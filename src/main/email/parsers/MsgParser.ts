@@ -1,15 +1,20 @@
 /**
  * MsgParser - Outlook .msg format parser
  *
- * Parses Outlook .msg files using msg-extractor library.
+ * Parses Outlook .msg files using @kenjiuno/msgreader library.
  * Per plan.md FR-008 and SC-004: ≥85% Message-ID extraction rate.
  * Falls back to SHA-256 fingerprint when Message-ID unavailable.
+ *
+ * Migration 2026-02-24: Migrated from msg-extractor to @kenjiuno/msgreader
+ * for better TypeScript support and active maintenance.
  *
  * @module main/email/parsers/MsgParser
  */
 
 import { createHash } from 'crypto';
+import * as fs from 'fs';
 import * as path from 'path';
+import MsgReader from '@kenjiuno/msgreader';
 import { logger } from '../../config/logger.js';
 import type { EmailParser, ParsedEmail } from './EmailParser.js';
 import { formatISO8601 } from '../../../shared/utils/dateUtils.js';
@@ -37,12 +42,19 @@ export class MsgParser implements EmailParser {
     try {
       logger.debug('MsgParser', `Starting parse for file: ${filePath}`);
 
-      // Dynamically import msg-extractor (optional dependency)
-      const msgExtractor = await import('msg-extractor');
-      const extractMsg = msgExtractor.extractMsg;
+      // Read file as Buffer
+      const msgBuffer = fs.readFileSync(filePath);
 
-      // Extract using msg-extractor
-      const msg = await extractMsg(filePath);
+      // Convert Buffer to ArrayBuffer for @kenjiuno/msgreader
+      // Buffer extends Uint8Array, which has a .buffer property
+      const arrayBuffer = msgBuffer.buffer.slice(
+        msgBuffer.byteOffset,
+        msgBuffer.byteOffset + msgBuffer.byteLength
+      );
+
+      // Parse .msg file using @kenjiuno/msgreader
+      const msgReader = new MsgReader(arrayBuffer);
+      const msg = msgReader.getFileData();
 
       // Extract Message-ID (critical for traceability per FR-001)
       const messageId = this.extractMessageId(msg);
@@ -55,10 +67,10 @@ export class MsgParser implements EmailParser {
       const emailHash = this.computeEmailHash(messageId, date, from);
 
       // Extract subject
-      const subject = msg.subject || '(无主题)';
+      const subject = this.extractSubject(msg);
 
       // Extract attachment metadata
-      const attachments = this.extractAttachments(msg.attachments || []);
+      const attachments = this.extractAttachments(msg);
 
       // Extract and truncate body
       const body = this.extractBody(msg);
@@ -100,24 +112,47 @@ export class MsgParser implements EmailParser {
    *
    * Message-ID extraction rate for .msg format is ≥85% per SC-004.
    *
-   * @param msg - Extracted msg object
+   * @param msg - MsgReader message object
    * @returns Message-ID string or undefined if missing
    */
   private extractMessageId(msg: any): string | undefined {
-    // msg-extractor provides various headers
-    if (msg.headers && msg.headers['message-id']) {
-      const messageId = msg.headers['message-id'];
+    // @kenjiuno/msgreader provides various properties
+    // Try internetMessageId first (most reliable)
+    if (msg.internetMessageId) {
+      const messageId = String(msg.internetMessageId).trim();
       // Clean up Message-ID (remove angle brackets if present)
       return messageId.replace(/^<|>$/g, '');
     }
 
-    // Some .msg files store Message-ID in internetMessageId field
-    if (msg.internetMessageId) {
-      return msg.internetMessageId.replace(/^<|>$/g, '');
+    // Some .msg files store Message-ID in headers
+    if (msg.headers && msg.headers['message-id']) {
+      const messageId = String(msg.headers['message-id']).trim();
+      return messageId.replace(/^<|>$/g, '');
+    }
+
+    // Try transport headers
+    if (msg.transportHeaders) {
+      const match = msg.transportHeaders.match(/Message-ID:\s*<([^>]+)>/i);
+      if (match) {
+        return match[1];
+      }
     }
 
     logger.debug('MsgParser', 'Message-ID not found in .msg file (expected for ~15% of files per SC-004)');
     return undefined;
+  }
+
+  /**
+   * Extract subject from .msg file
+   *
+   * @param msg - MsgReader message object
+   * @returns Subject line
+   */
+  private extractSubject(msg: any): string {
+    if (msg.subject) {
+      return String(msg.subject).trim();
+    }
+    return '(无主题)';
   }
 
   /**
@@ -147,25 +182,36 @@ export class MsgParser implements EmailParser {
   /**
    * Extract sender email address
    *
-   * @param msg - Extracted msg object
+   * @param msg - MsgReader message object
    * @returns Sender email address
    */
   private extractSenderEmail(msg: any): string {
-    if (msg.sender) {
-      // Try to extract email from sender field
-      const emailMatch = msg.sender.match(/<([^>]+)>/);
+    // Try senderEmailType and senderEmailAddress (MsgReader properties)
+    if (msg.senderEmailAddress) {
+      return String(msg.senderEmailAddress).toLowerCase().trim();
+    }
+
+    // Try fromEmail property
+    if (msg.fromEmail) {
+      return String(msg.fromEmail).toLowerCase().trim();
+    }
+
+    // Try senderName with email extraction
+    if (msg.senderName) {
+      const senderName = String(msg.senderName);
+      const emailMatch = senderName.match(/<([^>]+)>/);
       if (emailMatch) {
-        return emailMatch[1];
+        return emailMatch[1].toLowerCase().trim();
       }
-      // If no angle brackets, check if it's a plain email
-      if (msg.sender.includes('@')) {
-        return msg.sender;
+      // Check if it's a plain email
+      if (senderName.includes('@')) {
+        return senderName.toLowerCase().trim();
       }
     }
 
-    // Fallback to fromEmail field if available
-    if (msg.fromEmail) {
-      return msg.fromEmail;
+    // Try sentRepresentingEmailAddress
+    if (msg.sentRepresentingEmailAddress) {
+      return String(msg.sentRepresentingEmailAddress).toLowerCase().trim();
     }
 
     // Last resort fallback
@@ -178,18 +224,40 @@ export class MsgParser implements EmailParser {
    *
    * Uses date-fns formatISO8601 per plan.md R0-9 for consistent date handling.
    *
-   * @param msg - Extracted msg object
+   * @param msg - MsgReader message object
    * @returns ISO 8601 date string
    */
   private extractDate(msg: any): string {
-    if (msg.date) {
-      // msg-extractor returns Date object
-      return formatISO8601(new Date(msg.date));
+    // Try clientSubmitTime (most accurate for sent emails)
+    if (msg.clientSubmitTime) {
+      const date = new Date(msg.clientSubmitTime);
+      if (!isNaN(date.getTime())) {
+        return formatISO8601(date);
+      }
     }
 
-    // Fallback to sentTime if available
-    if (msg.sentTime) {
-      return formatISO8601(new Date(msg.sentTime));
+    // Try messageDeliveryTime
+    if (msg.messageDeliveryTime) {
+      const date = new Date(msg.messageDeliveryTime);
+      if (!isNaN(date.getTime())) {
+        return formatISO8601(date);
+      }
+    }
+
+    // Try creationTime
+    if (msg.creationTime) {
+      const date = new Date(msg.creationTime);
+      if (!isNaN(date.getTime())) {
+        return formatISO8601(date);
+      }
+    }
+
+    // Try lastModificationTime
+    if (msg.lastModificationTime) {
+      const date = new Date(msg.lastModificationTime);
+      if (!isNaN(date.getTime())) {
+        return formatISO8601(date);
+      }
     }
 
     // Fallback to current time (using date-fns formatISO8601 per plan.md R0-9)
@@ -200,15 +268,58 @@ export class MsgParser implements EmailParser {
   /**
    * Extract attachment metadata (no content per FR-044)
    *
-   * @param attachments - Array of attachment objects from msg-extractor
+   * @param msg - MsgReader message object
    * @returns Attachment metadata array
    */
-  private extractAttachments(attachments: any[]): Array<{ filename: string; size: number; mime_type: string }> {
-    return attachments.map(att => ({
-      filename: att.fileName || att.name || 'unnamed',
-      size: att.size || 0,
-      mime_type: att.mimeType || att.contentType || 'application/octet-stream',
-    }));
+  private extractAttachments(msg: any): Array<{ filename: string; size: number; mime_type: string }> {
+    const attachments: Array<{ filename: string; size: number; mime_type: string }> = [];
+
+    // @kenjiuno/msgreader provides attachment files
+    if (msg.attachmentFiles && Array.isArray(msg.attachmentFiles)) {
+      for (const att of msg.attachmentFiles) {
+        attachments.push({
+          filename: att.fileName || att.name || 'unnamed',
+          size: att.fileSize || att.size || 0,
+          mime_type: this.getMimeTypeFromFileName(att.fileName || att.name),
+        });
+      }
+    }
+
+    return attachments;
+  }
+
+  /**
+   * Guess MIME type from filename
+   *
+   * @param filename - Attachment filename
+   * @returns MIME type string
+   */
+  private getMimeTypeFromFileName(filename: string | undefined): string {
+    if (!filename) {
+      return 'application/octet-stream';
+    }
+    const ext = path.extname(filename).toLowerCase();
+
+    const mimeTypes: Record<string, string> = {
+      '.pdf': 'application/pdf',
+      '.doc': 'application/msword',
+      '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      '.xls': 'application/vnd.ms-excel',
+      '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      '.ppt': 'application/vnd.ms-powerpoint',
+      '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.zip': 'application/zip',
+      '.txt': 'text/plain',
+      '.html': 'text/html',
+      '.htm': 'text/html',
+      '.eml': 'message/rfc822',
+    };
+
+    return mimeTypes[ext] || 'application/octet-stream';
   }
 
   /**
@@ -217,16 +328,27 @@ export class MsgParser implements EmailParser {
    * Truncates to 100k characters per plan.md constraints.
    * Returns undefined if body is too short (<200 chars) per FR-013.
    *
-   * @param msg - Extracted msg object
+   * @param msg - MsgReader message object
    * @returns Truncated body content or undefined
    */
   private extractBody(msg: any): string | undefined {
-    // Prefer text body, fallback to HTML
-    let body = msg.body || msg.htmlBody || '';
+    // Prefer plain text body, fallback to HTML
+    let body = '';
+
+    if (msg.body) {
+      // @kenjiuno/msgreader provides body as string or Buffer
+      body = typeof msg.body === 'string' ? msg.body : msg.body.toString('utf-8');
+    } else if (msg.bodyHtml) {
+      body = typeof msg.bodyHtml === 'string' ? msg.bodyHtml : msg.bodyHtml.toString('utf-8');
+    } else if (msg.htmlBody) {
+      body = typeof msg.htmlBody === 'string' ? msg.htmlBody : msg.htmlBody.toString('utf-8');
+    }
 
     // Strip HTML tags if HTML content
-    if (msg.htmlBody && !msg.body) {
+    if ((msg.bodyHtml || msg.htmlBody) && !msg.body) {
       body = body.replace(/<[^>]*>/g, ' ').trim();
+      // Replace multiple whitespace with single space
+      body = body.replace(/\s+/g, ' ');
     }
 
     // Truncate to max size

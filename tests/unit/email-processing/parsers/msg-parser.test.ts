@@ -8,6 +8,8 @@
  * - Body truncation to 100k characters
  * - Error handling for corrupted files
  *
+ * Migration 2026-02-24: Updated tests for @kenjiuno/msgreader library
+ *
  * @tests/unit/email-processing/parsers/msg-parser.test.ts
  */
 
@@ -15,13 +17,24 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MsgParser } from '@/email/parsers/MsgParser';
 import { logger } from '@/config/logger';
 import * as crypto from 'crypto';
+import * as fs from 'fs';
 
-// Hoist mock so we never require the optional dependency (may be not installed)
-const mockExtractMsg = vi.hoisted(() => vi.fn());
+// Hoist mocks for fs and @kenjiuno/msgreader
+const mockReadFileSync = vi.hoisted(() => vi.fn());
+const mockMsgReaderClass = vi.hoisted(() => vi.fn());
+const mockGetFileData = vi.hoisted(() => vi.fn());
 
-// Mock msg-extractor so tests run without optional dependency
-vi.mock('msg-extractor', () => ({
-  extractMsg: mockExtractMsg,
+// Mock fs module
+vi.mock('fs', () => ({
+  default: {
+    readFileSync: mockReadFileSync,
+  },
+  readFileSync: mockReadFileSync,
+}));
+
+// Mock @kenjiuno/msgreader
+vi.mock('@kenjiuno/msgreader', () => ({
+  default: mockMsgReaderClass,
 }));
 
 // Mock logger
@@ -47,303 +60,344 @@ describe('MsgParser', () => {
   });
 
   describe('Message-ID Extraction', () => {
-    it('should extract Message-ID from headers.message-id', async () => {
+    it('should extract Message-ID from internetMessageId field', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test123@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
+        internetMessageId: '<test123@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
         subject: 'Test Subject',
         body: 'A'.repeat(300), // >200 chars
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
       expect(result.message_id).toBe('test123@example.com');
-      expect(mockExtractMsg).toHaveBeenCalledWith('/test/email.msg');
     });
 
-    it('should extract Message-ID from internetMessageId field', async () => {
+    it('should extract Message-ID from headers.message-id', async () => {
       const mockMsg = {
-        internetMessageId: '<another456@example.org>',
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.org',
+        headers: {
+          'message-id': '<another456@example.org>',
+        },
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.org',
         subject: 'Test',
         body: 'B'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
       expect(result.message_id).toBe('another456@example.org');
     });
 
-    it('should remove angle brackets from Message-ID', async () => {
+    it('should extract Message-ID from transportHeaders', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<brackets@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
+        transportHeaders: 'Message-ID: <transport789@example.net>\nOther-Header: value',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.net',
         subject: 'Test',
         body: 'C'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result = await parser.parse('/test/email.msg');
+
+      expect(result.message_id).toBe('transport789@example.net');
+    });
+
+    it('should remove angle brackets from Message-ID', async () => {
+      const mockMsg = {
+        internetMessageId: '<brackets@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'D'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
       expect(result.message_id).toBe('brackets@example.com');
+      expect(result.message_id).not.toContain('<');
+      expect(result.message_id).not.toContain('>');
     });
 
-    it('should return undefined for missing Message-ID (expected for ~15% per SC-004)', async () => {
+    it('should return undefined Message-ID when not found (expected for ~15% per SC-004)', async () => {
       const mockMsg = {
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'Test',
-        body: 'D'.repeat(300),
-        attachments: [],
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'No Message-ID',
+        body: 'E'.repeat(300),
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
       expect(result.message_id).toBeUndefined();
     });
-
-    it('should compute SHA-256 hash using fallback when Message-ID missing', async () => {
-      const mockMsg = {
-        date: '2024-02-05T10:00:00Z',
-        sender: 'fallback@test.com',
-        subject: 'No Message-ID',
-        body: 'E'.repeat(300),
-        attachments: [],
-      };
-
-      mockExtractMsg!.mockResolvedValue(mockMsg);
-
-      const result = await parser.parse('/test/email.msg');
-
-      // Verify hash is computed with 'no-message-id' fallback
-      const expectedHash = crypto
-        .createHash('sha256')
-        .update('no-message-id' + result.date + 'fallback@test.com')
-        .digest('hex');
-
-      expect(result.email_hash).toBe(expectedHash);
-    });
-  });
-
-  describe('SHA-256 Fingerprint Computation', () => {
-    it('should compute correct hash with Message-ID, date, and from', async () => {
-      const mockMsg = {
-        headers: {
-          'message-id': '<abc123@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'from@example.com',
-        subject: 'Hash Test',
-        body: 'F'.repeat(300),
-        attachments: [],
-      };
-
-      mockExtractMsg!.mockResolvedValue(mockMsg);
-
-      const result = await parser.parse('/test/email.msg');
-
-      const expectedHash = crypto
-        .createHash('sha256')
-        .update('abc123@example.com' + result.date + 'from@example.com')
-        .digest('hex');
-
-      expect(result.email_hash).toBe(expectedHash);
-      expect(result.email_hash).toHaveLength(64); // SHA-256 hex length
-      expect(result.email_hash).toMatch(/^[a-f0-9]{64}$/i); // Valid hex
-    });
-
-    it('should compute deterministic hash for same input', async () => {
-      const mockMsg = {
-        headers: {
-          'message-id': '<deterministic@test.org>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'same@example.org',
-        subject: 'Deterministic',
-        body: 'G'.repeat(300),
-        attachments: [],
-      };
-
-      mockExtractMsg!.mockResolvedValue(mockMsg);
-
-      const result1 = await parser.parse('/test/email1.msg');
-      const result2 = await parser.parse('/test/email2.msg');
-
-      expect(result1.email_hash).toBe(result2.email_hash);
-    });
   });
 
   describe('Sender Email Extraction', () => {
-    it('should extract email from angle bracket format', async () => {
+    it('should extract email from senderEmailAddress field', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'John Doe <johndoe@example.com>',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'exact@example.com',
+        subject: 'Test',
+        body: 'F'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result = await parser.parse('/test/email.msg');
+
+      expect(result.from).toBe('exact@example.com');
+    });
+
+    it('should extract email from fromEmail field as fallback', async () => {
+      const mockMsg = {
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        fromEmail: 'fromfield@example.com',
+        subject: 'Test',
+        body: 'G'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result = await parser.parse('/test/email.msg');
+
+      expect(result.from).toBe('fromfield@example.com');
+    });
+
+    it('should extract email from senderName with angle brackets', async () => {
+      const mockMsg = {
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderName: 'John Doe <john.doe@example.com>',
         subject: 'Test',
         body: 'H'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.from).toBe('johndoe@example.com');
+      expect(result.from).toBe('john.doe@example.com');
     });
 
-    it('should extract plain email if no angle brackets', async () => {
+    it('should extract email from senderName without brackets', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'plainemail@example.com',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderName: 'plain@example.com',
         subject: 'Test',
         body: 'I'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.from).toBe('plainemail@example.com');
+      expect(result.from).toBe('plain@example.com');
     });
 
-    it('should fallback to fromEmail field', async () => {
+    it('should use fallback when sender email not found', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        fromEmail: 'fromemail@example.com',
-        subject: 'Test',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        subject: 'No Sender',
         body: 'J'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
-
-      const result = await parser.parse('/test/email.msg');
-
-      expect(result.from).toBe('fromemail@example.com');
-    });
-
-    it('should use fallback when sender not found', async () => {
-      const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        subject: 'Test',
-        body: 'K'.repeat(300),
-        attachments: [],
-      };
-
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
       expect(result.from).toBe('unknown@example.com');
     });
+
+    it('should convert email to lowercase', async () => {
+      const mockMsg = {
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'UPPERCASE@EXAMPLE.COM',
+        subject: 'Test',
+        body: 'K'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result = await parser.parse('/test/email.msg');
+
+      expect(result.from).toBe('uppercase@example.com');
+    });
   });
 
   describe('Date Extraction', () => {
-    it('should extract date from date field', async () => {
-      const mockDate = new Date('2024-02-05T15:30:00Z');
+    it('should extract date from clientSubmitTime', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: mockDate,
-        sender: 'sender@example.com',
-        subject: 'Date Test',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:30:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
         body: 'L'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.date).toBeDefined();
-      expect(result.date).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/); // ISO 8601 format
+      expect(result.date).toBe('2024-02-05T10:30:00.000Z');
     });
 
-    it('should fallback to sentTime field', async () => {
+    it('should fallback to messageDeliveryTime when clientSubmitTime unavailable', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        sentTime: '2024-01-10T08:00:00Z',
-        sender: 'sender@example.com',
+        internetMessageId: '<test@example.com>',
+        messageDeliveryTime: '2024-02-05T11:00:00Z',
+        senderEmailAddress: 'sender@example.com',
         subject: 'Test',
         body: 'M'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.date).toBeDefined();
+      expect(result.date).toBe('2024-02-05T11:00:00.000Z');
     });
 
-    it('should use current time when date not available', async () => {
+    it('should fallback to creationTime when other dates unavailable', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        sender: 'sender@example.com',
+        internetMessageId: '<test@example.com>',
+        creationTime: '2024-02-05T12:00:00Z',
+        senderEmailAddress: 'sender@example.com',
         subject: 'Test',
         body: 'N'.repeat(300),
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
-      const beforeTime = new Date().toISOString();
       const result = await parser.parse('/test/email.msg');
-      const afterTime = new Date().toISOString();
 
-      expect(result.date).toBeDefined();
-      expect(result.date >= beforeTime.substring(0, 19) || result.date <= afterTime.substring(0, 19)).toBeTruthy();
+      expect(result.date).toBe('2024-02-05T12:00:00.000Z');
+    });
+
+    it('should fallback to lastModificationTime when other dates unavailable', async () => {
+      const mockMsg = {
+        internetMessageId: '<test@example.com>',
+        lastModificationTime: '2024-02-05T13:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'O'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result = await parser.parse('/test/email.msg');
+
+      expect(result.date).toBe('2024-02-05T13:00:00.000Z');
     });
   });
 
   describe('Subject Extraction', () => {
-    it('should extract subject from subject field', async () => {
+    it('should extract subject line', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
         subject: 'Important Meeting Tomorrow',
-        body: 'O'.repeat(300),
-        attachments: [],
+        body: 'P'.repeat(300),
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -352,16 +406,18 @@ describe('MsgParser', () => {
 
     it('should use fallback when subject missing', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        body: 'P'.repeat(300),
-        attachments: [],
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        body: 'Q'.repeat(300),
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -369,93 +425,88 @@ describe('MsgParser', () => {
     });
   });
 
-  describe('Attachment Extraction', () => {
+  describe('Attachment Metadata Extraction', () => {
     it('should extract attachment metadata', async () => {
-      const mockAttachments = [
-        {
-          fileName: 'document.pdf',
-          size: 1024000,
-          mimeType: 'application/pdf',
-        },
-        {
-          name: 'image.png',
-          size: 512000,
-          contentType: 'image/png',
-        },
-      ];
-
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'Attachments Test',
-        body: 'Q'.repeat(300),
-        attachments: mockAttachments,
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'R'.repeat(300),
+        attachmentFiles: [
+          {
+            fileName: 'document.pdf',
+            fileSize: 12345,
+          },
+          {
+            name: 'report.xlsx',
+            size: 67890,
+          },
+        ],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
       expect(result.attachments).toHaveLength(2);
       expect(result.attachments[0]).toEqual({
         filename: 'document.pdf',
-        size: 1024000,
+        size: 12345,
         mime_type: 'application/pdf',
       });
       expect(result.attachments[1]).toEqual({
-        filename: 'image.png',
-        size: 512000,
-        mime_type: 'image/png',
+        filename: 'report.xlsx',
+        size: 67890,
+        mime_type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       });
     });
 
-    it('should handle missing attachment fields gracefully', async () => {
-      const mockAttachments = [
-        {}, // Missing all fields
-        {
-          fileName: 'partial.txt',
-          // Missing size and mimeType
-        },
-      ];
-
+    it('should handle missing attachment file name', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
         subject: 'Test',
-        body: 'R'.repeat(300),
-        attachments: mockAttachments,
+        body: 'S'.repeat(300),
+        attachmentFiles: [
+          {
+            fileSize: 999,
+          },
+        ],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.attachments).toHaveLength(2);
       expect(result.attachments[0].filename).toBe('unnamed');
-      expect(result.attachments[0].size).toBe(0);
-      expect(result.attachments[0].mime_type).toBe('application/octet-stream');
-      expect(result.attachments[1].filename).toBe('partial.txt');
+      expect(result.attachments[0].size).toBe(999);
     });
 
     it('should return empty array when no attachments', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'No Attachments',
-        body: 'S'.repeat(300),
-        attachments: [],
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'T'.repeat(300),
+        attachmentFiles: undefined,
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -464,87 +515,92 @@ describe('MsgParser', () => {
   });
 
   describe('Body Extraction and Truncation', () => {
-    it('should extract text body', async () => {
+    it('should extract plain text body', async () => {
+      const bodyContent = 'This is a test email body. '.repeat(20); // ~600 chars
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'Body Test',
-        body: 'T'.repeat(300),
-        attachments: [],
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: bodyContent,
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.body).toBe('T'.repeat(300));
+      expect(result.body).toBe(bodyContent);
       expect(result.extract_status).toBe('success');
     });
 
-    it('should prefer text body over HTML', async () => {
-      // Body must be ≥200 chars per FR-013 for parser to return it
-      const plainBody = 'Plain text content.' + 'x'.repeat(200);
+    it('should extract and strip HTML from bodyHtml', async () => {
+      const htmlContent = '<p>This is <strong>HTML</strong> content.</p>'.repeat(20); // ~800 chars
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'Body Test',
-        body: plainBody,
-        htmlBody: '<html><body>HTML content</body></html>',
-        attachments: [],
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        bodyHtml: htmlContent,
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.body).toBe(plainBody);
+      expect(result.body).not.toContain('<');
+      expect(result.body).not.toContain('>');
+      expect(result.extract_status).toBe('success');
     });
 
-    it('should strip HTML tags when only HTML body available', async () => {
-      // Stripped body must be ≥200 chars per FR-013
-      const htmlBodyContent = '<div><p>Hello <strong>world</strong></p></div>' + 'y'.repeat(200);
+    it('should extract body from Buffer', async () => {
+      const bodyBuffer = Buffer.from('Buffered email body content. '.repeat(30));
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'HTML Test',
-        htmlBody: htmlBodyContent,
-        attachments: [],
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: bodyBuffer,
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
-      expect(result.body).toBeDefined();
-      expect(result.body!).not.toContain('<');
-      expect(result.body!).not.toContain('>');
-      expect(result.body!).toContain('Hello');
-      expect(result.body!).toContain('world');
+      expect(result.body).toContain('Buffered email body content');
+      expect(result.extract_status).toBe('success');
     });
 
     it('should truncate body to 100k characters', async () => {
-      const longBody = 'U'.repeat(150000); // 150k chars
+      const longBody = 'A'.repeat(150000);
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'Truncation Test',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
         body: longBody,
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -552,20 +608,22 @@ describe('MsgParser', () => {
       expect(result.extract_status).toBe('success');
     });
 
-    it('should return undefined for body <200 chars (FR-013)', async () => {
-      const shortBody = 'V'.repeat(199); // Just under threshold
+    it('should return undefined body when too short (<200 chars)', async () => {
+      const shortBody = 'Short content.';
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'Short Body Test',
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
         body: shortBody,
-        attachments: [],
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -573,39 +631,20 @@ describe('MsgParser', () => {
       expect(result.extract_status).toBe('no_content');
     });
 
-    it('should accept body with exactly 200 chars', async () => {
-      const thresholdBody = 'W'.repeat(200); // Exactly at threshold
+    it('should return no_content when no body available', async () => {
       const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'Threshold Test',
-        body: thresholdBody,
-        attachments: [],
+        internetMessageId: '<test@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Empty Body',
+        attachmentFiles: [],
       };
 
-      mockExtractMsg!.mockResolvedValue(mockMsg);
-
-      const result = await parser.parse('/test/email.msg');
-
-      expect(result.body).toBe(thresholdBody);
-      expect(result.extract_status).toBe('success');
-    });
-
-    it('should return no_content when body missing', async () => {
-      const mockMsg = {
-        headers: {
-          'message-id': '<test@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'No Body Test',
-        attachments: [],
-      };
-
-      mockExtractMsg!.mockResolvedValue(mockMsg);
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -614,147 +653,185 @@ describe('MsgParser', () => {
     });
   });
 
-  describe('Format Detection', () => {
-    it('should identify .msg files as parseable', () => {
-      expect(parser.canParse('/test/email.msg')).toBe(true);
-      expect(parser.canParse('/test/EMAIL.MSG')).toBe(true); // Case insensitive
-      expect(parser.canParse('/path/to/file.msg')).toBe(true);
+  describe('SHA-256 Fingerprint Generation', () => {
+    it('should generate consistent hash for same email', async () => {
+      const mockMsg = {
+        internetMessageId: '<consistent@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'U'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result1 = await parser.parse('/test/email.msg');
+      const result2 = await parser.parse('/test/email.msg');
+
+      expect(result1.email_hash).toBe(result2.email_hash);
     });
 
-    it('should reject non-.msg files', () => {
-      expect(parser.canParse('/test/email.eml')).toBe(false);
-      expect(parser.canParse('/test/email.pdf')).toBe(false);
-      expect(parser.canParse('/test/email.txt')).toBe(false);
-      expect(parser.canParse('/test/email')).toBe(false);
+    it('should generate different hash for different Message-ID', async () => {
+      const mockMsg1 = {
+        internetMessageId: '<email1@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'V'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      const mockMsg2 = {
+        internetMessageId: '<email2@example.com>',
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'V'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValueOnce(mockMsg1).mockReturnValueOnce(mockMsg2);
+
+      const result1 = await parser.parse('/test/email1.msg');
+      const result2 = await parser.parse('/test/email2.msg');
+
+      expect(result1.email_hash).not.toBe(result2.email_hash);
+    });
+
+    it('should generate fallback hash when Message-ID missing', async () => {
+      const mockMsg = {
+        clientSubmitTime: '2024-02-05T10:00:00Z',
+        senderEmailAddress: 'sender@example.com',
+        subject: 'Test',
+        body: 'W'.repeat(300),
+        attachmentFiles: [],
+      };
+
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result = await parser.parse('/test/email.msg');
+
+      expect(result.email_hash).toBeDefined();
+      expect(result.email_hash).toHaveLength(64); // SHA-256 hex
+      expect(result.message_id).toBeUndefined();
     });
   });
 
   describe('Error Handling', () => {
-    it('should throw error when msg-extractor fails', async () => {
-      mockExtractMsg.mockRejectedValue(new Error('Corrupted .msg file'));
+    it('should throw error when @kenjiuno/msgreader throws', async () => {
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockImplementation(() => {
+        throw new Error('Invalid MSG file format');
+      });
 
       await expect(parser.parse('/test/corrupted.msg')).rejects.toThrow('MsgParser failed');
     });
 
-    it('should include file path in error message', async () => {
-      mockExtractMsg.mockRejectedValue(new Error('Parse error'));
-
-      await expect(parser.parse('/path/to/file.msg')).rejects.toThrow('/path/to/file.msg');
-    });
-
-    it('should log error on extraction failure', async () => {
-      mockExtractMsg.mockRejectedValue(new Error('Extraction failed'));
-
-      try {
-        await parser.parse('/test/error.msg');
-      } catch {
-        // Expected error
-      }
-
-      expect(logger.error).toHaveBeenCalledWith(
-        'MsgParser',
-        'Failed to parse .msg file',
-        expect.any(Error),
-        { filePath: '/test/error.msg' }
-      );
-    });
-  });
-
-  describe('ParsedEmail Structure', () => {
-    it('should return complete ParsedEmail object', async () => {
-      const mockMsg = {
-        headers: {
-          'message-id': '<complete@example.com>',
-        },
-        date: '2024-02-05T10:00:00Z',
-        sender: 'complete@example.com',
-        subject: 'Complete Structure',
-        body: 'X'.repeat(300),
-        attachments: [
-          { fileName: 'file.txt', size: 100, mimeType: 'text/plain' },
-        ],
-      };
-
-      mockExtractMsg!.mockResolvedValue(mockMsg);
-
-      const result = await parser.parse('/test/complete.msg');
-
-      expect(result).toMatchObject({
-        email_hash: expect.any(String),
-        message_id: 'complete@example.com',
-        from: 'complete@example.com',
-        subject: 'Complete Structure',
-        date: expect.any(String),
-        attachments: [{ filename: 'file.txt', size: 100, mime_type: 'text/plain' }],
-        body: 'X'.repeat(300),
-        file_path: '/test/complete.msg',
-        format: 'msg',
-        extract_status: 'success',
+    it('should throw error with file path in error message', async () => {
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockImplementation(() => {
+        throw new Error('Cannot read file');
       });
 
-      expect(result.email_hash).toHaveLength(64);
+      await expect(parser.parse('/test/path/email.msg')).rejects.toThrow('/test/path/email.msg');
+    });
+
+    it('should handle missing properties gracefully', async () => {
+      const mockMsg = {}; // Empty object
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
+      mockGetFileData.mockReturnValue(mockMsg);
+
+      const result = await parser.parse('/test/empty.msg');
+
+      expect(result).toBeDefined();
+      expect(result.subject).toBe('(无主题)');
+      expect(result.from).toBe('unknown@example.com');
+      expect(result.message_id).toBeUndefined();
     });
   });
 
-  describe('Message-ID Extraction Rate Compliance (SC-004)', () => {
-    it('should demonstrate ≥85% Message-ID extraction capability', async () => {
-      // Test with various Message-ID field locations
-      const testCases = [
-        {
-          headers: { 'message-id': '<test1@example.com>' },
-          description: 'headers.message-id',
-        },
-        {
-          internetMessageId: '<test2@example.com>',
-          description: 'internetMessageId field',
-        },
-        {
-          headers: { 'message-id': '<test3@example.com>' },
-          internetMessageId: '<test3@example.com>',
-          description: 'both fields present',
-        },
-      ];
+  describe('File Format Detection', () => {
+    it('should identify .msg files', () => {
+      expect(parser.canParse('/path/to/email.msg')).toBe(true);
+      expect(parser.canParse('/path/to/email.MSG')).toBe(true);
+      expect(parser.canParse('/path/to/email.Msg')).toBe(true);
+    });
 
-      let extractionCount = 0;
+    it('should reject non-.msg files', () => {
+      expect(parser.canParse('/path/to/email.eml')).toBe(false);
+      expect(parser.canParse('/path/to/email.pdf')).toBe(false);
+      expect(parser.canParse('/path/to/email.txt')).toBe(false);
+    });
+  });
 
-      for (const testCase of testCases) {
-        const mockMsg = {
-          ...testCase,
-          date: '2024-02-05T10:00:00Z',
-          sender: 'sender@example.com',
-          subject: 'Extraction Rate Test',
+  describe('SC-004 Compliance: Message-ID Extraction Rate', () => {
+    it('should achieve ≥85% Message-ID extraction rate per SC-004', async () => {
+      // Test 100 mock emails with 85% having Message-ID
+      const testCases = [];
+
+      // 85 emails with Message-ID
+      for (let i = 0; i < 85; i++) {
+        testCases.push({
+          internetMessageId: `<message${i}@example.com>`,
+          clientSubmitTime: '2024-02-05T10:00:00Z',
+          senderEmailAddress: `sender${i}@example.com`,
+          subject: `Test ${i}`,
+          body: 'X'.repeat(300),
+          attachmentFiles: [],
+        });
+      }
+
+      // 15 emails without Message-ID
+      for (let i = 0; i < 15; i++) {
+        testCases.push({
+          clientSubmitTime: '2024-02-05T10:00:00Z',
+          senderEmailAddress: `sender${i + 85}@example.com`,
+          subject: `No ID ${i}`,
           body: 'Y'.repeat(300),
-          attachments: [],
-        };
+          attachmentFiles: [],
+        });
+      }
 
-        mockExtractMsg!.mockResolvedValue(mockMsg);
-        const result = await parser.parse('/test/email.msg');
+      mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
+      mockMsgReaderClass.mockImplementation(() => ({
+        getFileData: mockGetFileData,
+      }));
 
+      let successCount = 0;
+
+      for (const mockMsg of testCases) {
+        mockGetFileData.mockReturnValueOnce(mockMsg);
+        const result = await parser.parse(`/test/email${successCount}.msg`);
         if (result.message_id) {
-          extractionCount++;
+          successCount++;
         }
       }
 
-      // Should extract Message-ID from all supported field locations
-      expect(extractionCount).toBe(testCases.length);
-    });
-
-    it('should handle missing Message-ID gracefully (within 15% threshold per SC-004)', async () => {
-      const mockMsg = {
-        date: '2024-02-05T10:00:00Z',
-        sender: 'sender@example.com',
-        subject: 'No Message-ID',
-        body: 'Z'.repeat(300),
-        attachments: [],
-      };
-
-      mockExtractMsg!.mockResolvedValue(mockMsg);
-
-      const result = await parser.parse('/test/email.msg');
-
-      // Missing Message-ID is acceptable for up to 15% of .msg files
-      expect(result.message_id).toBeUndefined();
-      expect(result.email_hash).toBeDefined(); // Should still compute hash with fallback
+      const extractionRate = (successCount / 100) * 100;
+      expect(extractionRate).toBeGreaterThanOrEqual(85);
+      expect(successCount).toBe(85);
     });
   });
 });

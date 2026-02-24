@@ -55,13 +55,13 @@ export function formatYYYYMMDD(dateInput: string | Date | number): string {
 }
 
 /**
- * Format date as ISO 8601 string
+ * Format date as ISO 8601 string (UTC format)
  *
  * Used for email date headers and database storage.
- * Consistent with mailparser's date.toISOString() output.
+ * Always outputs UTC format with 'Z' suffix for consistency.
  *
  * @param dateInput - Date string, Date object, or number
- * @returns ISO 8601 date string, or current date ISO string if invalid
+ * @returns ISO 8601 date string in UTC format, or current date ISO string if invalid
  *
  * @example
  * ```typescript
@@ -82,29 +82,31 @@ export function formatISO8601(dateInput: string | Date | number): string {
       date = new Date(dateInput);
     } else {
       // Fallback to current date for invalid input
-      return formatISO(new Date());
+      return new Date().toISOString();
     }
 
     // Validate date
     if (!isValid(date)) {
-      return formatISO(new Date());
+      return new Date().toISOString();
     }
 
-    return formatISO(date);
+    // Use native toISOString() for UTC format with 'Z' suffix
+    return date.toISOString();
   } catch {
-    // On any error, return current date
-    return formatISO(new Date());
+    // On any error, return current date in UTC
+    return new Date().toISOString();
   }
 }
 
 /**
- * Parse email date header to ISO 8601 string
+ * Parse email date header to ISO 8601 string (UTC format)
  *
  * Email dates can be in various RFC 5322 formats.
  * Uses date-fns parse with flexible format handling.
+ * Always outputs UTC format with 'Z' suffix.
  *
  * @param dateHeader - Date string from email Date header
- * @returns ISO 8601 date string, or current date ISO string if parsing fails
+ * @returns ISO 8601 date string in UTC format, or current date ISO string if parsing fails
  *
  * @example
  * ```typescript
@@ -115,7 +117,7 @@ export function formatISO8601(dateInput: string | Date | number): string {
 export function parseEmailDate(dateHeader: string): string {
   try {
     if (!dateHeader || typeof dateHeader !== 'string') {
-      return formatISO(new Date());
+      return new Date().toISOString();
     }
 
     // Try parsing as ISO first (fastest path)
@@ -130,13 +132,14 @@ export function parseEmailDate(dateHeader: string): string {
 
     // Validate the parsed date
     if (!isValid(date) || isNaN(date.getTime())) {
-      return formatISO(new Date());
+      return new Date().toISOString();
     }
 
-    return formatISO(date);
+    // Use native toISOString() for UTC format with 'Z' suffix
+    return date.toISOString();
   } catch {
-    // On any error, return current date
-    return formatISO(new Date());
+    // On any error, return current date in UTC
+    return new Date().toISOString();
   }
 }
 

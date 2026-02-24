@@ -12,7 +12,7 @@
 - Unified confidence weighting: Rule engine 50% + LLM 50%, adjusts on failure
 - Simplified feedback storage: Integrated into `todo_items` table, removed separate feedback.db
 - Explicit traceability implementation: Search string + file path (display-only text, NO deep linking or clickable links per FR-004A)
-- Email format parsing libraries specified: msg-extractor/libpff
+- Email format parsing libraries specified: @kenjiuno/msgreader (MSG), pst-extractor (PST/OST)
 
 ## Summary
 
@@ -28,7 +28,7 @@ This feature implements a complete email item traceability and verification syst
   - Database: better-sqlite3 11.10.0 with field-level AES-256-GCM encryption
   - Security: Electron safeStorage API, QuickJS (WASM) for rule sandbox
   - Validation: Zod Schema for runtime validation
-  - Email: imapflow + mailparser (IMAP/POP3), msg-extractor/libpff/readpst (Outlook formats)
+  - Email: imapflow + mailparser (IMAP/POP3), @kenjiuno/msgreader/pst-extractor (Outlook formats)
   - Export: Puppeteer for PDF generation
   - Updates: electron-updater (GitHub Releases)
 
@@ -170,8 +170,8 @@ mailCopilot/
 │   │   ├── email-processing/
 │   │   │   ├── parsers/              # Email format parsers
 │   │   │   │   ├── eml.parser.ts     # RFC 5322 .eml format
-│   │   │   │   ├── msg.parser.ts     # Outlook MSG format (msg-extractor)
-│   │   │   │   ├── pst.parser.ts     # Outlook PST/OST format (libpff/readpst)
+│   │   │   │   ├── msg.parser.ts     # Outlook MSG format (@kenjiuno/msgreader)
+│   │   │   │   ├── pst.parser.ts     # Outlook PST/OST format (pst-extractor)
 │   │   │   │   ├── mbox.parser.ts    # Unix mbox format
 │   │   │   │   └── html.parser.ts    # Exported HTML format
 │   │   │   ├── metadata-extractor.ts # Message-ID/fingerprint extraction
@@ -314,7 +314,7 @@ This implementation plan fully satisfies all constitutional requirements without
 **Key Decisions**:
 - **Frontend Stack**: Tailwind CSS v3.4 + shadcn/ui + Lucide React + Inter font for modern, accessible UI
 - **Database**: better-sqlite3 11.10.0 with field-level AES-256-GCM encryption, WAL mode
-- **Email Parsing**: imapflow + mailparser for standard formats, msg-extractor/libpff/readpst for Outlook formats
+- **Email Parsing**: imapflow + mailparser for standard formats, @kenjiuno/msgreader/pst-extractor for Outlook formats
 - **LLM Integration**: Local (Ollama/LocalAI) and remote (third-party API) with unified adapter interface
 - **Validation**: Zod Schema for runtime type validation with automatic retry (max 2x) on failure
 - **Rule Engine**: QuickJS WASM sandbox with 128MB memory limit, 5s timeout, zero permissions
@@ -408,7 +408,7 @@ This implementation plan fully satisfies all constitutional requirements without
 | Risk | Impact | Likelihood | Mitigation |
 |------|--------|------------|------------|
 | QuickJS WASM compatibility issues | High | Medium | Extensive integration testing, fallback to isolated Node.js context |
-| Outlook format parsing failures | Medium | High | Clear user communication, degraded confidence caps, multiple library options (msg-extractor/libpff) |
+| Outlook format parsing failures | Medium | High | Clear user communication, degraded confidence caps, multiple library options (@kenjiuno/msgreader/pst-extractor) |
 | Local LLM performance degradation | Medium | Medium | Progress indicators, batch size limits, timeout enforcement |
 | Encryption key loss scenarios | High | Low | Clear user warnings, export functionality, device binding disclosure |
 | Mode switching race conditions | High | Low | State flag management, queue implementation, comprehensive testing |

@@ -54,12 +54,18 @@ const response = await client.chat.completions.create({
 
 **Rationale**:
 1. **.eml (RFC 5322)**: mailparser (already in dependencies) - battle-tested, handles MIME parsing
-2. **.msg (Outlook)**: msg-extractor (optional dependency) - supports Outlook msg format
-3. **.pst/.ost (Outlook Archive)**: libpff (optional dependency) - handles Outlook archives
+2. **.msg (Outlook)**: @kenjiuno/msgreader (optional dependency) - TypeScript-native MSG parser, better Windows support, modern maintenance
+3. **.pst/.ost (Outlook Archive)**: pst-extractor (optional dependency) - Pure JavaScript implementation, cross-platform, actively maintained
 4. **.mbox (Unix)**: mailparser with custom delimiter logic - standard mbox format
 5. **.html (Exported)**: Custom parser with cheerio - basic metadata extraction
 
+**Migration from msg-extractor/libpff**:
+- **@kenjiuno/msgreader**: Chosen over msg-extractor due to TypeScript support, active maintenance, and better Outlook MSG format compatibility
+- **pst-extractor**: Chosen over libpff due to pure JavaScript implementation (no native compilation), cross-platform compatibility, and easier installation
+
 **Alternatives**:
+- **msg-extractor**: Rejected due to lack of TypeScript support and maintenance issues
+- **libpff**: Rejected due to native compilation requirements and platform-specific dependencies
 - **Unified library approach**: Rejected due to format complexity and maintenance burden
 - **Cloud-based parsing**: Rejected due to privacy requirements (constitution Principle I)
 
@@ -342,6 +348,8 @@ tests/
 | **Validation** | Zod | ^3.22.4 | Runtime type validation |
 | **Date Handling** | date-fns | ^4.0.0 | Immutable, timezone support |
 | **Email Parsing** | mailparser | ^3.6.5 | MIME parsing, attachments |
+| **MSG Parser** | @kenjiuno/msgreader | Latest | TypeScript-native, Outlook MSG format |
+| **PST Parser** | pst-extractor | Latest | Pure JS, cross-platform, Outlook PST/OST |
 | **Rule Sandbox** | QuickJS WASM | Latest | Zero-permission sandbox |
 | **Testing** | Vitest | ^3.2.4 | Native ESM, fast execution |
 

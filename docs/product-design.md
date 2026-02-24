@@ -151,8 +151,8 @@ flowchart LR
 | 格式 | 版本/类型 | 索引提取策略 | Message-ID提取率 | 备注 |
 |------|-----------|--------------|------------------|------|
 | **.eml** | RFC 5322标准 | 直接解析Header | ~99% | 最标准格式，支持完美 |
-| **.msg** | Outlook 97-2003/2007+ | 使用msg-extractor库提取Header | ~85% | 部分转发邮件可能丢失原始Message-ID，启用指纹备用 |
-| **.pst/.ost** | Outlook个人文件夹 | 使用libpff或readpst提取邮件后解析 | ~90% | 需先解压为中间格式，性能开销较大（+200ms/封） |
+| **.msg** | Outlook 97-2003/2007+ | 使用@kenjiuno/msgreader库提取Header | ~85% | TypeScript原生库，部分转发邮件可能丢失原始Message-ID，启用指纹备用 |
+| **.pst/.ost** | Outlook个人文件夹 | 使用pst-extractor提取邮件后解析 | ~90% | 纯JavaScript实现，跨平台，性能开销约+200ms/封 |
 | **mbox** | Unix邮箱格式 | 解析From_行+分隔符提取单封邮件 | ~95% | 需记录偏移量（Offset）用于回溯，指纹基于内容生成 |
 | **.htm/.html** | 导出网页格式 | 提取Meta标签或标题哈希 | ~30% | **低支持度**，仅生成指纹索引，置信度上限0.6 |
 

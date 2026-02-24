@@ -145,7 +145,7 @@ All pull requests MUST verify:
 | **Rule Execution** | QuickJS (WASM) | Zero-permission sandbox, 128MB memory limit, 5s timeout |
 | **LLM Output Validation** | Zod Schema | Structured output validation, auto-retry (max 2x), fallback to unverified |
 | **Email Import** | imapflow + mailparser | TLS 1.3 enforced, 20MB size limit |
-| **Format Extensions** | msg-extractor / libpff | Local library parsing, no cloud upload |
+| **Format Extensions** | @kenjiuno/msgreader / pst-extractor | Local library parsing, no cloud upload |
 | **Export** | Internal template + puppeteer | Plaintext export, security warning before export |
 | **Auto-Update** | electron-updater | GitHub Releases, mandatory code signature verification |
 

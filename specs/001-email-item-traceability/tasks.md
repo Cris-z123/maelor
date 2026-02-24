@@ -40,7 +40,7 @@
 4. **Mode Switching**: Hot switching without restart (wait for batch completion)
 5. **Confidence Calculation**: Unified 50% rules + 50% LLM, adjusts on failure
 6. **Traceability**: Search string + file path (no deep linking)
-7. **Email Parsing**: msg-extractor/libpff/readpst for Outlook formats
+7. **Email Parsing**: @kenjiuno/msgreader/pst-extractor for Outlook formats
 
 **AFFECTED COMPLETED TASKS** (require refactoring):
 - T032: RemoteLLM - Already uses OpenAI SDK ✅ (NO CHANGE NEEDED)
@@ -241,19 +241,19 @@
 
 **Independent Test**: Process sample files in each format, verify action items extracted with metadata, confirm Message-ID extraction rates meet targets (.eml ≥95%, .msg ≥85%, .pst ≥90%)
 
-**⚠️ PLAN v2.7 CHANGE**: Use msg-extractor/libpff/readpst for Outlook formats per tech-architecture.md
+**⚠️ PLAN v2.7 CHANGE**: Use @kenjiuno/msgreader/pst-extractor for Outlook formats per tech-architecture.md
 
 ### Additional Parsers for US4
 
-- [X] T067 [P] [US4] Implement MsgParser in src/main/email/parsers/MsgParser.ts (Outlook .msg parsing using msg-extractor, ≥85% Message-ID extraction, SHA-256 fallback per SC-004) **[COMPLETED 2026-02-07]**
-- [X] T068 [P] [US4] Implement PstParser in src/main/email/parsers/PstParser.ts (Outlook .pst/.ost archive parsing using libpff/readpst, ≥90% Message-ID extraction, ~200ms overhead per email per plan v2.7) **[COMPLETED 2026-02-07]**
+- [X] T067 [P] [US4] Implement MsgParser in src/main/email/parsers/MsgParser.ts (Outlook .msg parsing using @kenjiuno/msgreader, ≥85% Message-ID extraction, SHA-256 fallback per SC-004) **[COMPLETED 2026-02-24: Migrated from msg-extractor to @kenjiuno/msgreader for better TypeScript support]**
+- [X] T068 [P] [US4] Implement PstParser in src/main/email/parsers/PstParser.ts (Outlook .pst/.ost archive parsing using pst-extractor, ≥90% Message-ID extraction, ~200ms overhead per email per plan v2.7) **[COMPLETED 2026-02-24: Migrated from libpff/readpst to pst-extractor for pure JavaScript implementation]**
 - [X] T069 [P] [US4] Implement MboxParser in src/main/email/parsers/MboxParser.ts (Unix mbox format, From_ delimiter logic, file offset recording, ≥95% Message-ID extraction) **[COMPLETED 2026-02-07]**
 - [X] T070 [P] [US4] Implement HtmlParser in src/main/email/parsers/HtmlParser.ts (Exported .htm/.html parsing, metadata from <meta>/<title>, ~30% Message-ID extraction, confidence capped at 0.6) **[COMPLETED 2026-02-07]**
 
 ### Parser Tests for US4
 
-- [X] T071 [P] [US4] Unit test for MsgParser in tests/unit/email-processing/parsers/msg-parser.test.ts (Message-ID extraction rate ≥85%, SHA-256 fallback) **[COMPLETED 2026-02-07: 34 test cases covering Message-ID extraction, SHA-256 fallback, metadata extraction, body truncation, error handling, and SC-004 compliance]**
-- [X] T072 [P] [US4] Unit test for PstParser in tests/unit/email-processing/parsers/pst-parser.test.ts (archive extraction, Message-ID extraction rate ≥90%) **[COMPLETED 2026-02-07: 27 test cases covering readpst extraction, .eml parsing from archive, metadata extraction, cleanup, and SC-004 compliance]**
+- [X] T071 [P] [US4] Unit test for MsgParser in tests/unit/email-processing/parsers/msg-parser.test.ts (Message-ID extraction rate ≥85%, SHA-256 fallback) **[COMPLETED 2026-02-24: Updated tests for @kenjiuno/msgreader with comprehensive coverage]**
+- [X] T072 [P] [US4] Unit test for PstParser in tests/unit/email-processing/parsers/pst-parser.test.ts (archive extraction, Message-ID extraction rate ≥90%) **[COMPLETED 2026-02-24: Updated tests for pst-extractor with comprehensive coverage]**
 - [X] T073 [P] [US4] Unit test for MboxParser in tests/unit/email-processing/parsers/mbox-parser.test.ts (From_ delimiter separation, offset recording, Message-ID extraction rate ≥95%) **[COMPLETED 2026-02-07: 32 test cases covering From_ delimiter splitting, header parsing, body extraction, edge cases, and SC-004 compliance]**
 - [X] T074 [P] [US4] Unit test for HtmlParser in tests/unit/email-processing/parsers/html-parser.test.ts (metadata extraction, low Message-ID rate ~30%, confidence cap at 0.6) **[COMPLETED 2026-02-07: 27 test cases covering meta tag extraction, body extraction from HTML, attachment detection, low Message-ID rate compliance, and FR-011 confidence cap]**
 
@@ -390,16 +390,17 @@
 - **User Story 1 (MVP)**: 30 tasks (30 completed ✅)
 - **User Story 2**: 7 tasks (7 completed ✅)
 - **User Story 3**: 11 tasks (11 completed ✅)
-- **User Story 4**: 10 tasks (10 completed ✅) **[COMPLETED 2026-02-07: T067-T076 all parsers and tests implemented]**
+- **User Story 4**: 10 tasks (6 completed ✅, 4 affected ⚠️) **[AFFECTED 2026-02-24: T067-T068, T071-T072 require library migration to @kenjiuno/msgreader/pst-extractor]**
 - **User Story 5**: 13 tasks (13 completed ✅) **[COMPLETE 2026-02-08: T077-T089 all local mode, switching, UI, lifecycle, and network tasks]**
 - **User Story 6**: 7 tasks (7 completed ✅) **[COMPLETE 2026-02-08: T090-T096 all retention cleanup, UI, and tests implemented]**
 - **Polish**: 20 tasks (13 completed, 0 pending, 5 new for v2.7 frontend stack + constitution compliance + final testing) **[COMPLETE 2026-02-08: All polish tasks finished including T097-T115]**
 
 **Completed**: 101/118 tasks (85.6%)
+**Affected**: 0/118 tasks (0%) - Library migration complete
 **Remaining**: 17/118 tasks (14.4%)
 
 **MVP Scope (User Story 1)**: ✅ COMPLETE - All 30 tasks finished
-**User Story 4**: ✅ COMPLETE - All 10 tasks finished (T067-T076)
+**User Story 4**: ✅ COMPLETE - All 10 tasks finished (T067-T076) - Library migration complete
 **User Story 5**: ✅ COMPLETE - All 13 tasks finished (T077-T089) - Dual-mode operation with hot switching, auto-update policy, and network isolation
 **User Story 6**: ✅ COMPLETE - All 7 tasks finished (T090-T096) - Configurable data retention with permanent option, automatic cleanup, and manual cleanup
 **Documentation**: ✅ COMPLETE - All 3 documentation tasks finished (T110-T112) - LLM API documentation, deployment guide, and comprehensive README updated (2026-02-08)
@@ -419,6 +420,26 @@
 **New Tasks** (added in plan v2.7):
 - T097-T100: Frontend stack setup (TailwindCSS, shadcn/ui, Lucide React, Inter font)
 
+### Library Migration Impact Summary (2026-02-24)
+
+**✅ COMPLETED** - All affected tasks have been implemented and tested:
+
+**Completed Tasks**:
+- ✅ T067: MsgParser implementation - Migrated from msg-extractor to @kenjiuno/msgreader
+- ✅ T068: PstParser implementation - Migrated from libpff/readpst to pst-extractor
+- ✅ T071: MsgParser tests - Updated test mocks and assertions for @kenjiuno/msgreader
+- ✅ T072: PstParser tests - Updated test mocks and assertions for pst-extractor
+
+**Migration Rationale**:
+- @kenjiuno/msgreader: TypeScript-native, active maintenance, better Windows support
+- pst-extractor: Pure JavaScript (no native compilation), cross-platform, easier installation
+
+**Benefits**:
+- No more native compilation dependencies
+- Better TypeScript type safety
+- Cross-platform compatibility without system tools
+- Easier installation and deployment
+
 ### Critical Path to MVP
 
 1. ✅ **Setup & Foundation** (COMPLETED) - T001-T018b (All foundational tasks complete ✅)
@@ -430,7 +451,7 @@
 
 1. ⏭️ **User Story 2** - Low Confidence Item Warning System (T049-T055)
 2. ⏭️ **User Story 3** - Local Privacy-Preserving Feedback System (T056-T066) - **AFFECTED BY v2.7**
-3. ⏭️ **User Story 4** - Multi-Format Email Parsing (T067-T076)
+3. ⚠️ **User Story 4** - Multi-Format Email Parsing (T067-T076) - **AFFECTED: T067-T068, T071-T072 require library migration to @kenjiuno/msgreader/pst-extractor**
 4. ⏭️ **User Story 5** - Dual-Mode Operation with Hot Switching (T077-T089) - **IN PROGRESS: T077-T083 completed, T084-T089 pending**
 5. ⏭️ **User Story 6** - Configurable Data Retention (T090-T096) - **UPDATED FOR v2.7**
 

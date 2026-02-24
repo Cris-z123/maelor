@@ -10,7 +10,7 @@
 - 统一置信度计算权重：规则引擎 50% + LLM 50%，失败时调整权重
 - 简化反馈存储：移除独立 feedback.db，集成至 `todo_items` 表
 - 明确溯源实现：基于搜索字符串 + 文件路径，移除深度链接
-- 补充邮件格式解析库具体选型（msg-extractor/libpff）
+- 补充邮件格式解析库具体选型（@kenjiuno/msgreader/pst-extractor）
 
 ---
 
@@ -116,7 +116,7 @@ flowchart TB
 | **规则执行** | QuickJS (WASM) | 规则脚本沙箱 | 零权限沙箱，内存 128MB 限制，5秒超时 |
 | **LLM 输出校验** | Zod Schema | 结构化输出验证 | 缺失字段自动重试（最多2次），失败降级入库（标记来源待确认） |
 | **邮件接入** | imapflow + mailparser | IMAP/POP3/本地文件 | TLS 1.3 强制，20MB 大小限制 |
-| **格式扩展** | msg-extractor / libpff / readpst | Outlook MSG/PST解析 | 本地库解析，不上传云端 |
+| **格式扩展** | @kenjiuno/msgreader / pst-extractor | Outlook MSG/PST解析 | TypeScript原生/纯JavaScript，跨平台，本地库解析不上传云端 |
 | **导出引擎** | 内置模板引擎 + puppeteer | Markdown/PDF 生成 | 明文导出，导出前安全提示 |
 | **自动更新** | electron-updater | 检查 GitHub Releases | 强制代码签名验证，本地模式需手动触发 |
 
@@ -685,8 +685,8 @@ jobs:
 | 格式 | 技术库 | 性能影响 | 备注 |
 |------|--------|----------|------|
 | **.eml** | mailparser | 基准 | RFC 5322标准支持 |
-| **.msg** | msg-extractor | +50ms/封 | Outlook MSG格式，需提前提取 |
-| **.pst/.ost** | libpff / readpst | +200ms/封 | 需先解压为中间格式，大文件额外耗时 |
+| **.msg** | @kenjiuno/msgreader | +50ms/封 | Outlook MSG格式，TypeScript原生支持 |
+| **.pst/.ost** | pst-extractor | +200ms/封 | 纯JavaScript实现，跨平台，大文件额外耗时 |
 | **.mbox** | mailparser + 自建分隔器 | 基准 | 基于From_分隔符解析，记录offset |
 | **.html** | 正则提取 | +10ms/封 | 低支持度，仅提取基础Meta，置信度上限0.6 |
 

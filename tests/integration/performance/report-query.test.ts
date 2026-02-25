@@ -264,6 +264,12 @@ describe('Report Query Performance (T103)', () => {
  */
 function createSchema(db: Database.Database): void {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS user_config (
+      config_key TEXT PRIMARY KEY,
+      config_value BLOB NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS daily_reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       report_date TEXT UNIQUE NOT NULL,

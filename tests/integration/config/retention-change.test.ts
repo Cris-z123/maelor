@@ -23,9 +23,14 @@ vi.mock('../../../src/main/config/logger', () => ({
   },
 }));
 
-/** Create minimal schema for retention tests (daily_reports, processed_emails, todo_items). */
+/** Create minimal schema for retention tests (user_config, daily_reports, processed_emails, todo_items). */
 function createMinimalSchema(database: Database.Database): void {
   database.exec(`
+    CREATE TABLE user_config (
+      config_key TEXT PRIMARY KEY,
+      config_value BLOB NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
     CREATE TABLE daily_reports (
       report_date TEXT PRIMARY KEY,
       created_at INTEGER NOT NULL,

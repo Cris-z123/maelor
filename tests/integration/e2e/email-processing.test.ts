@@ -27,7 +27,7 @@ import { fileURLToPath } from 'url';
 import { EmailProcessor } from '@/email/EmailProcessor';
 import { DuplicateDetector } from '@/email/DuplicateDetector';
 import { TraceabilityGenerator } from '@/email/TraceabilityGenerator';
-import { ParserFactory } from '@/email/parsers/ParserFactory';
+import { parserFactory } from '@/email/parsers/ParserFactory';
 import type { ParsedEmail } from '@/email/parsers/EmailParser';
 import { ActionItemRepository } from '@/database/entities/ActionItem';
 import { EmailSourceRepository } from '@/database/entities/EmailSource';
@@ -212,7 +212,7 @@ describe('T113: End-to-End Email Processing Workflow', () => {
       expect(fs.existsSync(emailFilePath)).toBe(true);
 
       // Step 2: Parse email
-      const parser = ParserFactory.getParser(emailFilePath);
+      const parser = parserFactory.getParser(emailFilePath);
       const parsedEmail: ParsedEmail = await parser.parse(emailFilePath);
 
       // Verify email parsing
@@ -341,7 +341,7 @@ describe('T113: End-to-End Email Processing Workflow', () => {
     it('should generate search string that locates email within 60 seconds', async () => {
       // Process email
       const emailFilePath = tempEmailFiles.get('email1')!;
-      const parser = ParserFactory.getParser(emailFilePath);
+      const parser = parserFactory.getParser(emailFilePath);
       const parsedEmail = await parser.parse(emailFilePath);
 
       // Generate search string
@@ -385,7 +385,7 @@ describe('T113: End-to-End Email Processing Workflow', () => {
     it('should handle emails without Message-ID using SHA-256 fingerprint', async () => {
       // Process email without Message-ID
       const emailFilePath = tempEmailFiles.get('email3')!;
-      const parser = ParserFactory.getParser(emailFilePath);
+      const parser = parserFactory.getParser(emailFilePath);
       const parsedEmail = await parser.parse(emailFilePath);
 
       // Verify fallback to fingerprint
@@ -422,7 +422,7 @@ describe('T113: End-to-End Email Processing Workflow', () => {
 
       // First processing
       const detector = new DuplicateDetector();
-      const parser = ParserFactory.getParser(emailFilePath);
+      const parser = parserFactory.getParser(emailFilePath);
       const parsedEmail = await parser.parse(emailFilePath);
 
       // Check duplicate (first time - should not be duplicate)
@@ -453,12 +453,12 @@ describe('T113: End-to-End Email Processing Workflow', () => {
     it('should apply correct confidence scores based on content clarity', async () => {
       // Process clear email
       const clearEmailPath = tempEmailFiles.get('email1')!;
-      const parser1 = ParserFactory.getParser(clearEmailPath);
+      const parser1 = parserFactory.getParser(clearEmailPath);
       const clearEmail = await parser1.parse(clearEmailPath);
 
       // Process ambiguous email
       const ambiguousEmailPath = tempEmailFiles.get('email2')!;
-      const parser2 = ParserFactory.getParser(ambiguousEmailPath);
+      const parser2 = parserFactory.getParser(ambiguousEmailPath);
       const ambiguousEmail = await parser2.parse(ambiguousEmailPath);
 
       // Verify both emails parsed successfully
@@ -503,7 +503,7 @@ describe('T113: End-to-End Email Processing Workflow', () => {
       fs.writeFileSync(invalidEmailPath, 'Invalid email content');
 
       // Attempt to parse
-      const parser = ParserFactory.getParser(invalidEmailPath);
+      const parser = parserFactory.getParser(invalidEmailPath);
 
       let parseError: Error | null = null;
       try {
@@ -563,7 +563,7 @@ describe('T113: End-to-End Email Processing Workflow', () => {
       // Measure processing time
       const startTime = Date.now();
 
-      const parser = ParserFactory.getParser(emailFilePath);
+      const parser = parserFactory.getParser(emailFilePath);
       await parser.parse(emailFilePath);
 
       const endTime = Date.now();

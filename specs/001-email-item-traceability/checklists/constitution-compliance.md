@@ -55,7 +55,7 @@
 - [ ] CHK030 Are the coverage threshold requirements (≥85% line, ≥80% branch, 100% for security modules) quantified and measurable? [Measurability, Constitution Principle V]
 - [ ] CHK031 Is the Red-Green-Refactor test-first enforcement requirement documented as a mandatory process? [Completeness, Constitution Principle V]
 - [ ] CHK032 Are the QuickJS sandbox escape testing scenarios (20+) explicitly enumerated with specific escape vectors? [Completeness, Constitution Principle V]
-- [ ] CHK033 Is the IPC whitelist validation requirement (exactly 6 channels) specified as a testable requirement? [Completeness, Tasks §T109a, Constitution Development Workflow]
+- [ ] CHK033 Is the IPC whitelist validation requirement (exactly 22 channels across 8 categories) specified as a testable requirement? [Completeness, Tasks §T109a, Constitution Development Workflow]
 - [ ] CHK034 Are the security-critical modules (encryption, validation, desensitization, sandbox) explicitly listed for 100% branch coverage? [Completeness, Constitution Principle V]
 
 ## Principle VI: Single Instance & Concurrency Control

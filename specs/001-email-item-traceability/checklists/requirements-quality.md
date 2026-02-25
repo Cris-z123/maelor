@@ -141,7 +141,7 @@
 - [ ] CHK098 - Are device-bound key requirements specified with clear implications for data recovery (intentional loss)? [Security, Constitution Principle III, Spec §FR-046]
 - [ ] CHK099 - Are key management requirements specified (auto-generation, safeStorage, no user input, no export)? [Security, Constitution Principle III, R0-3]
 - [ ] [ ] CHK100 - Are network isolation requirements specified for local mode (network-layer blocking, no auto-fallback)? [Security, Constitution Principle IV, Spec §FR-037, FR-040]
-- [ ] [ ] CHK101 - Are IPC channel whitelist requirements specified (6 channels max)? [Security, Constitution Principle V, Spec §Tech Architecture §5.1]
+- [ ] [ ] CHK101 - Are IPC channel whitelist requirements specified (22 channels across 8 categories)? [Security, Constitution Principle V, Spec §Tech Architecture §5.1]
 - [ ] [ ] CHK102 - Are CSP policy requirements specified for local vs remote modes? [Security, Constitution Principle V, Spec §Tech Architecture §5.1]
 - [ ] [ ] CHK103 - Are QuickJS sandbox security constraints specified (no os/std/eval/Function, 128MB memory, 5s timeout)? [Security, R0-2]
 - [ ] [ ] CHK104 - Are structured logging requirements specified that prohibit sensitive data in logs? [Security, Constitution Principle VII, Spec §FR-053]

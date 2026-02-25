@@ -415,8 +415,16 @@ if (!gotTheLock) {
 
 ### 5.1 进程隔离与通信
 
-- **IPC 白名单**（仅 6 个 Channel）：
-  `llm:generate`, `db:query:history`, `db:export`, `config:get/set`, `app:check-update`, `email:fetch-meta`
+- **IPC 白名单**（22 个 Channel，8 个类别）：
+  - **LLM 处理** (1个): `llm:generate`
+  - **数据库操作** (2个): `db:query:history`, `db:export`
+  - **配置管理** (2个): `config:get`, `config:set`
+  - **应用更新** (2个): `app:check-update`, `app:download-update`
+  - **邮件操作** (1个): `email:fetch-meta`
+  - **反馈系统** (4个): `feedback:submit`, `feedback:stats`, `feedback:export`, `feedback:destroy`
+  - **数据保留** (5个): `retention:get-config`, `retention:set-periods`, `retention:get-preview`, `retention:manual-cleanup`, `retention:get-storage`
+  - **首次运行引导** (2个): `onboarding:get-status`, `onboarding:acknowledge`
+  - **模式切换** (3个): `mode:get`, `mode:switch`, `mode:cancel`
 - **数据校验**：所有 IPC 入参使用 Zod 运行时校验
 - **CSP 策略**：`default-src 'self'; script-src 'self'; connect-src 'self' https://api.github.com`（远程模式）或 `'self'`（本地模式）
 

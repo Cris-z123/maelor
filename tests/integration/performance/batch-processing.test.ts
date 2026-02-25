@@ -31,7 +31,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { EmailProcessor } from '@/email/EmailProcessor';
-import { ParserFactory } from '@/email/parsers/ParserFactory';
+import { parserFactory } from '@/email/parsers/ParserFactory';
 import { EmailSourceRepository } from '@/database/entities/EmailSource';
 import { ActionItemRepository } from '@/database/entities/ActionItem';
 import { generateKey } from '@/config/encryption';
@@ -464,7 +464,7 @@ describe('T114: Batch Processing Performance Tests', () => {
 
       // Measure parsing time
       const startTime = Date.now();
-      const parser = ParserFactory.getParser(emailFiles[0]);
+      const parser = parserFactory.getParser(emailFiles[0]);
       const parsedEmail = await parser.parse(emailFiles[0]);
       const endTime = Date.now();
 
@@ -489,7 +489,7 @@ describe('T114: Batch Processing Performance Tests', () => {
       const startTime = Date.now();
 
       for (const emailFile of emailFiles) {
-        const parser = ParserFactory.getParser(emailFile);
+        const parser = parserFactory.getParser(emailFile);
         const parsedEmail = await parser.parse(emailFile);
         expect(parsedEmail.extract_status).toBe('success');
       }

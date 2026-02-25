@@ -64,7 +64,7 @@ if (!global.window || typeof global.window.document === 'undefined') {
   },
 };
 
-// Mock electron app.getPath for logger tests
+// Mock electron app.getPath and safeStorage for tests
 vi.mock('electron', () => ({
   app: {
     getPath: (name: string) => {
@@ -72,6 +72,21 @@ vi.mock('electron', () => ({
         return '/tmp/test-mailcopilot';
       }
       return '/tmp/test';
+    },
+  },
+  safeStorage: {
+    isEncryptionAvailable: () => true,
+    encryptString: (plainText: string) => {
+      // Mock encryption by returning a Buffer with the plain text
+      return Buffer.from(`encrypted:${plainText}`);
+    },
+    decryptString: (encrypted: Buffer) => {
+      // Mock decryption by extracting the plain text from our mock format
+      const str = encrypted.toString('utf-8');
+      if (str.startsWith('encrypted:')) {
+        return str.substring(10); // Remove 'encrypted:' prefix
+      }
+      return str;
     },
   },
 }));

@@ -32,6 +32,11 @@ vi.mock('../../../src/main/config/logger', () => ({
 /** Minimal schema for cleanup tests. */
 function createMinimalSchema(database: Database.Database): void {
   database.exec(`
+    CREATE TABLE user_config (
+      config_key TEXT PRIMARY KEY,
+      config_value BLOB NOT NULL,
+      updated_at INTEGER NOT NULL
+    );
     CREATE TABLE daily_reports (
       report_date TEXT PRIMARY KEY,
       created_at INTEGER NOT NULL,

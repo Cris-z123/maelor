@@ -22,9 +22,9 @@ import { RuleEngine, type RuleEngineExecutionResult } from '../rules/RuleEngine.
 import type { LLMAdapter, EmailBatch } from '../llm/LLMAdapter.js';
 import { OutputValidator } from '../llm/OutputValidator.js';
 import { ConfidenceCalculator, type ConfidenceResult } from '../llm/ConfidenceCalculator.js';
-import { ActionItemRepository, ItemType, SourceStatus } from '../database/entities/ActionItem.js';
+import { ActionItemRepository, ItemType, SourceStatus, type ActionItemData } from '../database/entities/ActionItem.js';
 import { EmailSourceRepository, ExtractStatus } from '../database/entities/EmailSource.js';
-import { ItemEmailRefRepository } from '../database/entities/ItemEmailRef.js';
+import { ItemEmailRefRepository, type ItemEmailRefData } from '../database/entities/ItemEmailRef.js';
 import type { ParsedEmail } from './parsers/EmailParser.js';
 
 /**
@@ -593,88 +593,102 @@ export class EmailProcessor {
       evidence: string;
     }> = [];
 
-    // Store email sources
-    for (const email of uniqueEmails) {
-      try {
-        EmailSourceRepository.create(email.email_hash, {
-          processed_at: Math.floor(Date.now() / 1000),
-          last_seen_at: Math.floor(Date.now() / 1000),
-          report_date: context.reportDate,
-          attachments_meta: JSON.stringify(email.attachments || []),
-          extract_status: ExtractStatus.SUCCESS,
-          search_string: email.search_string || '',
-          file_path: email.file_path || '',
-        });
-      } catch {
-        // Email source might already exist (cross-batch duplicate)
-        logger.debug('EmailProcessor', 'Email source already exists, skipping', {
-          emailHash: email.email_hash.substring(0, 16) + '...',
-        });
-      }
-    }
+    // Step 1: Batch store email sources
+    const emailSourceBatch = uniqueEmails.map((email) => ({
+      email_hash: email.email_hash,
+      data: {
+        processed_at: Math.floor(Date.now() / 1000),
+        last_seen_at: Math.floor(Date.now() / 1000),
+        report_date: context.reportDate,
+        attachments_meta: JSON.stringify(email.attachments || []),
+        extract_status: ExtractStatus.SUCCESS,
+        search_string: email.search_string || '',
+        file_path: email.file_path || '',
+      } as const,
+    }));
 
-    // Store action items with email references
+    const createdEmailSources = EmailSourceRepository.batchCreate(emailSourceBatch);
+    logger.debug('EmailProcessor', 'Batch created email sources', {
+      total: emailSourceBatch.length,
+      created: createdEmailSources.length,
+    });
+
+    // Step 2: Prepare action items batch
+    const now = Math.floor(Date.now() / 1000);
+    const actionItemBatch: Array<{ item_id: string; data: ActionItemData }> = [];
+
     for (let i = 0; i < llmItems.length; i++) {
       const llmItem = llmItems[i];
       const confidenceResult = confidenceResults[i];
-
       const item_id = uuidv4();
 
-      try {
-        // Create action item
-        await ActionItemRepository.create(item_id, {
+      actionItemBatch.push({
+        item_id,
+        data: {
           report_date: context.reportDate,
           content: llmItem.content,
           item_type: llmItem.type === 'completed' ? ItemType.COMPLETED : ItemType.PENDING,
-          source_status: context.isDegraded ? SourceStatus.UNVERIFIED : (llmItem.source_status === 'verified' ? SourceStatus.VERIFIED : SourceStatus.UNVERIFIED),
+          source_status: context.isDegraded
+            ? SourceStatus.UNVERIFIED
+            : llmItem.source_status === 'verified'
+              ? SourceStatus.VERIFIED
+              : SourceStatus.UNVERIFIED,
           confidence_score: confidenceResult.confidence,
           tags: [],
-          created_at: Math.floor(Date.now() / 1000),
+          created_at: now,
           is_manually_edited: false,
-        });
+        },
+      });
 
-        // Create email references if source_email_indices provided
-        if (llmItem.source_email_indices && llmItem.source_email_indices.length > 0) {
-          for (let j = 0; j < llmItem.source_email_indices.length; j++) {
-            const emailIndex = llmItem.source_email_indices[j];
-            const email = uniqueEmails[emailIndex];
+      storedItems.push({
+        item_id,
+        content: llmItem.content,
+        item_type: llmItem.type,
+        confidence: confidenceResult.confidence,
+        source_status: context.isDegraded ? 'unverified' : llmItem.source_status,
+        evidence: llmItem.evidence,
+      });
+    }
 
-            if (email) {
-              const ref_id = uuidv4();
-              ItemEmailRefRepository.create(ref_id, {
+    // Step 3: Batch create action items
+    const createdItemIds = await ActionItemRepository.batchCreate(actionItemBatch);
+    logger.debug('EmailProcessor', 'Batch created action items', {
+      total: actionItemBatch.length,
+      created: createdItemIds.length,
+    });
+
+    // Step 4: Prepare and batch create email references
+    const emailRefBatch: Array<{ ref_id: string; data: ItemEmailRefData }> = [];
+
+    for (let i = 0; i < llmItems.length; i++) {
+      const llmItem = llmItems[i];
+      const confidenceResult = confidenceResults[i];
+      const item_id = storedItems[i].item_id;
+
+      if (llmItem.source_email_indices && llmItem.source_email_indices.length > 0) {
+        for (const emailIndex of llmItem.source_email_indices) {
+          const email = uniqueEmails[emailIndex];
+          if (email) {
+            emailRefBatch.push({
+              ref_id: uuidv4(),
+              data: {
                 item_id,
                 email_hash: email.email_hash,
                 evidence_text: llmItem.evidence || '',
                 confidence: Math.round(confidenceResult.confidence * 100),
-              });
-            }
+              },
+            });
           }
         }
-
-        storedItems.push({
-          item_id,
-          content: llmItem.content,
-          item_type: llmItem.type,
-          confidence: confidenceResult.confidence,
-          source_status: context.isDegraded ? 'unverified' : llmItem.source_status,
-          evidence: llmItem.evidence,
-        } as any);
-
-        logger.debug('EmailProcessor', 'Action item stored', {
-          item_id,
-          contentPreview: llmItem.content.substring(0, 50),
-          confidence: confidenceResult.confidence,
-          source_status: context.isDegraded ? 'unverified' : llmItem.source_status,
-          isDegraded: context.isDegraded,
-        });
-      } catch (error) {
-        logger.error('EmailProcessor', 'Failed to store action item', {
-          item_id,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        // Continue with next item (partial failure handling)
       }
     }
+
+    // Step 5: Batch create email references
+    const createdRefIds = ItemEmailRefRepository.batchCreate(emailRefBatch);
+    logger.debug('EmailProcessor', 'Batch created email references', {
+      total: emailRefBatch.length,
+      created: createdRefIds.length,
+    });
 
     return storedItems;
   }

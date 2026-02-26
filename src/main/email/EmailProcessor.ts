@@ -594,6 +594,11 @@ export class EmailProcessor {
     }> = [];
 
     // Step 1: Batch store email sources
+    logger.debug('EmailProcessor', 'Storing email sources to database', {
+      uniqueEmailsCount: uniqueEmails.length,
+      firstEmailHash: uniqueEmails.length > 0 ? uniqueEmails[0].email_hash.substring(0, 16) + '...' : 'N/A',
+    });
+
     const emailSourceBatch = uniqueEmails.map((email) => ({
       email_hash: email.email_hash,
       data: {
@@ -606,6 +611,10 @@ export class EmailProcessor {
         file_path: email.file_path || '',
       } as const,
     }));
+
+    logger.debug('EmailProcessor', 'Calling batchCreate', {
+      batchSize: emailSourceBatch.length,
+    });
 
     const createdEmailSources = EmailSourceRepository.batchCreate(emailSourceBatch);
     logger.debug('EmailProcessor', 'Batch created email sources', {

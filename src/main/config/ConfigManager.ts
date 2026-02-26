@@ -5,6 +5,19 @@ import DatabaseManager from '../database/Database.js';
 import * as encryption from './encryption.js';
 import type { CryptoKey } from './encryption.js';
 
+/**
+ * Type-safe configuration value types
+ */
+type ConfigValue =
+  | string
+  | number
+  | boolean
+  | null
+  | string[]
+  | { [key: string]: ConfigValue };
+
+type ConfigRecord = Record<string, ConfigValue>;
+
 /** Directory for storing encrypted key files (userData) */
 function getKeyStorageDir(): string {
   return path.join(app.getPath('userData'), 'keys');
@@ -96,7 +109,7 @@ export class ConfigManager {
    * @param keys - Optional array of keys to retrieve (returns all if not specified)
    * @returns Decrypted config values
    */
-  static async get(keys?: string[]): Promise<Record<string, any>> {
+  static async get(keys?: string[]): Promise<ConfigRecord> {
     await this.ensureInitialized();
 
     const db = DatabaseManager.getDatabase();
@@ -113,7 +126,7 @@ export class ConfigManager {
       config_value: string | Buffer;
     }>;
 
-    const config: Record<string, any> = {};
+    const config: ConfigRecord = {};
 
     for (const row of rows) {
       try {
@@ -140,7 +153,7 @@ export class ConfigManager {
    * @param updates - Key-value pairs to update
    * @returns List of keys that were updated
    */
-  static async set(updates: Record<string, any>): Promise<string[]> {
+  static async set(updates: ConfigRecord): Promise<string[]> {
     await this.ensureInitialized();
 
     const db = DatabaseManager.getDatabase();
@@ -212,7 +225,7 @@ export class ConfigManager {
   /**
    * Get default configuration
    */
-  static getDefaults(): Record<string, any> {
+  static getDefaults(): ConfigRecord {
     return {
       'llm.mode': 'remote', // Default to remote mode per FR-031
       'llm.localEndpoint': 'http://localhost:11434',
@@ -232,7 +245,7 @@ export class ConfigManager {
     const existing = await this.get();
     const defaults = this.getDefaults();
 
-    const newDefaults: Record<string, any> = {};
+    const newDefaults: ConfigRecord = {};
 
     for (const [key, value] of Object.entries(defaults)) {
       if (!(key in existing)) {
@@ -277,7 +290,7 @@ export class ConfigManager {
    *
    * @returns Plain text config (WARNING: unencrypted)
    */
-  static async exportDebug(): Promise<Record<string, any>> {
+  static async exportDebug(): Promise<ConfigRecord> {
     return await this.get();
   }
 

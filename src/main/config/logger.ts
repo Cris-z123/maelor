@@ -14,6 +14,17 @@ import { app } from 'electron';
 import path from 'path';
 
 /**
+ * TypeScript interfaces for electron-log transports
+ * These extend the base electron-log types with missing properties
+ */
+interface LogTransport {
+  level?: string;
+  format?: string;
+  maxSize?: number;
+  file?: string;
+}
+
+/**
  * Check if running in test environment
  */
 function isTestEnvironment(): boolean {
@@ -27,7 +38,8 @@ function initializeLogger(): void {
   // Skip file transport initialization in test environment
   if (isTestEnvironment()) {
     // Configure console transport only for tests
-    (log.transports.console as any).level = 'debug';
+    const consoleTransport = log.transports.console as LogTransport;
+    consoleTransport.level = 'debug';
     return;
   }
 
@@ -35,16 +47,18 @@ function initializeLogger(): void {
   const logsDir = path.join(app.getPath('userData'), '.mailcopilot', 'logs');
 
   // Configure file transport
-  (log.transports.file as any).level = 'debug';
-  (log.transports.file as any).format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [{processType}] {text}';
-  (log.transports.file as any).maxSize = 10 * 1024 * 1024; // 10MB per file
-  (log.transports.file as any).file = path.join(logsDir, 'main.log');
+  const fileTransport = log.transports.file as LogTransport;
+  fileTransport.level = 'debug';
+  fileTransport.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [{processType}] {text}';
+  fileTransport.maxSize = 10 * 1024 * 1024; // 10MB per file
+  fileTransport.file = path.join(logsDir, 'main.log');
 
   // Configure console transport for development
+  const consoleTransport = log.transports.console as LogTransport;
   if (process.env.NODE_ENV === 'development') {
-    (log.transports.console as any).level = 'debug';
+    consoleTransport.level = 'debug';
   } else {
-    (log.transports.console as any).level = 'info';
+    consoleTransport.level = 'info';
   }
 }
 
@@ -55,6 +69,17 @@ initializeLogger();
  * Structured logging helper
  * Provides consistent logging interface across the application
  */
+
+type LogContext = Record<string, string | number | boolean | null | undefined>;
+
+type ErrorData = {
+  error?: {
+    message: string;
+    stack?: string;
+    name: string;
+  } | string;
+};
+
 export const logger = {
   /**
    * Log debug message
@@ -62,7 +87,7 @@ export const logger = {
    * @param message - Log message
    * @param context - Additional context metadata
    */
-  debug: (module: string, message: string, context?: Record<string, any>) => {
+  debug: (module: string, message: string, context?: LogContext) => {
     log.debug({
       level: 'DEBUG',
       module,
@@ -78,7 +103,7 @@ export const logger = {
    * @param message - Log message
    * @param context - Additional context metadata
    */
-  info: (module: string, message: string, context?: Record<string, any>) => {
+  info: (module: string, message: string, context?: LogContext) => {
     log.info({
       level: 'INFO',
       module,
@@ -94,7 +119,7 @@ export const logger = {
    * @param message - Log message
    * @param context - Additional context metadata
    */
-  warn: (module: string, message: string, context?: Record<string, any>) => {
+  warn: (module: string, message: string, context?: LogContext) => {
     log.warn({
       level: 'WARN',
       module,
@@ -115,9 +140,9 @@ export const logger = {
     module: string,
     message: string,
     error?: Error | unknown,
-    context?: Record<string, any>
+    context?: LogContext
   ) => {
-    const errorData: Record<string, any> = {};
+    const errorData: ErrorData = {};
 
     if (error instanceof Error) {
       errorData.error = {
@@ -145,14 +170,16 @@ export const logger = {
  * @param contextId - Unique identifier for request/context
  */
 export function setContextId(contextId: string): void {
-  (log.transports.file as any).format = `[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [${contextId}] [{processType}] {text}`;
+  const fileTransport = log.transports.file as LogTransport;
+  fileTransport.format = `[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [${contextId}] [{processType}] {text}`;
 }
 
 /**
  * Clear context ID
  */
 export function clearContextId(): void {
-  (log.transports.file as any).format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [{processType}] {text}';
+  const fileTransport = log.transports.file as LogTransport;
+  fileTransport.format = '[{y}-{m}-{d} {h}:{i}:{s}.{ms}] [{level}] [{processType}] {text}';
 }
 
 export default log;

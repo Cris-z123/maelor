@@ -16,9 +16,20 @@ export interface EncryptedData {
   authTag: string; // Base64 encoded authentication tag
 }
 
-// CryptoKey type - using any to avoid complex webcrypto type issues
-// This is safe because we only get CryptoKey from webcrypto.subtle.generateKey()
-export type CryptoKey = any;
+// Use global CryptoKey from Web Crypto API (available in Node.js via crypto.webcrypto)
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace webcrypto {
+    interface CryptoKey {
+      algorithm: KeyAlgorithm;
+      extractable: boolean;
+      type: 'secret' | 'private' | 'public';
+      usages: KeyUsage[];
+    }
+  }
+}
+
+export type CryptoKey = globalThis.CryptoKey;
 
 /**
  * Generate a random 256-bit encryption key

@@ -54,6 +54,11 @@ export interface ModeGetResponse {
 }
 
 /**
+ * Generic type for IPC data
+ */
+type IPCData = string | number | boolean | null | undefined | object | [];
+
+/**
  * IPC Client class
  *
  * Provides Promise-based IPC communication with main process.
@@ -67,7 +72,7 @@ class IPCClient {
    * @param data - Request data
    * @returns Promise with response data
    */
-  async invoke<T = any>(channel: string, data?: any): Promise<T> {
+  async invoke<T = unknown>(channel: string, data?: IPCData): Promise<T> {
     try {
       const response = await ipcRenderer.invoke(channel, data);
       return response as T;
@@ -84,7 +89,7 @@ class IPCClient {
    * @param callback - Event handler callback
    * @returns Cleanup function to remove listener
    */
-  on(channel: string, callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void): () => void {
+  on(channel: string, callback: (event: Electron.IpcRendererEvent, ...args: IPCData[]) => void): () => void {
     ipcRenderer.on(channel, callback);
 
     // Return cleanup function
@@ -100,7 +105,7 @@ class IPCClient {
    * @param callback - Event handler callback
    * @returns Cleanup function to remove listener
    */
-  once(channel: string, callback: (event: Electron.IpcRendererEvent, ...args: any[]) => void): () => void {
+  once(channel: string, callback: (event: Electron.IpcRendererEvent, ...args: IPCData[]) => void): () => void {
     ipcRenderer.once(channel, callback);
 
     // Return cleanup function (though once removes itself after firing)
@@ -115,7 +120,7 @@ class IPCClient {
    * @param channel - IPC channel name
    * @param data - Message data
    */
-  send(channel: string, data?: any): void {
+  send(channel: string, data?: IPCData): void {
     try {
       ipcRenderer.send(channel, data);
     } catch (error) {

@@ -13,13 +13,13 @@
 import { useEffect, useState } from 'react';
 import { Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
 
-interface OnboardingStatus {
+export interface OnboardingStatus {
   hasAcknowledgedDisclosure: boolean;
   disclosureVersion: string;
   acknowledgedAt?: number;
 }
 
-interface FirstRunDisclosureProps {
+export interface FirstRunDisclosureProps {
   onAcknowledged: () => void;
 }
 
@@ -29,30 +29,31 @@ function FirstRunDisclosure({ onAcknowledged }: FirstRunDisclosureProps) {
   const [acknowledging, setAcknowledging] = useState(false);
 
   useEffect(() => {
-    checkStatus();
-  }, []);
+    /**
+     * Check if user has already acknowledged the disclosure
+     */
+    async function checkStatus() {
+      try {
+        setLoading(true);
+        const status = await window.ipc.invoke<OnboardingStatus>(
+          'onboarding:get-status'
+        );
 
-  /**
-   * Check if user has already acknowledged the disclosure
-   */
-  async function checkStatus() {
-    try {
-      setLoading(true);
-      const status = await window.ipc.invoke<OnboardingStatus>(
-        'onboarding:get-status'
-      );
-
-      if (status.hasAcknowledgedDisclosure) {
-        // User already acknowledged, proceed to app
-        onAcknowledged();
+        if (status.hasAcknowledgedDisclosure) {
+          // User already acknowledged, proceed to app
+          onAcknowledged();
+        }
+      } catch (err) {
+        console.error('Failed to check onboarding status:', err);
+        setError('Failed to load onboarding status');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to check onboarding status:', err);
-      setError('Failed to load onboarding status');
-    } finally {
-      setLoading(false);
     }
-  }
+
+    checkStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * Handle user acknowledgment of the disclosure

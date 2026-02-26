@@ -14,10 +14,12 @@
 import { createHash } from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
-import MsgReader from '@kenjiuno/msgreader';
 import { logger } from '../../config/logger.js';
 import type { EmailParser, ParsedEmail } from './EmailParser.js';
 import { formatISO8601 } from '../../../shared/utils/dateUtils.js';
+
+// Load MsgReader dynamically to work around TypeScript NodeNext + CommonJS interop issue
+const MsgReader = require('@kenjiuno/msgreader');
 
 /**
  * MsgParser implements EmailParser interface for Outlook .msg files

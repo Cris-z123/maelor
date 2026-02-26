@@ -19,10 +19,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
-import { EmailSourceRepository } from '../../../src/main/database/entities/EmailSource';
-import { ActionItemRepository } from '../../../src/main/database/entities/ActionItem';
-import { ItemEmailRefRepository } from '../../../src/main/database/entities/ItemEmailRef';
-import DatabaseManager from '../../../src/main/database/Database';
 
 describe('Security Audit: SQL Injection', () => {
   let db: Database.Database;
@@ -491,7 +487,6 @@ describe('Security Audit: SQL Injection', () => {
     it('should block authentication bypass via SQL injection', () => {
       // Simulate login query (though we don't have authentication, this is a common pattern)
       const maliciousUsername = "admin' --";
-      const maliciousPassword = "anything";
 
       // This query should not bypass authentication
       const result = db.prepare(`

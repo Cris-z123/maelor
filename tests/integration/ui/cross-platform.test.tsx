@@ -20,17 +20,15 @@
  * @module tests/integration/ui/cross-platform.test
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { platform } from 'os';
-import { join, sep } from 'path';
-import ReportView from '@renderer/components/ReportView';
+import { sep } from 'path';
 import { ModeSwitchCard } from '@renderer/components/settings/ModeSwitchCard';
 import { RetentionConfig } from '@renderer/components/settings/RetentionConfig';
 import { ConfidenceSummaryBanner, ConfidenceBadge } from '@renderer/components/reports';
 import { FeedbackButtons } from '@renderer/components/reports/FeedbackButtons';
-import { DataManagement } from '@renderer/components/settings/DataManagement';
 import type { ItemSourceRef } from '@shared/schemas/validation';
 
 // Detect current platform
@@ -47,7 +45,7 @@ const mockElectron = {
 
   // Clipboard API (platform-specific)
   clipboard: {
-    writeText: vi.fn().mockImplementation((text: string) => {
+    writeText: vi.fn().mockImplementation((_text: string) => {
       // Mock clipboard write
       return Promise.resolve(true);
     }),
@@ -91,64 +89,6 @@ const mockElectron = {
     };
     return paths[name] || '/tmp';
   }),
-};
-
-// Mock IPC channels
-const mockIPC = {
-  invoke: vi.fn().mockImplementation((channel: string, ...args: any[]) => {
-    // Mock IPC responses based on channel
-    switch (channel) {
-      case 'llm:generate':
-        return Promise.resolve({
-          items: [
-            {
-              item_id: '1',
-              content: 'Test task',
-              item_type: 'pending',
-              confidence: 0.8,
-              source_status: 'verified',
-              evidence: 'Test evidence',
-            },
-          ],
-          batch_info: {
-            total_emails: 1,
-            processed_emails: 1,
-            skipped_emails: 0,
-            same_batch_duplicates: 0,
-            cross_batch_duplicates: 0,
-          },
-          success: true,
-        });
-
-      case 'db:query:history':
-        return Promise.resolve([]);
-
-      case 'config:get':
-        return Promise.resolve({
-          mode: 'remote',
-          retention: {
-            email_retention_days: 90,
-            feedback_retention_days: 90,
-          },
-        });
-
-      case 'mode:get':
-        return Promise.resolve({ currentMode: 'remote', isProcessing: false });
-
-      case 'retention:get-config':
-        return Promise.resolve({
-          email_retention_days: 90,
-          feedback_retention_days: 90,
-        });
-
-      default:
-        return Promise.resolve({});
-    }
-  }),
-
-  send: vi.fn(),
-  on: vi.fn().mockReturnValue({ off: vi.fn() }),
-  removeListener: vi.fn(),
 };
 
 // Mock reportStore

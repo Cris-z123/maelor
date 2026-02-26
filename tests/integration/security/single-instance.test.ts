@@ -23,7 +23,6 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { EventEmitter } from 'events';
 
 // Mock Electron modules using vi.hoisted to avoid hoisting issues
 const { mockApp, mockBrowserWindow, mockNotification } = vi.hoisted(() => ({
@@ -70,8 +69,8 @@ describe('Security Audit: Single-Instance Lock (Principle VI)', () => {
     mockApp.requestSingleInstanceLock.mockReturnValue(true);
 
     // Reset EventEmitter behavior
-    const eventHandlers: Record<string, Function[]> = {};
-    mockApp.on.mockImplementation((event: string, callback: Function) => {
+    const eventHandlers: Record<string, ((...args: unknown[]) => void)[]> = {};
+    mockApp.on.mockImplementation((event: string, callback: (...args: unknown[]) => void) => {
       if (!eventHandlers[event]) {
         eventHandlers[event] = [];
       }

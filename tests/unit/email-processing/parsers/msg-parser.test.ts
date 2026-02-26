@@ -15,9 +15,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { MsgParser } from '@/email/parsers/MsgParser';
-import { logger } from '@/config/logger';
-import * as crypto from 'crypto';
-import * as fs from 'fs';
 
 // Hoist mocks for fs and @kenjiuno/msgreader
 const mockReadFileSync = vi.hoisted(() => vi.fn());

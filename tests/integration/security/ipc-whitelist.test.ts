@@ -22,8 +22,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { ipcMain } from 'electron';
-import { IPC_CHANNELS, isValidChannel, getAllChannels } from '../../../src/main/ipc/channels';
+import { isValidChannel, getAllChannels } from '../../../src/main/ipc/channels';
 
 // Mock Electron's ipcMain
 vi.mock('electron', () => ({

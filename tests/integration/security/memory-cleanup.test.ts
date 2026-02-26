@@ -67,9 +67,6 @@ describe('Security Audit: Memory Cleanup (Principle VII)', () => {
       const plaintext = 'Another sensitive data';
       const encrypted = await encryption.encrypt(testKey, plaintext);
 
-      // Track buffer state before and after decryption
-      let bufferAfterDecryption: Uint8Array | null = null;
-
       const originalDecrypt = encryption.decrypt;
       const mockDecrypt = async (key: CryptoKey, encryptedData: typeof encrypted) => {
         // Call original decrypt

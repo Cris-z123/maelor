@@ -244,7 +244,7 @@ function createMockLLMAdapter(latencyMs: number = 50): LLMAdapter {
       };
     },
 
-    async updateConfig(config) {
+    async updateConfig(_config) {
       return { success: true };
     },
   };
@@ -544,7 +544,7 @@ describe('T114: Batch Processing Performance Tests', () => {
 
       // Measure processing time
       const startTime = Date.now();
-      const result = await processor.processBatch(
+      await processor.processBatch(
         emailFiles,
         '2026-01-27',
         'remote'

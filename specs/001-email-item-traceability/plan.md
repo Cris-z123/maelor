@@ -50,7 +50,7 @@ This feature implements a complete email item traceability and verification syst
 **Constraints**:
   - Privacy-first: No cloud backup, no cross-device sync, device-bound keys
   - Single-instance: Only one application instance allowed
-  - Security: IPC whitelist (6 channels), CSP enforced, sandbox enabled
+  - Security: IPC whitelist (22 channels across 8 categories), CSP enforced, sandbox enabled
   - Resource limits: 20MB per email, 100k char body truncation, 50 emails/batch
   - Rule engine: 128MB memory, 5s timeout, QuickJS WASM sandbox
   - Data retention: Default 90 days (configurable 30/90/180/365/-1 where -1 = permanent)
@@ -103,7 +103,7 @@ This feature implements a complete email item traceability and verification syst
 - ✅ **Test-First Enforcement**: Red-Green-Refactor cycle strictly enforced
 - ✅ **Integration Test Focus**: New library contracts, IPC communication, database operations
 - ✅ **Security Testing**: QuickJS sandbox escape, SQL injection, memory residue, single-instance lock
-- **IPC Compliance**: IPC whitelist validation test (T109a) ensures exactly 6 channels registered per constitution Development Workflow section
+- **IPC Compliance**: IPC whitelist validation test (T109a) ensures exactly 22 channels registered across 8 categories per constitution Development Workflow section
 - **Implementation**: Testing section in tech-architecture.md specifies test strategy
 
 ### VI. Single Instance & Concurrency Control ✅

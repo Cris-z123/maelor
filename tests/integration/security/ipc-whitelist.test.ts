@@ -1,17 +1,17 @@
 /**
  * Security Audit: IPC Whitelist Compliance Verification
  *
- * Per T109a: Verify exactly 6 channels registered per constitution.md line 132
- * Per Constitution Principle V: IPC channel whitelist validation with 6 channels max
+ * Per T109a: Verify exactly 22 channels registered across 8 categories per constitution.md line 132
+ * Per Constitution Principle V: IPC channel whitelist validation with 22 channels across 8 categories
  * Per Constitution Development Workflow: IPC whitelist compliance is a security-critical requirement
  *
- * CONSTITUTIONAL REQUIREMENT (constitution.md line 132):
- * "IPC channel whitelist compliance (6 channels max: llm:generate, db:query:history,
- *  db:export, config:get/set, app:check-update, email:fetch-meta)"
+ * CONSTITUTIONAL REQUIREMENT (constitution.md line 132, updated 2026-02-08):
+ * "IPC channel whitelist compliance (22 channels across 8 categories:
+ *  llm:*, db:*, config:*, app:*, email:*, feedback:*, retention:*, onboarding:*, mode:*)"
  *
  * Tests:
- * - Verify exactly 6 IPC channels are registered (not more)
- * - Verify the 6 channels match the constitution whitelist exactly
+ * - Verify exactly 22 IPC channels are registered (not more)
+ * - Verify the 22 channels match the constitution whitelist exactly
  * - Fail the test if additional channels are registered
  * - Provide clear error messages identifying non-compliant channels
  * - Test all IPC channel registration points
@@ -472,13 +472,13 @@ ${channels.map((ch, i) => `  ${i + 1}. ${ch}`).join('\n')}
 `);
 
       // Verify the count matches constitutional requirements
-      const constitutionalMax = 7; // 6 channel types, config has 2 channels
+      const constitutionalMax = 22; // 22 channels across 8 categories (updated 2026-02-08)
 
       if (channels.length > constitutionalMax) {
         console.error(`
 ⚠️  WARNING: ${channels.length} channels registered (constitutional limit: ${constitutionalMax})
 
-This violates constitution.md line 132 which specifies "6 channels max".
+This violates constitution.md line 132 which specifies "22 channels across 8 categories".
 `);
       }
     });
@@ -486,7 +486,7 @@ This violates constitution.md line 132 which specifies "6 channels max".
 
   describe('100% Branch Coverage for IPC Validation', () => {
     it('should test all channel validation code paths', () => {
-      // Test valid channels
+      // Test all 22 valid channels
       const validChannels = [
         'llm:generate',
         'db:query:history',
@@ -494,7 +494,22 @@ This violates constitution.md line 132 which specifies "6 channels max".
         'config:get',
         'config:set',
         'app:check-update',
+        'app:download-update',
         'email:fetch-meta',
+        'feedback:submit',
+        'feedback:stats',
+        'feedback:export',
+        'feedback:destroy',
+        'retention:get-config',
+        'retention:set-periods',
+        'retention:get-preview',
+        'retention:manual-cleanup',
+        'retention:get-storage',
+        'onboarding:get-status',
+        'onboarding:acknowledge',
+        'mode:get',
+        'mode:switch',
+        'mode:cancel',
       ];
 
       validChannels.forEach(channel => {

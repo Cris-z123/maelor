@@ -67,6 +67,27 @@ class DatabaseManager {
   }
 
   /**
+   * Set database instance for testing purposes
+   *
+   * WARNING: This method should only be used in tests!
+   * It bypasses the normal initialization process and should never be used in production code.
+   *
+   * @param db - Database instance to use
+   */
+  static setInstanceForTesting(db: Database.Database): void {
+    this.instance = db;
+  }
+
+  /**
+   * Reset database instance (for testing cleanup)
+   *
+   * WARNING: This method should only be used in tests!
+   */
+  static resetInstanceForTesting(): void {
+    this.instance = null;
+  }
+
+  /**
    * Close database connection
    */
   static close(): void {

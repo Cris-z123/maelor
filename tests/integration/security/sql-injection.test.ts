@@ -19,10 +19,6 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
-import { EmailSourceRepository } from '../../../src/main/database/entities/EmailSource';
-import { ActionItemRepository } from '../../../src/main/database/entities/ActionItem';
-import { ItemEmailRefRepository } from '../../../src/main/database/entities/ItemEmailRef';
-import DatabaseManager from '../../../src/main/database/Database';
 
 describe('Security Audit: SQL Injection', () => {
   let db: Database.Database;
@@ -169,14 +165,14 @@ describe('Security Audit: SQL Injection', () => {
       const itemResult = itemStmt.run('test content', 'pending', 0.8, 'verified', 'test', '2026-01-01', Date.now(), Date.now());
       const itemId = itemResult.lastInsertRowid as number;
 
+      // Test SQL injection in email_hash
+      // First, insert the malicious hash as a valid email to satisfy FK constraint
+      const maliciousHash = "'; DELETE FROM item_email_refs; --";
       const emailStmt = db.prepare(`
         INSERT INTO processed_emails (email_hash, processed_at, last_seen_at, extract_status)
         VALUES (?, ?, ?, ?)
       `);
-      emailStmt.run('test-hash', Date.now(), Date.now(), 'success');
-
-      // Test SQL injection in email_hash
-      const maliciousHash = "'; DELETE FROM item_email_refs; --";
+      emailStmt.run(maliciousHash, Date.now(), Date.now(), 'success');
 
       expect(() => {
         const refStmt = db.prepare(`
@@ -491,7 +487,6 @@ describe('Security Audit: SQL Injection', () => {
     it('should block authentication bypass via SQL injection', () => {
       // Simulate login query (though we don't have authentication, this is a common pattern)
       const maliciousUsername = "admin' --";
-      const maliciousPassword = "anything";
 
       // This query should not bypass authentication
       const result = db.prepare(`

@@ -336,6 +336,32 @@ describe('ParserFactory', () => {
         expect((error as Error).message).toContain('.htm');
       }
     });
+
+    it('should throw error for invalid file extension (.exe)', async () => {
+      await expect(factory.parse('/test/virus.exe')).rejects.toThrow('Unsupported email format: .exe');
+    });
+
+    it('should throw error for document formats (.pdf, .doc, .txt)', async () => {
+      await expect(factory.parse('/test/document.pdf')).rejects.toThrow('Unsupported email format');
+      await expect(factory.parse('/test/document.doc')).rejects.toThrow('Unsupported email format');
+      await expect(factory.parse('/test/document.txt')).rejects.toThrow('Unsupported email format');
+    });
+
+    it('should throw error for archive formats (.zip, .rar, .7z)', async () => {
+      await expect(factory.parse('/test/archive.zip')).rejects.toThrow('Unsupported email format');
+      await expect(factory.parse('/test/archive.rar')).rejects.toThrow('Unsupported email format');
+      await expect(factory.parse('/test/archive.7z')).rejects.toThrow('Unsupported email format');
+    });
+
+    it('should throw error for image formats (.jpg, .png, .gif)', async () => {
+      await expect(factory.parse('/test/image.jpg')).rejects.toThrow('Unsupported email format');
+      await expect(factory.parse('/test/image.png')).rejects.toThrow('Unsupported email format');
+      await expect(factory.parse('/test/image.gif')).rejects.toThrow('Unsupported email format');
+    });
+
+    it('should handle files with no extension', async () => {
+      await expect(factory.parse('/test/file')).rejects.toThrow('Unsupported email format');
+    });
   });
 
   describe('Format Support Check', () => {

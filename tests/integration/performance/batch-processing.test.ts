@@ -25,7 +25,7 @@
  * @module tests/integration/performance/batch-processing.test
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
@@ -34,9 +34,25 @@ import { EmailProcessor } from '@/email/EmailProcessor';
 import { parserFactory } from '@/email/parsers/ParserFactory';
 import { EmailSourceRepository } from '@/database/entities/EmailSource';
 import { ActionItemRepository } from '@/database/entities/ActionItem';
-import { generateKey } from '@/config/encryption';
-import type { CryptoKey } from '@/config/encryption';
+import DatabaseManager from '@/database/Database';
 import type { LLMAdapter } from '@/llm/LLMAdapter';
+
+// Mock ConfigManager encryption methods for tests
+vi.mock('@/config/ConfigManager.js', () => ({
+  ConfigManager: {
+    initialize: vi.fn().mockResolvedValue(undefined),
+    encryptField: vi.fn((value: string) => Promise.resolve(Buffer.from(`encrypted:${value}`))),
+    decryptField: vi.fn((buffer: Buffer) => {
+      const str = buffer.toString('utf-8');
+      if (str.startsWith('encrypted:')) {
+        return Promise.resolve(str.substring(10));
+      }
+      return Promise.resolve(str);
+    }),
+    get: vi.fn(),
+    set: vi.fn().mockResolvedValue(undefined),
+  },
+}));
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const TEST_DB_PATH = path.join(__dirname, '.temp', 'batch-perf-test.db');
@@ -185,20 +201,29 @@ function createMockLLMAdapter(latencyMs: number = 50): LLMAdapter {
       await new Promise(resolve => setTimeout(resolve, latencyMs));
 
       // Generate mock items for each email
-      const items = batch.emails.flatMap(email => [
+      const items = batch.emails.flatMap((email, index) => [
         {
           content: `Complete task from ${email.from}`,
           item_type: 'pending' as const,
           evidence: 'Clear action verb and deadline',
+          source_email_indices: [index], // Link item to source email
         },
         {
           content: `Review documentation for ${email.subject}`,
           item_type: 'pending' as const,
           evidence: 'Specific task with context',
+          source_email_indices: [index], // Link item to source email
         },
       ]);
 
-      return { items };
+      return {
+        items,
+        batch_info: {
+          total_emails: batch.emails.length,
+          processed_emails: batch.emails.length,
+          skipped_emails: 0,
+        },
+      };
     },
 
     async checkHealth() {
@@ -219,7 +244,7 @@ function createMockLLMAdapter(latencyMs: number = 50): LLMAdapter {
       };
     },
 
-    async updateConfig(config) {
+    async updateConfig(_config) {
       return { success: true };
     },
   };
@@ -227,12 +252,10 @@ function createMockLLMAdapter(latencyMs: number = 50): LLMAdapter {
 
 describe('T114: Batch Processing Performance Tests', () => {
   let db: Database.Database;
-  let encryptionKey: CryptoKey;
   let tempDir: string;
 
   beforeAll(async () => {
     db = setupTestDatabase();
-    encryptionKey = await generateKey();
     tempDir = path.join(__dirname, '.temp', 'batch-emails');
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir, { recursive: true });
@@ -240,10 +263,14 @@ describe('T114: Batch Processing Performance Tests', () => {
   });
 
   afterAll(() => {
+    DatabaseManager.resetInstanceForTesting();
     cleanupTestDatabase(db, tempDir);
   });
 
   beforeEach(() => {
+    // Set database instance for each test
+    DatabaseManager.setInstanceForTesting(db);
+
     // Clear database tables before each test
     db.exec('DELETE FROM item_email_refs');
     db.exec('DELETE FROM todo_items');
@@ -256,7 +283,7 @@ describe('T114: Batch Processing Performance Tests', () => {
       const emailFiles = createEmailBatch(60, tempDir);
 
       const llmAdapter = createMockLLMAdapter(50);
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: PERFORMANCE_TARGETS.MAX_BATCH_SIZE,
       });
 
@@ -277,7 +304,7 @@ describe('T114: Batch Processing Performance Tests', () => {
       const emailFiles = createEmailBatch(50, tempDir);
 
       const llmAdapter = createMockLLMAdapter(50);
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: 50,
       });
 
@@ -300,7 +327,7 @@ describe('T114: Batch Processing Performance Tests', () => {
 
       // Mock remote LLM adapter with low latency (simulates fast API)
       const llmAdapter = createMockLLMAdapter(50); // 50ms per batch = ~2.5s total LLM time
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: 50,
       });
 
@@ -347,7 +374,7 @@ describe('T114: Batch Processing Performance Tests', () => {
 
         // Process batch
         const llmAdapter = createMockLLMAdapter(50);
-        const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+        const processor = new EmailProcessor(llmAdapter, {
           maxBatchSize: 50,
         });
 
@@ -384,7 +411,7 @@ describe('T114: Batch Processing Performance Tests', () => {
 
       // Mock local LLM adapter with higher latency (simulates Ollama)
       const llmAdapter = createMockLLMAdapter(200); // 200ms per batch = ~10s total LLM time
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: 50,
       });
 
@@ -440,7 +467,7 @@ describe('T114: Batch Processing Performance Tests', () => {
         },
       };
 
-      const processor = new EmailProcessor(unavailableLLM, db, encryptionKey, {
+      const processor = new EmailProcessor(unavailableLLM, {
         maxBatchSize: 50,
       });
 
@@ -511,13 +538,13 @@ describe('T114: Batch Processing Performance Tests', () => {
 
       // Mock LLM adapter with realistic latency
       const llmAdapter = createMockLLMAdapter(500); // 500ms per batch
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: 50,
       });
 
       // Measure processing time
       const startTime = Date.now();
-      const result = await processor.processBatch(
+      await processor.processBatch(
         emailFiles,
         '2026-01-27',
         'remote'
@@ -539,7 +566,7 @@ describe('T114: Batch Processing Performance Tests', () => {
       const emailFiles = createEmailBatch(10, tempDir);
 
       const llmAdapter = createMockLLMAdapter(50);
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: 50,
       });
 
@@ -550,6 +577,14 @@ describe('T114: Batch Processing Performance Tests', () => {
         'remote'
       );
       const endTime = Date.now();
+
+      // Log full result for debugging
+      console.log(`[DEBUG] Full result:`, JSON.stringify(result, null, 2));
+
+      // Log error if failed
+      if (!result.success) {
+        console.log(`[DEBUG] Batch processing failed:`, result.error);
+      }
 
       expect(result.success).toBe(true);
       expect(result.batch_info.processed_emails).toBe(10);
@@ -562,7 +597,7 @@ describe('T114: Batch Processing Performance Tests', () => {
       const emailFiles = createEmailBatch(25, tempDir);
 
       const llmAdapter = createMockLLMAdapter(50);
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: 50,
       });
 
@@ -586,15 +621,33 @@ describe('T114: Batch Processing Performance Tests', () => {
     it('should efficiently store 50 emails and associated items', async () => {
       const emailFiles = createEmailBatch(50, tempDir);
 
+      // Create a daily_reports entry first (required for foreign key constraint)
+      const reportDate = '2026-01-27';
+      db.prepare(`
+        INSERT INTO daily_reports (
+          report_date, created_at, updated_at, generation_mode,
+          completed_count, pending_count, content_encrypted, content_checksum
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        reportDate,
+        Math.floor(Date.now() / 1000),
+        Math.floor(Date.now() / 1000),
+        'remote',
+        0,  // Will be updated by triggers
+        0,  // Will be updated by triggers
+        Buffer.from('{}', 'utf-8'),  // BLOB placeholder encrypted content
+        '0'.repeat(64)  // Placeholder checksum
+      );
+
       const llmAdapter = createMockLLMAdapter(50);
-      const processor = new EmailProcessor(llmAdapter, db, encryptionKey, {
+      const processor = new EmailProcessor(llmAdapter, {
         maxBatchSize: 50,
       });
 
       // Process batch
       const result = await processor.processBatch(
         emailFiles,
-        '2026-01-27',
+        reportDate,
         'remote'
       );
 
@@ -603,8 +656,8 @@ describe('T114: Batch Processing Performance Tests', () => {
 
       // Measure database query time
       const startTime = Date.now();
-      const allEmails = EmailSourceRepository.findAll(db);
-      const allItems = ActionItemRepository.findByReportDate(db, '2026-01-27');
+      const allEmails = EmailSourceRepository.findByReportDate(reportDate);
+      const allItems = ActionItemRepository.findByReportDate(reportDate);
       const endTime = Date.now();
 
       const queryTime = endTime - startTime;

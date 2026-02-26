@@ -64,7 +64,43 @@ if (!global.window || typeof global.window.document === 'undefined') {
   },
 };
 
-// Mock electron app.getPath and safeStorage for tests
+// Create IPC renderer mock
+const mockIpcRenderer = {
+  invoke: vi.fn().mockImplementation((channel: string, ..._args: unknown[]) => {
+    // Default mock responses for common IPC channels
+    switch (channel) {
+      case 'mode:get':
+        return Promise.resolve({ mode: 'remote', isProcessing: false });
+      case 'config:get':
+        return Promise.resolve({ mode: 'remote' });
+      case 'retention:get-config':
+        return Promise.resolve({
+          email_retention_days: 90,
+          feedback_retention_days: 90,
+        });
+      case 'llm:generate':
+        return Promise.resolve({
+          success: true,
+          items: [],
+          batch_info: {
+            total_emails: 0,
+            processed_emails: 0,
+            skipped_emails: 0,
+            same_batch_duplicates: 0,
+            cross_batch_duplicates: 0,
+          },
+        });
+      default:
+        return Promise.resolve({});
+    }
+  }),
+  on: vi.fn().mockReturnValue({ off: vi.fn() }),
+  once: vi.fn().mockReturnValue({ off: vi.fn() }),
+  removeListener: vi.fn(),
+  send: vi.fn(),
+};
+
+// Mock electron app.getPath, safeStorage, and ipcRenderer for tests
 vi.mock('electron', () => ({
   app: {
     getPath: (name: string) => {
@@ -89,6 +125,7 @@ vi.mock('electron', () => ({
       return str;
     },
   },
+  ipcRenderer: mockIpcRenderer,
 }));
 
 // Mock electron-log to avoid file I/O in tests

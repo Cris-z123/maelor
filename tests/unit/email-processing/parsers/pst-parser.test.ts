@@ -15,8 +15,6 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { PstParser } from '@/email/parsers/PstParser';
-import { logger } from '@/config/logger';
-import * as crypto from 'crypto';
 
 // Hoist mocks for pst-extractor
 const mockPSTFileClass = vi.hoisted(() => vi.fn());

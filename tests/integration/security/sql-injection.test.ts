@@ -165,14 +165,14 @@ describe('Security Audit: SQL Injection', () => {
       const itemResult = itemStmt.run('test content', 'pending', 0.8, 'verified', 'test', '2026-01-01', Date.now(), Date.now());
       const itemId = itemResult.lastInsertRowid as number;
 
+      // Test SQL injection in email_hash
+      // First, insert the malicious hash as a valid email to satisfy FK constraint
+      const maliciousHash = "'; DELETE FROM item_email_refs; --";
       const emailStmt = db.prepare(`
         INSERT INTO processed_emails (email_hash, processed_at, last_seen_at, extract_status)
         VALUES (?, ?, ?, ?)
       `);
-      emailStmt.run('test-hash', Date.now(), Date.now(), 'success');
-
-      // Test SQL injection in email_hash
-      const maliciousHash = "'; DELETE FROM item_email_refs; --";
+      emailStmt.run(maliciousHash, Date.now(), Date.now(), 'success');
 
       expect(() => {
         const refStmt = db.prepare(`

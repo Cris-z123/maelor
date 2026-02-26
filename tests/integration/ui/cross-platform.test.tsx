@@ -204,31 +204,34 @@ describe('T115: Cross-Platform UI Tests', () => {
     it('should render ConfidenceBadge with correct styling', () => {
       render(<ConfidenceBadge confidence={0.8} />);
 
-      // Verify badge renders
-      const badge = screen.getByText('0.8');
-      expect(badge).toBeInTheDocument();
+      // High confidence (≥0.8) should NOT show a badge
+      expect(screen.queryByTestId('confidence-badge')).not.toBeInTheDocument();
     });
 
     it('should render low confidence badge with warning icon', () => {
       render(<ConfidenceBadge confidence={0.5} />);
 
-      // Verify low confidence badge
-      const badge = screen.getByText('0.5');
+      // Low confidence (<0.6) should show red "[来源待确认]" badge
+      const badge = screen.getByTestId('confidence-badge');
       expect(badge).toBeInTheDocument();
+      expect(badge).toHaveClass('bg-red-100', 'text-red-700');
+      // Verify badge contains the label text
+      expect(badge.textContent).toContain('来源待确认');
     });
 
     it('should render ModeSwitchCard on all platforms', () => {
       render(<ModeSwitchCard />);
 
-      // Verify mode switch card renders
-      expect(screen.getByText(/模式选择/)).toBeInTheDocument();
+      // Verify mode switch card renders with correct title
+      expect(screen.getByText('处理模式设置')).toBeInTheDocument();
     });
 
-    it('should render RetentionConfig on all platforms', () => {
+    it('should render RetentionConfig on all platforms', async () => {
       render(<RetentionConfig />);
 
-      // Verify retention config renders
-      expect(screen.getByText(/数据保留设置/)).toBeInTheDocument();
+      // Wait for component to load and render
+      // Note: Using waitFor to handle async state updates
+      expect(await screen.findByText('数据保留设置')).toBeInTheDocument();
     });
 
     it('should render FeedbackButtons on all platforms', () => {
@@ -243,9 +246,9 @@ describe('T115: Cross-Platform UI Tests', () => {
 
       render(<FeedbackButtons item={mockItem} />);
 
-      // Verify feedback buttons render
-      expect(screen.getByTitle(/标记准确/)).toBeInTheDocument();
-      expect(screen.getByTitle(/标记错误/)).toBeInTheDocument();
+      // Verify feedback buttons render using aria-label
+      expect(screen.getByLabelText(/标记准确/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/标记错误/)).toBeInTheDocument();
     });
   });
 

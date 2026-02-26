@@ -2,4 +2,5 @@
  * Onboarding Components
  */
 
-export { default, default as FirstRunDisclosure } from './FirstRunDisclosure';
+export { default } from './FirstRunDisclosure';
+export type { FirstRunDisclosureProps } from './FirstRunDisclosure';

@@ -109,12 +109,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?)
       `).run('recent_email', twentyDaysAgo, twentyDaysAgo, '2024-01-01', 'success');
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default) - NO MOCK, use actual config
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change email retention from 90 to 30 days (should trigger cleanup)
@@ -146,12 +146,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?)
       `).run('old_email', hundredDaysAgo, hundredDaysAgo, '2024-01-01', 'success');
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change email retention from 90 to 180 days (should NOT delete 100-day-old email)
@@ -178,12 +178,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?)
       `).run('old_email', fortyDaysAgo, fortyDaysAgo, '2024-01-01', 'success');
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change email retention to permanent (-1)
@@ -218,12 +218,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run('recent_item', '2024-01-01', Buffer.from('encrypted'), 'checksum', 'pending', twentyDaysAgo, Buffer.from('feedback2'));
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change feedback retention from 90 to 30 days (should trigger cleanup)
@@ -255,12 +255,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run('old_item', '2024-01-01', Buffer.from('encrypted'), 'checksum', 'pending', hundredDaysAgo, Buffer.from('feedback'));
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change feedback retention from 90 to 180 days
@@ -287,12 +287,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run('old_item', '2024-01-01', Buffer.from('encrypted'), 'checksum', 'pending', fortyDaysAgo, Buffer.from('feedback'));
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change feedback retention to permanent (-1)
@@ -326,12 +326,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run('old_item', '2024-01-01', Buffer.from('encrypted'), 'checksum', 'pending', fortyDaysAgo, Buffer.from('feedback'));
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change both retention periods from 90 to 30 days
@@ -368,12 +368,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?, ?, ?)
       `).run('old_item', '2024-01-01', Buffer.from('encrypted'), 'checksum', 'pending', fortyDaysAgo, Buffer.from('feedback'));
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change both retention periods to permanent (-1)
@@ -407,12 +407,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?)
       `).run('old_email', fortyDaysAgo, fortyDaysAgo, '2024-01-01', 'success');
 
-      // Mock DataRetentionConfigRepository.get to return 90 days initially
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change retention but disable immediate cleanup
@@ -432,11 +432,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
     it('should NOT trigger cleanup when retention period does not change', async () => {
       const now = Math.floor(Date.now() / 1000);
 
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       await DataRetentionConfigRepository.setEmailRetention(90, {
@@ -459,12 +460,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         VALUES (?, ?, ?, ?, ?)
       `).run('old_email', fortyDaysAgo, fortyDaysAgo, '2024-01-01', 'success');
 
-      // Mock DataRetentionConfigRepository.get
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change retention period (should trigger cleanup)
@@ -483,11 +484,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
     it('should handle cleanup failure gracefully and still update retention period', async () => {
       const now = Math.floor(Date.now() / 1000);
 
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       const cleanupMod = await import('../../../src/main/database/cleanup');
@@ -506,11 +508,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
     it('should update last_cleanup_at timestamp after immediate cleanup', async () => {
       const now = Math.floor(Date.now() / 1000);
 
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now - (24 * 60 * 60),
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now - (24 * 60 * 60),
+        'estimated_storage_bytes': 0,
       });
 
       const updateSpy = vi.spyOn(DataRetentionConfigRepository, 'updateLastCleanup').mockResolvedValue();
@@ -537,12 +540,12 @@ describe('T096: Immediate Cleanup on Retention Change Integration Tests', () => 
         `).run(`email_${i}`, fortyDaysAgo, fortyDaysAgo, '2024-01-01', 'success');
       }
 
-      // Mock DataRetentionConfigRepository.get
-      vi.spyOn(DataRetentionConfigRepository, 'get').mockResolvedValue({
-        email_metadata_retention_days: 90,
-        feedback_retention_days: 90,
-        last_cleanup_at: now,
-        estimated_storage_bytes: 0,
+      // Pre-configure 90 days retention (default)
+      await ConfigManager.set({
+        'email_metadata_retention_days': 90,
+        'feedback_retention_days': 90,
+        'last_cleanup_at': now,
+        'estimated_storage_bytes': 0,
       });
 
       // Change retention period - should delete all or none in transaction

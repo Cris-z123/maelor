@@ -27,7 +27,7 @@ export type RetentionPeriod = number;
 /**
  * Cleanup result interface
  */
-export interface CleanupResult {
+export interface CleanupResult extends Record<string, unknown> {
   email_metadata_deleted: number;
   feedback_deleted: number;
   skipped_permanent_email: boolean;

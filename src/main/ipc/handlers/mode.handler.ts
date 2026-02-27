@@ -16,7 +16,7 @@ import { getModeManager, type ProcessingMode } from '../../app/mode-manager.js';
 /**
  * Mode status response
  */
-interface ModeStatusResponse {
+interface ModeStatusResponse extends Record<string, unknown> {
   currentMode: ProcessingMode;
   pendingMode: ProcessingMode | null;
   isProcessing: boolean;

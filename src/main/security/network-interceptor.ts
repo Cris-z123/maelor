@@ -10,7 +10,7 @@
 
 import { session } from 'electron';
 import { logger } from '../config/logger.js';
-import { getModeManager, ProcessingMode } from '../app/mode-manager.js';
+import { getModeManager, type ProcessingMode } from '../app/mode-manager.js';
 
 /**
  * Allowed LLM API endpoints for remote mode

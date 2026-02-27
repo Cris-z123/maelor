@@ -16,19 +16,7 @@ export interface EncryptedData {
   authTag: string; // Base64 encoded authentication tag
 }
 
-// Use global CryptoKey from Web Crypto API (available in Node.js via crypto.webcrypto)
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace webcrypto {
-    interface CryptoKey {
-      algorithm: KeyAlgorithm;
-      extractable: boolean;
-      type: 'secret' | 'private' | 'public';
-      usages: KeyUsage[];
-    }
-  }
-}
-
+// CryptoKey is available globally in Node.js 20.x with DOM lib
 export type CryptoKey = globalThis.CryptoKey;
 
 /**

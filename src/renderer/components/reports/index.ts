@@ -11,6 +11,9 @@ export {
   FeedbackDialog,
   type FeedbackDialogProps,
   type FeedbackType,
+} from './FeedbackDialog';
+export {
   getFeedbackTypeLabel,
   getFeedbackTypeDescription,
-} from './FeedbackDialog';
+  FEEDBACK_OPTIONS,
+} from './feedbackUtils';

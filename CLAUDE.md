@@ -8,6 +8,7 @@ Auto-generated from all feature plans. Last updated: 2026-02-06
 - better-sqlite3 11.10.0 with field-level AES-256-GCM encryption, WAL mode (constitution v1.1.0)
 - TypeScript 5.4 + Node.js 20.x (001-email-item-traceability)
 - SQLite (better-sqlite3) with field-level encryption, WAL mode (001-email-item-traceability)
+- TypeScript 5.4, Node.js 20.x (002-user-interaction-system)
 
 ## Project Structure
 
@@ -31,9 +32,9 @@ Per constitution v1.1.0:
 - Security-critical modules (encryption, validation, desensitization, sandbox) MUST achieve 100% branch coverage
 
 ## Recent Changes
+- 002-user-interaction-system: Added TypeScript 5.4, Node.js 20.x
 - 001-email-item-traceability: Added TypeScript 5.4 + Node.js 20.x
 - constitution v1.1.0: Updated Electron to 29.4.6, added Tailwind CSS v3.4 + shadcn/ui, updated better-sqlite3 to 11.10.0, relaxed test coverage to 80%/70%
-- 001-email-item-traceability: Added TypeScript 5.4 + Node.js 20.x
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

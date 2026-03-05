@@ -1,25 +1,49 @@
-import { StateStorage, createJSONStorage, persist } from 'zustand/middleware';
-import { safeStorage } from 'electron';
+import { StateStorage } from 'zustand/middleware';
+
+// SafeStorage interface for Electron's safeStorage API
+interface SafeStorage {
+  encryptString(plaintext: string): string;
+  decryptString(ciphertext: string): string;
+  isEncryptionAvailable(): boolean;
+}
 
 interface EncryptedPersistenceConfig<T> {
   name: string;
   sensitiveFields: (keyof T)[];
+  safeStorage: SafeStorage;
   storage?: StateStorage;
 }
 
 /**
- * Custom Zustand persistence middleware with field-level encryption
+ * Custom Zustand persistence middleware configuration with field-level encryption
  *
  * Per constitution v1.1.0:
  * - Uses Electron safeStorage for AES-256-GCM encryption
  * - Only encrypts sensitive fields (API keys, file paths)
  * - Non-sensitive fields remain plaintext for debugging
  * - Graceful degradation if safeStorage unavailable
+ *
+ * Usage:
+ * ```ts
+ * import { safeStorage } from 'electron';
+ *
+ * create(
+ *   persist(
+ *     (set, get) => ({ ... }),
+ *     createEncryptedPersistence({
+ *       name: 'my-store',
+ *       sensitiveFields: ['apiKey'],
+ *       safeStorage
+ *     })
+ *   )
+ * )
+ * ```
  */
 export function createEncryptedPersistence<T extends object>({
   name,
   sensitiveFields,
-  storage = createJSONStorage(() => localStorage),
+  safeStorage,
+  storage,
 }: EncryptedPersistenceConfig<T>) {
   const encryptionAvailable = safeStorage.isEncryptionAvailable();
 
@@ -31,22 +55,22 @@ export function createEncryptedPersistence<T extends object>({
 
   // Create custom storage with encryption/decryption
   const encryptedStorage: StateStorage = {
-    ...storage,
     getItem: (key): string | null => {
-      const value = storage.getItem(key);
+      const value = localStorage.getItem(key);
       if (!value) return null;
 
       try {
-        const parsed = JSON.parse(value);
-        const state = parsed.state as T;
+        // Parse and decrypt in one step
+        const stored = JSON.parse(value);
+        if (!stored.state) return null;
 
-        // Decrypt sensitive fields
-        if (encryptionAvailable && state) {
+        // Decrypt sensitive fields by mutating the state object
+        if (encryptionAvailable) {
           for (const field of sensitiveFields) {
-            const fieldValue = (state as any)[field];
+            const fieldValue = (stored.state as any)[field];
             if (typeof fieldValue === 'string' && fieldValue.startsWith('encrypted:')) {
               try {
-                (state as any)[field] = safeStorage.decryptString(fieldValue);
+                (stored.state as any)[field] = safeStorage.decryptString(fieldValue);
               } catch (error) {
                 console.error(`[encryptedPersistence] Failed to decrypt ${String(field)}:`, error);
               }
@@ -54,25 +78,24 @@ export function createEncryptedPersistence<T extends object>({
           }
         }
 
-        parsed.state = state;
-        return JSON.stringify(parsed);
+        return JSON.stringify(stored);
       } catch (error) {
-        console.error(`[encryptedPersistence] Failed to parse storage:`, error);
+        console.error('[encryptedPersistence] Failed to parse storage value:', error);
         return null;
       }
     },
     setItem: (key, newValue): void => {
       try {
-        const parsed = JSON.parse(newValue);
-        const state = { ...parsed.state } as T;
+        // Parse the new value (always a string from zustand persist)
+        const stored = typeof newValue === 'string' ? JSON.parse(newValue) : newValue;
 
-        // Encrypt sensitive fields
-        if (encryptionAvailable && state) {
+        // Encrypt sensitive fields by mutating the state object
+        if (encryptionAvailable && stored.state) {
           for (const field of sensitiveFields) {
-            const fieldValue = (state as any)[field];
+            const fieldValue = (stored.state as any)[field];
             if (fieldValue !== undefined && fieldValue !== null) {
               try {
-                (state as any)[field] = safeStorage.encryptString(String(fieldValue));
+                (stored.state as any)[field] = safeStorage.encryptString(String(fieldValue));
               } catch (error) {
                 console.error(`[encryptedPersistence] Failed to encrypt ${String(field)}:`, error);
               }
@@ -80,22 +103,23 @@ export function createEncryptedPersistence<T extends object>({
           }
         }
 
-        parsed.state = state;
-        storage.setItem(key, JSON.stringify(parsed));
+        localStorage.setItem(key, JSON.stringify(stored));
       } catch (error) {
-        console.error(`[encryptedPersistence] Failed to serialize storage:`, error);
-        storage.setItem(key, newValue);
+        console.error('[encryptedPersistence] Failed to serialize storage:', error);
+        // Fallback: store original value
+        if (typeof newValue === 'string') {
+          localStorage.setItem(key, newValue);
+        }
       }
+    },
+    removeItem: (key): void => {
+      localStorage.removeItem(key);
     },
   };
 
-  // Return persist configuration
-  return persist(
-    (config: any) => config,
-    {
-      name,
-      storage: encryptedStorage,
-      partialize: (state: T) => state,
-    }
-  );
+  // Return persist configuration object
+  return {
+    name,
+    storage: encryptedStorage,
+  };
 }

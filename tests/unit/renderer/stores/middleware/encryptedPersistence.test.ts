@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 // Mock localStorage for Node.js environment
 const localStorageMock = (() => {
@@ -26,13 +27,15 @@ Object.defineProperty(global, 'localStorage', {
   value: localStorageMock,
 });
 
-// Mock Electron safeStorage BEFORE importing the module
+// Mock Electron safeStorage
+const mockSafeStorage = {
+  encryptString: vi.fn((plaintext: string) => `encrypted:${plaintext}`),
+  decryptString: vi.fn((ciphertext: string) => ciphertext.replace('encrypted:', '')),
+  isEncryptionAvailable: vi.fn(() => true),
+};
+
 vi.mock('electron', () => ({
-  safeStorage: {
-    encryptString: vi.fn((plaintext: string) => `encrypted:${plaintext}`),
-    decryptString: vi.fn((ciphertext: string) => ciphertext.replace('encrypted:', '')),
-    isEncryptionAvailable: vi.fn(() => true),
-  },
+  safeStorage: mockSafeStorage,
 }));
 
 import { createEncryptedPersistence } from '@renderer/stores/middleware/encryptedPersistence';
@@ -52,10 +55,17 @@ describe('createEncryptedPersistence', () => {
 
     const createStore = () =>
       create<TestState>()(
-        createEncryptedPersistence<TestState>({
-          name: 'test-store',
-          sensitiveFields: ['apiKey'],
-        })
+        persist(
+          () => ({
+            apiKey: '',
+            publicData: '',
+          }),
+          createEncryptedPersistence<TestState>({
+            name: 'test-store',
+            sensitiveFields: ['apiKey'],
+            safeStorage: mockSafeStorage as any,
+          })
+        )
       );
 
     const store = createStore();
@@ -66,7 +76,7 @@ describe('createEncryptedPersistence', () => {
     expect(saved.state.publicData).toBe('public');
   });
 
-  it('decrypts sensitive fields on hydration', () => {
+  it('decrypts sensitive fields on load', () => {
     interface TestState {
       apiKey: string;
       publicData: string;
@@ -84,21 +94,20 @@ describe('createEncryptedPersistence', () => {
       })
     );
 
-    const createStore = () =>
-      create<TestState>()(
-        createEncryptedPersistence<TestState>({
-          name: 'test-store',
-          sensitiveFields: ['apiKey'],
-        })
-      );
+    // Test decryption logic by directly testing the storage's getItem
+    const storageConfig = createEncryptedPersistence<TestState>({
+      name: 'test-store',
+      sensitiveFields: ['apiKey'],
+      safeStorage: mockSafeStorage as any,
+    });
 
-    const store = createStore();
-    const state = store.getState();
+    const decryptedString = storageConfig.storage.getItem('test-store');
+    expect(decryptedString).toBeTruthy();
 
-    expect(state.apiKey).toBe('secret-key');
-    expect(state.publicData).toBe('public');
-    const { safeStorage } = require('electron');
-    expect(safeStorage.decryptString).toHaveBeenCalledWith('encrypted:secret-key');
+    const decrypted = JSON.parse(decryptedString!);
+    expect(decrypted.state.apiKey).toBe('secret-key');
+    expect(decrypted.state.publicData).toBe('public');
+    expect(mockSafeStorage.decryptString).toHaveBeenCalledWith('encrypted:secret-key');
   });
 
   it('stores non-sensitive fields as plaintext', () => {
@@ -109,10 +118,17 @@ describe('createEncryptedPersistence', () => {
 
     const createStore = () =>
       create<TestState>()(
-        createEncryptedPersistence<TestState>({
-          name: 'test-store',
-          sensitiveFields: ['apiKey'],
-        })
+        persist(
+          () => ({
+            apiKey: '',
+            theme: '',
+          }),
+          createEncryptedPersistence<TestState>({
+            name: 'test-store',
+            sensitiveFields: ['apiKey'],
+            safeStorage: mockSafeStorage as any,
+          })
+        )
       );
 
     const store = createStore();
@@ -123,8 +139,7 @@ describe('createEncryptedPersistence', () => {
   });
 
   it('gracefully degrades when safeStorage unavailable', () => {
-    const { safeStorage } = require('electron');
-    safeStorage.isEncryptionAvailable.mockReturnValue(false);
+    mockSafeStorage.isEncryptionAvailable.mockReturnValue(false);
 
     interface TestState {
       apiKey: string;
@@ -134,10 +149,16 @@ describe('createEncryptedPersistence', () => {
 
     const createStore = () =>
       create<TestState>()(
-        createEncryptedPersistence<TestState>({
-          name: 'test-store',
-          sensitiveFields: ['apiKey'],
-        })
+        persist(
+          () => ({
+            apiKey: '',
+          }),
+          createEncryptedPersistence<TestState>({
+            name: 'test-store',
+            sensitiveFields: ['apiKey'],
+            safeStorage: mockSafeStorage as any,
+          })
+        )
       );
 
     const store = createStore();

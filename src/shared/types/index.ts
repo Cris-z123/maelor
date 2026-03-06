@@ -140,6 +140,113 @@ export interface ElectronAPI {
       currentStep: 1 | 2 | 3;
       canProceed: boolean;
     }>;
+    setStep: (request: {
+      step: 1 | 2 | 3;
+      data?: {
+        emailClient?: { type: 'thunderbird' | 'outlook' | 'apple-mail'; path: string };
+        schedule?: { generationTime: { hour: number; minute: number }; skipWeekends: boolean };
+        llm?: {
+          mode: 'local' | 'remote';
+          localEndpoint?: string;
+          remoteEndpoint?: string;
+          apiKey?: string;
+        };
+      };
+    }) => Promise<{ success: boolean; error?: string }>;
+    detectEmailClient: (request: { type: 'thunderbird' | 'outlook' | 'apple-mail' }) => Promise<{
+      detectedPath: string | null;
+      error?: string;
+    }>;
+    validateEmailPath: (request: { path: string }) => Promise<{
+      valid: boolean;
+      message: string;
+    }>;
+    testLLMConnection: (config: {
+      mode: 'local' | 'remote';
+      localEndpoint?: string;
+      remoteEndpoint?: string;
+      apiKey?: string;
+    }) => Promise<{
+      success: boolean;
+      responseTime: number;
+      error?: string;
+    }>;
+  };
+  generation: {
+    start: () => Promise<{ success: boolean; emailCount?: number; error?: string }>;
+    cancel: () => Promise<{ success: boolean; message: string }>;
+    onProgress: (callback: (data: {
+      stage: 'processing' | 'complete' | 'error';
+      current: number;
+      total: number;
+      percentage: number;
+      subject: string;
+    }) => void) => void;
+  };
+  reports: {
+    getToday: () => Promise<{
+      date: string;
+      summary: {
+        totalEmails: number;
+        completedItems: number;
+        pendingItems: number;
+        reviewCount: number;
+      };
+      items: any[];
+    }>;
+    getByDate: (request: { date: string }) => Promise<any>;
+    search: (request: {
+      keywords: string;
+      dateRange: {
+        type: 'all' | 'today' | 'last-7-days' | 'last-30-days' | 'this-month' | 'last-month' | 'custom';
+        startDate?: string;
+        endDate?: string;
+      };
+      filters: {
+        itemTypes?: ('completed' | 'pending')[];
+        confidenceLevels?: ('high' | 'medium' | 'low')[];
+        hasFeedback?: boolean;
+      };
+      pagination: { page: number; perPage: number };
+    }) => Promise<{
+      items: any[];
+      totalCount: number;
+      totalPages: number;
+      currentPage: number;
+      matchHighlights: Record<string, string[]>;
+    }>;
+    expandItem: (request: { itemId: string }) => Promise<any>;
+    submitFeedback: (request: {
+      itemId: string;
+      type: 'accurate' | 'content_error' | 'priority_error' | 'not_actionable' | 'source_error';
+    }) => Promise<{ success: boolean; message: string }>;
+    copySearchTerm: (request: { itemId: string }) => Promise<{ success: boolean; searchTerm: string }>;
+  };
+  settings: {
+    getAll: () => Promise<any>;
+    update: (request: {
+      section: 'email' | 'schedule' | 'llm' | 'display' | 'notifications' | 'data';
+      updates: Partial<any>;
+    }) => Promise<{ success: boolean; error?: string }>;
+    cleanupData: (request: { dateRange: string }) => Promise<{
+      cutoffDate: string;
+      reportCount: number;
+      itemCount: number;
+      sizeToFree: number;
+    }>;
+    destroyFeedback: (request: { confirmation: string }) => Promise<{
+      success: boolean;
+      deletedCount: number;
+      error?: string;
+    }>;
+  };
+  notifications: {
+    sendTest: () => Promise<{ success: boolean; error?: string }>;
+    configure: (settings: Partial<{
+      enabled: boolean;
+      doNotDisturb: { enabled: boolean; startTime: string; endTime: string };
+      soundEnabled: boolean;
+    }>) => Promise<{ success: boolean; error?: string }>;
   };
 }
 

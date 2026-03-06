@@ -3,6 +3,8 @@
  * Per data-model.md section 6
  */
 
+import { EmailClientConfig, ScheduleConfig, LLMConfig } from './onboarding';
+
 export interface NotificationSettings {
   enabled: boolean;
   doNotDisturb: {
@@ -17,10 +19,37 @@ export interface DisplaySettings {
   aiExplanationMode: boolean;
 }
 
+export interface DataManagementSettings {
+  retentionPeriods: {
+    reports: number; // days
+    emails: number; // days
+  };
+  cleanupPreview: {
+    cutoffDate: string;
+    reportCount: number;
+    itemCount: number;
+    sizeToFree: number; // bytes
+  } | null;
+}
+
+export type SettingsSection =
+  | 'email'
+  | 'schedule'
+  | 'llm'
+  | 'display'
+  | 'notifications'
+  | 'data';
+
+export interface UpdateSettingsRequest {
+  section: SettingsSection;
+  updates: Partial<AllSettings>;
+}
+
 export interface AllSettings {
-  email: any; // EmailClientConfig from onboarding
-  schedule: any; // ScheduleConfig from onboarding
-  llm: any; // LLMConfig from onboarding
+  email: EmailClientConfig;
+  schedule: ScheduleConfig;
+  llm: LLMConfig;
   notifications: NotificationSettings;
   display: DisplaySettings;
+  data?: DataManagementSettings;
 }

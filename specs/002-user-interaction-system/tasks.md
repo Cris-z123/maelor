@@ -31,9 +31,9 @@ This is an Electron desktop application with main/renderer process separation:
 - [ ] T002 Install and configure shadcn/ui components (Calendar, Dialog, Input, Button, Progress, Toast) following constitution-required Tailwind CSS v3.4 setup
 - [ ] T003 [P] Configure Zustand 4.5 with persistence middleware for encrypted state storage
 - [ ] T004 [P] Create Zod schema base templates in src/shared/schemas/ for runtime validation
-- [ ] T005 [P] Setup IPC client abstraction layer in src/renderer/services/ipc.ts for type-safe communication
-- [ ] T006 [P] Create shared TypeScript type definitions in src/shared/types/{onboarding,reports,history,settings}.ts
-- [ ] T007 [P] Configure Inter font family and custom theme (智捷蓝 #4F46E5, etc.) in src/renderer/styles/theme.css per visual design specifications
+- [x] T005 [P] Setup IPC client abstraction layer in src/renderer/services/ipc.ts for type-safe communication
+- [x] T006 [P] Create shared TypeScript type definitions in src/shared/types/{onboarding,reports,history,settings}.ts
+- [x] T007 [P] Configure Inter font family and custom theme (智捷蓝 #4F46E5, etc.) in src/renderer/styles/theme.css per visual design specifications
 
 ---
 

@@ -21,9 +21,9 @@ import type {
 class IPCClient {
   private api: ElectronAPI;
 
-  constructor() {
-    // Access ElectronAPI exposed by preload script
-    this.api = window.electronAPI || this.createMockAPI();
+  constructor(api?: ElectronAPI) {
+    // Access ElectronAPI exposed by preload script, or use provided api (for testing)
+    this.api = api || window.electronAPI || this.createMockAPI();
   }
 
   /**
@@ -63,6 +63,13 @@ class IPCClient {
           error: 'Mock API: Not running in Electron',
         }),
       },
+      onboarding: {
+        getStatus: async () => ({
+          completed: false,
+          currentStep: 1,
+          canProceed: true
+        })
+      }
     };
   }
 
@@ -229,6 +236,28 @@ class IPCClient {
     } catch (error) {
       console.error('[IPC] Email metadata fetch failed:', error);
       throw new Error(`Email metadata fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // =============================================================================
+  // Onboarding Operations
+  // =============================================================================
+
+  /**
+   * Get onboarding wizard status
+   * Channel: onboarding:get-status
+   */
+  async getOnboardingStatus(): Promise<{
+    completed: boolean;
+    currentStep: 1 | 2 | 3;
+    canProceed: boolean;
+  }> {
+    try {
+      const response = await this.api.onboarding.getStatus();
+      return response;
+    } catch (error) {
+      console.error('[IPC] Onboarding get-status failed:', error);
+      throw new Error(`Onboarding get-status failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 }

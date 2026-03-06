@@ -134,6 +134,13 @@ export interface ElectronAPI {
       error?: string;
     }>;
   };
+  onboarding: {
+    getStatus: () => Promise<{
+      completed: boolean;
+      currentStep: 1 | 2 | 3;
+      canProceed: boolean;
+    }>;
+  };
 }
 
 declare global {

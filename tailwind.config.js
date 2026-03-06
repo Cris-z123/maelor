@@ -30,6 +30,18 @@ export default {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      colors: {
+        brand: {
+          blue: '#4F46E5',  // 智捷蓝
+          cyan: '#06B6D4',  // 灵动青
+        },
+        'low-confidence': '#FFFBE6',
+      },
+      transitionDuration: {
+        fast: '150ms',
+        normal: '300ms',
+        slow: '500ms',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

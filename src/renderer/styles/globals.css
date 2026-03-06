@@ -7,48 +7,85 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    /* Brand Colors (Chinese design system) */
+    --primary: 243 87% 59%;        /* 智捷蓝 #4F46E5 */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 187 92% 42%;      /* 灵动青 #06B6D4 */
+    --secondary-foreground: 0 0% 100%;
+
+    /* Semantic Colors */
+    --success: 158 64% 42%;        /* 翠绿 #10B981 */
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 49%;         /* 琥珀黄 #F59E0B */
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 59%;      /* 珊瑚红 #EF4444 */
+    --destructive-foreground: 0 0% 100%;
+
+    /* Neutral Colors */
+    --background: 210 40% 98%;     /* 极简灰 #F8FAFC */
+    --foreground: 215 16% 15%;     /* 深岩灰 #1E293B */
+
+    --card: 0 0% 100%;             /* 纯白 #FFFFFF */
+    --card-foreground: 215 16% 15%;
+
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 215 16% 15%;
+
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-foreground: 215 16% 47%; /* 中灰 #64748B */
+
     --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --accent-foreground: 215 16% 15%;
+
+    /* UI Colors */
+    --border: 215 26% 91%;         /* 淡灰蓝 #E2E8F0 */
+    --input: 215 26% 91%;
+    --ring: 243 87% 59%;           /* Primary color ring */
+
+    --disabled: 215 26% 80%;       /* 浅灰 #CBD5E1 */
+
+    /* Special Colors */
+    --low-confidence-bg: 48 100% 97%; /* #FFFBE6 */
+
+    /* Animation timings (FR-095) */
+    --duration-fast: 150ms;        /* Fast transitions */
+    --duration-normal: 300ms;      /* Standard transitions */
+    --duration-slow: 500ms;        /* Slow transitions */
+
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 215 16% 15%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+
+    --card: 215 16% 15%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+
+    --popover: 215 16% 15%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+
+    --primary: 243 87% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 187 92% 42%;
+    --secondary-foreground: 0 0% 100%;
+
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
+
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
+
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
+    --ring: 243 87.6% 47.9%;
   }
 }
 

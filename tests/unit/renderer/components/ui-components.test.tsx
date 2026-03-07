@@ -1,9 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import { Calendar } from '../ui/calendar';
-import { Input } from '../ui/input';
-import { Progress } from '../ui/progress';
-import { Toaster } from '../ui/toast';
+import { Calendar } from '@renderer/components/ui/calendar';
+import { Input } from '@renderer/components/ui/input';
+import { Progress } from '@renderer/components/ui/progress';
+import { Toaster } from '@renderer/components/ui/toast';
 
 describe('shadcn/ui Components', () => {
   describe('Calendar', () => {

@@ -167,36 +167,3 @@ chore: update dependencies
 
 **Constitution Version**: 1.1.0
 **Last Updated**: 2026-02-08
-
-## Project Structure
-
-```
-src/
-├── main/                    # Electron main process (backend)
-│   ├── onboarding/         # First-time setup wizard
-│   ├── notifications/      # Desktop notifications
-│   ├── database/           # SQLite database + migrations
-│   ├── ipc/                # IPC handlers
-│   ├── llm/                # LLM integration
-│   └── config/             # Configuration management
-├── renderer/               # Electron renderer process (frontend)
-│   ├── components/         # React components
-│   │   ├── Onboarding/     # Setup wizard UI (PascalCase - legacy)
-│   │   ├── Settings/       # Settings pages (PascalCase - legacy)
-│   │   ├── ReportView/     # Report view (PascalCase - legacy)
-│   │   ├── reports/        # Daily report display (kebab-case)
-│   │   ├── generation/     # Manual generation UI (kebab-case)
-│   │   ├── history/        # Historical reports search (kebab-case)
-│   │   ├── shared/         # Shared UI components
-│   │   └── ui/             # shadcn/ui components
-│   ├── stores/             # Zustand state stores
-│   ├── hooks/              # Custom React hooks
-│   ├── services/           # IPC clients, utilities
-│   └── styles/             # Global styles, themes
-└── shared/                 # Shared between main/renderer
-    ├── schemas/            # Zod validation schemas
-    ├── types/              # TypeScript type definitions
-    └── utils/              # Shared utilities
-```
-
-**Naming Convention Note**: The project uses mixed naming conventions. New code should use kebab-case (`reports/`, `history/`) while some legacy components use PascalCase (`Onboarding/`, `Settings/`).

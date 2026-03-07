@@ -11,6 +11,7 @@ import { IPC_CHANNELS } from './ipc/channels.js';
 import { SingleInstanceManager, ApplicationManager } from './app.js';
 import { IPCValidatorRegistry } from './ipc/validators/registry.js';
 import { registerOnboardingValidators } from './ipc/validators/onboarding.js';
+import { registerSettingsValidators } from './ipc/validators/settings.js';
 import { checkForUpdates, downloadAndInstallUpdate } from './app/lifecycle.js';
 import { errorHandler } from './error-handler.js';
 
@@ -166,7 +167,11 @@ class Application {
     registerOnboardingValidators(IPCValidatorRegistry, db);
     logger.info('IPC', 'Onboarding validators registered (Zod validation enabled)');
 
-    // Note: Other handlers (generation, reports, settings, notifications)
+    // Register settings validators (T014 - IPC Validation System)
+    registerSettingsValidators(IPCValidatorRegistry, db);
+    logger.info('IPC', 'Settings validators registered (Zod validation enabled)');
+
+    // Note: Other handlers (generation, reports, notifications)
     // will be migrated to validator system incrementally in T018+
 
     // Placeholder handlers for remaining IPC channels

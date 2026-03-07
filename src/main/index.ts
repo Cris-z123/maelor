@@ -9,7 +9,8 @@ import { ConfigManager } from './config/ConfigManager.js';
 import { logger } from './config/logger.js';
 import { IPC_CHANNELS } from './ipc/channels.js';
 import { SingleInstanceManager, ApplicationManager } from './app.js';
-import { registerOnboardingHandlers } from './ipc/handlers/onboardingHandler.js';
+import { IPCValidatorRegistry } from './ipc/validators/registry.js';
+import { registerOnboardingValidators } from './ipc/validators/onboarding.js';
 import { checkForUpdates, downloadAndInstallUpdate } from './app/lifecycle.js';
 import { errorHandler } from './error-handler.js';
 
@@ -160,10 +161,13 @@ class Application {
    * Setup IPC handlers
    */
   private setupIPCHandlers(): void {
-    // Register onboarding handlers (T018b - Constitution Principle I)
+    // Register onboarding validators (T014 - IPC Validation System)
     const db = DatabaseManager.getDatabase();
-    registerOnboardingHandlers(db);
-    logger.info('IPC', 'Onboarding handlers registered');
+    registerOnboardingValidators(IPCValidatorRegistry, db);
+    logger.info('IPC', 'Onboarding validators registered (Zod validation enabled)');
+
+    // Note: Other handlers (generation, reports, settings, notifications)
+    // will be migrated to validator system incrementally in T018+
 
     // Placeholder handlers for remaining IPC channels
     // Full implementation will be in user stories
@@ -252,8 +256,6 @@ class Application {
       // TODO: Implement in US3
       return { success: false, error: 'NOT_IMPLEMENTED' };
     });
-
-    // Onboarding get status / acknowledge are registered by registerOnboardingHandlers() above
 
     logger.info('IPC', 'All IPC handlers registered');
   }

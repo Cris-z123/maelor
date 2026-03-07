@@ -91,7 +91,7 @@ export class IPCValidatorRegistry {
     channel: string,
     validatedHandler: ValidatedHandler<TRequest, TResponse>
   ): (event: IpcMainInvokeEvent, request: unknown) => Promise<TResponse> {
-    return async (event, request) => {
+    return async (_event, request) => {
       // Validate request
       const requestValidation =
         validatedHandler.requestSchema.safeParse(request);

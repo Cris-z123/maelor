@@ -16,9 +16,9 @@
 import type { Database } from 'better-sqlite3';
 
 interface OnboardingStatus {
-  completed: boolean;
-  currentStep: 1 | 2 | 3;
-  canProceed: boolean;
+  hasAcknowledgedDisclosure: boolean;
+  disclosureVersion: string;
+  acknowledgedAt?: number;
 }
 
 const CURRENT_DISCLOSURE_VERSION = '1.0.0';
@@ -26,18 +26,19 @@ const DISCLOSURE_KEY = 'onboarding_disclosure';
 
 /**
  * Step data for onboarding set-step handler
+ * Matches Zod schema inference where all fields are optional
  */
 interface StepData {
   emailClient?: {
-    type: 'thunderbird' | 'outlook' | 'apple-mail';
-    path: string;
+    type?: 'thunderbird' | 'outlook' | 'apple-mail';
+    path?: string;
   };
   schedule?: {
-    generationTime: { hour: number; minute: number };
-    skipWeekends: boolean;
+    generationTime?: { hour?: number; minute?: number };
+    skipWeekends?: boolean;
   };
   llm?: {
-    mode: 'local' | 'remote';
+    mode?: 'local' | 'remote';
     localEndpoint?: string;
     remoteEndpoint?: string;
     apiKey?: string;
@@ -62,9 +63,8 @@ export async function handleGetStatus(
 
     if (!row) {
       return {
-        completed: false,
-        currentStep: 1,
-        canProceed: false,
+        hasAcknowledgedDisclosure: false,
+        disclosureVersion: CURRENT_DISCLOSURE_VERSION,
       };
     }
 
@@ -73,9 +73,8 @@ export async function handleGetStatus(
   } catch (error) {
     console.error('Failed to get onboarding status:', error);
     return {
-      completed: false,
-      currentStep: 1,
-      canProceed: false,
+      hasAcknowledgedDisclosure: false,
+      disclosureVersion: CURRENT_DISCLOSURE_VERSION,
     };
   }
 }
@@ -84,9 +83,9 @@ export async function handleGetStatus(
  * Set onboarding step
  */
 export async function handleSetStep(
-  db: Database,
-  step: 1 | 2 | 3,
-  data?: StepData
+  _db: Database,
+  _step: 1 | 2 | 3,
+  _data?: StepData
 ): Promise<{ success: boolean; error?: string }> {
   // Implementation to be added based on OnboardingManager
   // For now, return success
@@ -101,9 +100,9 @@ export async function handleAcknowledge(
 ): Promise<{ success: boolean }> {
   try {
     const status: OnboardingStatus = {
-      completed: false,
-      currentStep: 1,
-      canProceed: true,
+      hasAcknowledgedDisclosure: true,
+      disclosureVersion: CURRENT_DISCLOSURE_VERSION,
+      acknowledgedAt: Date.now(),
     };
 
     db
@@ -126,8 +125,8 @@ export async function handleAcknowledge(
  * Detect email client installation path
  */
 export async function handleDetectEmailClient(
-  db: Database,
-  type: 'thunderbird' | 'outlook' | 'apple-mail'
+  _db: Database,
+  _type: 'thunderbird' | 'outlook' | 'apple-mail'
 ): Promise<{ detectedPath: string | null; error?: string }> {
   // Call EmailClientDetector
   // Implementation to be added
@@ -138,8 +137,8 @@ export async function handleDetectEmailClient(
  * Validate email client path
  */
 export async function handleValidateEmailPath(
-  db: Database,
-  path: string
+  _db: Database,
+  _path: string
 ): Promise<{ valid: boolean; message: string }> {
   // Implementation to be added
   return { valid: false, message: 'NOT_IMPLEMENTED' };
@@ -149,8 +148,8 @@ export async function handleValidateEmailPath(
  * Test LLM connection
  */
 export async function handleTestLLMConnection(
-  db: Database,
-  request: {
+  _db: Database,
+  _request: {
     mode: 'local' | 'remote';
     localEndpoint?: string;
     remoteEndpoint?: string;

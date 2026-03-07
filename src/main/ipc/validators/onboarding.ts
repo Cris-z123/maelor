@@ -23,31 +23,6 @@ import {
   LLMModeSchema,
 } from './common.js';
 
-// ==================== TYPE DEFINITIONS ====================
-
-interface OnboardingStatus {
-  hasAcknowledgedDisclosure: boolean;
-  disclosureVersion: string;
-  acknowledgedAt?: number;
-}
-
-interface StepData {
-  emailClient?: {
-    type: 'thunderbird' | 'outlook' | 'apple-mail';
-    path: string;
-  };
-  schedule?: {
-    generationTime: { hour: number; minute: number };
-    skipWeekends: boolean;
-  };
-  llm?: {
-    mode: 'local' | 'remote';
-    localEndpoint?: string;
-    remoteEndpoint?: string;
-    apiKey?: string;
-  };
-}
-
 // ==================== CHANNEL 1: GET STATUS ====================
 
 export const OnboardingGetStatusRequestSchema = z.object({}).strict();

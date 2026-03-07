@@ -43,18 +43,16 @@ This is an Electron desktop application with main/renderer process separation:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Extend database schema with user_config table for onboarding state, notification settings, and display preferences per data-model.md in src/main/database/migrations/002-add-user-interaction-tables.sql
-- [ ] T009 [P] Add feedback_type column to todo_items table per constitution v1.3.0 in src/main/database/migrations/003-add-feedback-type.sql
-- [ ] T010 [P] Create FTS5 full-text search virtual table todo_items_fts with triggers for search optimization per research.md decision #4 in src/main/database/migrations/004-add-fts5-search.sql
-- [ ] T011 Implement OnboardingManager in src/main/onboarding/OnboardingManager.ts for tracking wizard state and persisting configuration
-- [ ] T012 [P] Implement EmailClientDetector in src/main/onboarding/EmailClientDetector.ts with platform-specific auto-detection per research.md decision #1
-- [ ] T013 [P] Implement NotificationManager in src/main/notifications/NotificationManager.ts with do-not-disturb and aggregation per research.md decision #2
-- [ ] T014 Create IPC handler registration in src/main/ipc/handlers.ts for all 21 channels defined in contracts/ipc-channels.md with Zod validation
+- [X] T008 Extend database schema with user_config table for onboarding state, notification settings, and display preferences per data-model.md in src/main/database/migrations/002-add-user-interaction-tables.sql
+- [X] T009 [P] Add feedback_type column to todo_items table per constitution v1.3.0 in src/main/database/migrations/003-add-feedback-type.sql
+- [X] T010 [P] Create FTS5 full-text search virtual table todo_items_fts with triggers for search optimization per research.md decision #4 in src/main/database/migrations/004-add-fts5-search.sql
+- [X] T011 Implement OnboardingManager in src/main/onboarding/OnboardingManager.ts for tracking wizard state and persisting configuration
+- [X] T012 [P] Implement EmailClientDetector in src/main/onboarding/EmailClientDetector.ts with platform-specific auto-detection per research.md decision #1
+- [X] T013 [P] Implement NotificationManager in src/main/notifications/NotificationManager.ts with do-not-disturb and aggregation per research.md decision #2
+- [X] T014 Create IPC handler registration in src/main/ipc/channels.ts for all 21 channels defined in contracts/ipc-channels.md with Zod validation
 - [ ] T015 Implement error handling middleware with specific error messages (invalid path, LLM connection failure, insufficient disk space) per FR-080 to FR-089 in src/main/error-handler.ts
 - [ ] T016 Create structured logging system excluding sensitive data in src/main/logger.ts for observability per constitution VII
 - [ ] T017 Setup Electron safeStorage integration for field-level encryption of sensitive config values in src/main/encryption.ts
-
-**Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
 ---
 

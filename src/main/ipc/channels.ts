@@ -44,6 +44,34 @@ export const IPC_CHANNELS = {
   // Onboarding / First-run disclosure
   ONBOARDING_GET_STATUS: 'onboarding:get-status',
   ONBOARDING_ACKNOWLEDGE: 'onboarding:acknowledge',
+  ONBOARDING_SET_STEP: 'onboarding:set-step',
+  ONBOARDING_DETECT_EMAIL_CLIENT: 'onboarding:detect-email-client',
+  ONBOARDING_VALIDATE_EMAIL_PATH: 'onboarding:validate-email-path',
+  ONBOARDING_TEST_LLM_CONNECTION: 'onboarding:test-llm-connection',
+
+  // Report generation
+  GENERATION_START: 'generation:start',
+  GENERATION_CANCEL: 'generation:cancel',
+  GENERATION_GET_PROGRESS: 'generation:get-progress',
+
+  // Reports
+  REPORTS_GET_TODAY: 'reports:get-today',
+  REPORTS_GET_BY_DATE: 'reports:get-by-date',
+  REPORTS_SEARCH: 'reports:search',
+  REPORTS_EXPAND_ITEM: 'reports:expand-item',
+  REPORTS_SUBMIT_FEEDBACK: 'reports:submit-feedback',
+  REPORTS_COPY_SEARCH_TERM: 'reports:copy-search-term',
+  REPORTS_INLINE_EDIT: 'reports:inline-edit',
+
+  // Settings
+  SETTINGS_GET_ALL: 'settings:get-all',
+  SETTINGS_UPDATE: 'settings:update',
+  SETTINGS_CLEANUP_DATA: 'settings:cleanup-data',
+  SETTINGS_DESTROY_FEEDBACK: 'settings:destroy-feedback',
+
+  // Notifications
+  NOTIFICATIONS_SEND_TEST: 'notifications:send-test',
+  NOTIFICATIONS_CONFIGURE: 'notifications:configure',
 
   // Mode switching (US5: Dual-mode operation)
   MODE_GET: 'mode:get',

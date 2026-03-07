@@ -49,10 +49,10 @@ This is an Electron desktop application with main/renderer process separation:
 - [X] T011 Implement OnboardingManager in src/main/onboarding/OnboardingManager.ts for tracking wizard state and persisting configuration
 - [X] T012 [P] Implement EmailClientDetector in src/main/onboarding/EmailClientDetector.ts with platform-specific auto-detection per research.md decision #1
 - [X] T013 [P] Implement NotificationManager in src/main/notifications/NotificationManager.ts with do-not-disturb and aggregation per research.md decision #2
-- [X] T014 Create IPC handler registration in src/main/ipc/channels.ts for all 21 channels defined in contracts/ipc-channels.md with Zod validation
-- [ ] T015 Implement error handling middleware with specific error messages (invalid path, LLM connection failure, insufficient disk space) per FR-080 to FR-089 in src/main/error-handler.ts
-- [ ] T016 Create structured logging system excluding sensitive data in src/main/logger.ts for observability per constitution VII
-- [ ] T017 Setup Electron safeStorage integration for field-level encryption of sensitive config values in src/main/encryption.ts
+- [X] T014 [P] Create IPC handler registration with Zod validation in src/main/ipc/validators/ for all 21 channels defined in contracts/ipc-channels.md
+- [X] T015 [P] Implement error handling middleware with specific error messages (invalid path, LLM connection failure, insufficient disk space) per FR-080 to FR-089 in src/main/error-handler.ts
+- [X] T016 [P] Create structured logging system excluding sensitive data in src/main/logger.ts for observability per constitution VII
+- [X] T017 [P] Setup Electron safeStorage integration for field-level encryption of sensitive config values in src/main/config/ConfigManager.ts
 
 ---
 

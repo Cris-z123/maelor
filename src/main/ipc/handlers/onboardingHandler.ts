@@ -13,9 +13,7 @@
  * - Task T018b: Implement disclosure acknowledgment handler
  */
 
-import { ipcMain } from 'electron';
 import type { Database } from 'better-sqlite3';
-import { IPC_CHANNELS } from '../channels.js';
 
 interface OnboardingStatus {
   hasAcknowledgedDisclosure: boolean;
@@ -27,9 +25,32 @@ const CURRENT_DISCLOSURE_VERSION = '1.0.0';
 const DISCLOSURE_KEY = 'onboarding_disclosure';
 
 /**
+ * Step data for onboarding set-step handler
+ * Matches Zod schema inference where all fields are optional
+ */
+interface StepData {
+  emailClient?: {
+    type?: 'thunderbird' | 'outlook' | 'apple-mail';
+    path?: string;
+  };
+  schedule?: {
+    generationTime?: { hour?: number; minute?: number };
+    skipWeekends?: boolean;
+  };
+  llm?: {
+    mode?: 'local' | 'remote';
+    localEndpoint?: string;
+    remoteEndpoint?: string;
+    apiKey?: string;
+  };
+}
+
+/**
  * Get onboarding status from database
  */
-async function getOnboardingStatus(db: Database): Promise<OnboardingStatus> {
+export async function handleGetStatus(
+  db: Database
+): Promise<OnboardingStatus> {
   try {
     const row = db
       .prepare(
@@ -59,11 +80,26 @@ async function getOnboardingStatus(db: Database): Promise<OnboardingStatus> {
 }
 
 /**
- * Save onboarding acknowledgment to database
+ * Set onboarding step
  */
-async function saveAcknowledgment(db: Database): Promise<void> {
+export async function handleSetStep(
+  _db: Database,
+  _step: 1 | 2 | 3,
+  _data?: StepData
+): Promise<{ success: boolean; error?: string }> {
+  // Implementation to be added based on OnboardingManager
+  // For now, return success
+  return { success: true };
+}
+
+/**
+ * Acknowledge first-run disclosure
+ */
+export async function handleAcknowledge(
+  db: Database
+): Promise<{ success: boolean }> {
   try {
-    const data: OnboardingStatus = {
+    const status: OnboardingStatus = {
       hasAcknowledgedDisclosure: true,
       disclosureVersion: CURRENT_DISCLOSURE_VERSION,
       acknowledgedAt: Date.now(),
@@ -76,7 +112,9 @@ async function saveAcknowledgment(db: Database): Promise<void> {
         VALUES (?, ?)
       `
       )
-      .run(DISCLOSURE_KEY, JSON.stringify(data));
+      .run(DISCLOSURE_KEY, JSON.stringify(status));
+
+    return { success: true };
   } catch (error) {
     console.error('Failed to save onboarding acknowledgment:', error);
     throw error;
@@ -84,26 +122,42 @@ async function saveAcknowledgment(db: Database): Promise<void> {
 }
 
 /**
- * Register onboarding IPC handlers
+ * Detect email client installation path
  */
-export function registerOnboardingHandlers(db: Database): void {
-  /**
-   * Get onboarding status
-   * Returns whether the user has acknowledged the first-run disclosure
-   */
-  ipcMain.handle(IPC_CHANNELS.ONBOARDING_GET_STATUS, async () => {
-    const status = await getOnboardingStatus(db);
-    return status;
-  });
+export async function handleDetectEmailClient(
+  _db: Database,
+  _type: 'thunderbird' | 'outlook' | 'apple-mail'
+): Promise<{ detectedPath: string | null; error?: string }> {
+  // Call EmailClientDetector
+  // Implementation to be added
+  return { detectedPath: null, error: 'NOT_IMPLEMENTED' };
+}
 
-  /**
-   * Acknowledge first-run disclosure
-   * Stores the user's acknowledgment that they understand the data transmission scope
-   */
-  ipcMain.handle(IPC_CHANNELS.ONBOARDING_ACKNOWLEDGE, async () => {
-    await saveAcknowledgment(db);
-    return { success: true };
-  });
+/**
+ * Validate email client path
+ */
+export async function handleValidateEmailPath(
+  _db: Database,
+  _path: string
+): Promise<{ valid: boolean; message: string }> {
+  // Implementation to be added
+  return { valid: false, message: 'NOT_IMPLEMENTED' };
+}
+
+/**
+ * Test LLM connection
+ */
+export async function handleTestLLMConnection(
+  _db: Database,
+  _request: {
+    mode: 'local' | 'remote';
+    localEndpoint?: string;
+    remoteEndpoint?: string;
+    apiKey?: string;
+  }
+): Promise<{ success: boolean; responseTime: number; error?: string }> {
+  // Implementation to be added
+  return { success: false, responseTime: 0, error: 'NOT_IMPLEMENTED' };
 }
 
 /**

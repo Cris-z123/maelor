@@ -9,10 +9,11 @@ import Database from 'better-sqlite3';
 import { app } from 'electron';
 
 // Mock DatabaseManager before importing OnboardingManager
+let mockState: any = null;
 vi.mock('@/database/Database', () => {
   const mockDb = {
     prepare: vi.fn(() => ({
-      get: vi.fn(() => undefined),
+      get: vi.fn(() => mockState),
       run: vi.fn(),
     })),
   };
@@ -27,7 +28,11 @@ vi.mock('@/database/Database', () => {
 vi.mock('electron', () => ({
   safeStorage: {
     isEncryptionAvailable: vi.fn(() => true),
-    encryptString: vi.fn((plaintext: string) => Buffer.from(`encrypted:${plaintext}`)),
+    encryptString: vi.fn((plaintext: string) => {
+      const state = JSON.parse(plaintext);
+      mockState = Buffer.from(`encrypted:${plaintext}`);
+      return mockState;
+    }),
     decryptString: vi.fn((encrypted: Buffer) => {
       const data = encrypted.toString();
       if (data.startsWith('encrypted:')) {
@@ -56,7 +61,8 @@ import OnboardingManager from '@/onboarding/OnboardingManager';
 
 describe('T011: OnboardingManager Implementation', () => {
   beforeEach(() => {
-    // Reset mocks before each test
+    // Reset mocks and state before each test
+    mockState = null;
     vi.clearAllMocks();
   });
 
@@ -91,6 +97,19 @@ describe('T011: OnboardingManager Implementation', () => {
       const update = {
         completed: true,
         currentStep: 3 as const,
+        emailClient: {
+          type: 'thunderbird' as const,
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+        llm: {
+          mode: 'remote' as const,
+          localEndpoint: 'http://localhost:11434',
+          remoteEndpoint: 'https://api.openai.com/v1',
+          apiKey: 'test',
+          connectionStatus: 'success' as const,
+        },
       };
 
       OnboardingManager.updateState(update);
@@ -103,7 +122,16 @@ describe('T011: OnboardingManager Implementation', () => {
 
   describe('Step Validation', () => {
     it('should reject moving backward from step 2 to step 1', () => {
-      OnboardingManager.updateState({ currentStep: 2 });
+      // First set up valid state at step 2
+      OnboardingManager.updateState({
+        currentStep: 2,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+      });
 
       expect(() => {
         OnboardingManager.updateState({ currentStep: 1 });
@@ -125,6 +153,17 @@ describe('T011: OnboardingManager Implementation', () => {
     });
 
     it('should validate schedule hour range (0-23)', () => {
+      // First set up valid state at step 2
+      OnboardingManager.updateState({
+        currentStep: 2,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+      });
+
       expect(() => {
         OnboardingManager.updateState({
           currentStep: 3,
@@ -137,6 +176,17 @@ describe('T011: OnboardingManager Implementation', () => {
     });
 
     it('should validate schedule minute range (0-59)', () => {
+      // First set up valid state at step 2
+      OnboardingManager.updateState({
+        currentStep: 2,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+      });
+
       expect(() => {
         OnboardingManager.updateState({
           currentStep: 3,
@@ -181,9 +231,19 @@ describe('T011: OnboardingManager Implementation', () => {
 
   describe('Completion', () => {
     it('should complete onboarding after successful LLM test', () => {
-      // Setup: step 3 with successful connection
+      // Setup: step 3 with successful connection and validated email client
       OnboardingManager.updateState({
         currentStep: 3,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+        schedule: {
+          generationTime: { hour: 18, minute: 0 },
+          skipWeekends: true,
+        },
         llm: {
           mode: 'remote',
           localEndpoint: 'http://localhost:11434',
@@ -202,7 +262,22 @@ describe('T011: OnboardingManager Implementation', () => {
     it('should return completion status', () => {
       expect(OnboardingManager.isComplete()).toBe(false);
 
-      OnboardingManager.updateState({ completed: true });
+      OnboardingManager.updateState({
+        completed: true,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+        llm: {
+          mode: 'remote',
+          localEndpoint: 'http://localhost:11434',
+          remoteEndpoint: 'https://api.openai.com/v1',
+          apiKey: 'test',
+          connectionStatus: 'success',
+        },
+      });
 
       expect(OnboardingManager.isComplete()).toBe(true);
     });

@@ -134,3 +134,4 @@ describe('Onboarding IPC Channels', () => {
     }, 35000);
   });
 });
+

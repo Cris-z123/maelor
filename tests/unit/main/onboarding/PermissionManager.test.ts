@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { dialog, Notification } from 'electron';
+import { dialog } from 'electron';
 
 vi.mock('electron', () => ({
   dialog: {

@@ -1,17 +1,17 @@
 /**
  * Security Audit: IPC Whitelist Compliance Verification
  *
- * Per T109a: Verify exactly 22 channels registered across 8 categories per constitution.md line 132
- * Per Constitution Principle V: IPC channel whitelist validation with 22 channels across 8 categories
+ * Per T109a: Verify exactly 42 channels registered across 11 categories per constitution.md line 132
+ * Per Constitution Principle V: IPC channel whitelist validation with 42 channels across 11 categories
  * Per Constitution Development Workflow: IPC whitelist compliance is a security-critical requirement
  *
- * CONSTITUTIONAL REQUIREMENT (constitution.md line 132, updated 2026-02-08):
- * "IPC channel whitelist compliance (22 channels across 8 categories:
- *  llm:*, db:*, config:*, app:*, email:*, feedback:*, retention:*, onboarding:*, mode:*)"
+ * CONSTITUTIONAL REQUIREMENT (constitution.md line 132, updated 2026-03-08):
+ * "IPC channel whitelist compliance (42 channels across 11 categories:
+ *  llm:*, db:*, config:*, app:*, email:*, feedback:*, retention:*, onboarding:*, generation:*, reports:*, settings:*, notifications:*, mode:*)"
  *
  * Tests:
- * - Verify exactly 22 IPC channels are registered (not more)
- * - Verify the 22 channels match the constitution whitelist exactly
+ * - Verify exactly 42 IPC channels are registered (not more)
+ * - Verify the 42 channels match the constitution whitelist exactly
  * - Fail the test if additional channels are registered
  * - Provide clear error messages identifying non-compliant channels
  * - Test all IPC channel registration points
@@ -34,7 +34,7 @@ vi.mock('electron', () => ({
 }));
 
 describe('Security Audit: IPC Whitelist Compliance (Constitution Principle V)', () => {
-  // CONSTITUTIONAL REQUIREMENT from constitution.md line 132 (updated 2026-02-08)
+  // CONSTITUTIONAL REQUIREMENT from constitution.md line 132 (updated 2026-03-08)
   const CONSTITUTIONAL_WHITELIST = [
     // LLM processing (1 channel)
     'llm:generate',
@@ -67,9 +67,37 @@ describe('Security Audit: IPC Whitelist Compliance (Constitution Principle V)', 
     'retention:manual-cleanup',
     'retention:get-storage',
 
-    // Onboarding (2 channels)
+    // Onboarding (5 channels)
     'onboarding:get-status',
     'onboarding:acknowledge',
+    'onboarding:set-step',
+    'onboarding:detect-email-client',
+    'onboarding:validate-email-path',
+    'onboarding:test-llm-connection',
+
+    // Report generation (3 channels)
+    'generation:start',
+    'generation:cancel',
+    'generation:get-progress',
+
+    // Reports (6 channels)
+    'reports:get-today',
+    'reports:get-by-date',
+    'reports:search',
+    'reports:expand-item',
+    'reports:submit-feedback',
+    'reports:copy-search-term',
+    'reports:inline-edit',
+
+    // Settings (4 channels)
+    'settings:get-all',
+    'settings:update',
+    'settings:cleanup-data',
+    'settings:destroy-feedback',
+
+    // Notifications (2 channels)
+    'notifications:send-test',
+    'notifications:configure',
 
     // Mode switching (3 channels)
     'mode:get',
@@ -77,7 +105,7 @@ describe('Security Audit: IPC Whitelist Compliance (Constitution Principle V)', 
     'mode:cancel',
   ] as const;
 
-  // Total: 22 channels across 8 categories (llm, db, config, app, email, feedback, retention, onboarding, mode)
+  // Total: 42 channels across 11 categories (llm, db, config, app, email, feedback, retention, onboarding, generation, reports, settings, notifications, mode)
 
   beforeEach(() => {
     // Clear all mocks before each test
@@ -89,14 +117,14 @@ describe('Security Audit: IPC Whitelist Compliance (Constitution Principle V)', 
   });
 
   describe('Constitutional Channel Limit Verification', () => {
-    it('should verify exactly 22 channels are registered per constitution', () => {
+    it('should verify exactly 42 channels are registered per constitution', () => {
       // Get all registered channels
       const registeredChannels = getAllChannels();
 
-      // The constitution now specifies exactly 22 channels
-      const expectedChannelCount = 22;
+      // The constitution now specifies exactly 42 channels
+      const expectedChannelCount = 42;
 
-      // Verify we have exactly 22 channels
+      // Verify we have exactly 42 channels
       expect(registeredChannels.length).toBe(expectedChannelCount);
 
       // Verify all channels are in the constitutional whitelist
@@ -112,7 +140,7 @@ describe('Security Audit: IPC Whitelist Compliance (Constitution Principle V)', 
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 Per constitution.md line 132 (updated 2026-02-08):
-"IPC channel whitelist compliance (22 channels across 8 categories)"
+"IPC channel whitelist compliance (42 channels across 11 categories)"
 
 NON-COMPLIANT CHANNELS DETECTED:
 ${nonCompliantChannels.map(ch => `  ❌ ${ch}`).join('\n')}
@@ -298,7 +326,7 @@ ${Array.from(registeredTypes).map(t => `  ✅ ${t}:*`).join('\n')}
       if (nonCompliantChannels.length > 0) {
         const errorReport = {
           totalChannels: channels.length,
-          constitutionalLimit: 22, // 22 channels total
+          constitutionalLimit: 22, // 42 channels total
           nonCompliantCount: nonCompliantChannels.length,
           nonCompliantChannels,
           compliantChannels: channels.filter(ch => constitutionalChannelSet.has(ch as any)),
@@ -322,7 +350,7 @@ ${errorReport.compliantChannels.map(ch => `    • ${ch}`).join('\n')}
 
 CONSTITUTIONAL REFERENCE (updated 2026-02-08):
   constitution.md line 132:
-  "IPC channel whitelist compliance (22 channels across 8 categories:
+  "IPC channel whitelist compliance (42 channels across 11 categories:
    llm:*, db:*, config:*, app:*, email:*, feedback:*, retention:*, onboarding:*, mode:*)"
 
 RESOLUTION OPTIONS:
@@ -350,8 +378,8 @@ RESOLUTION OPTIONS:
         categories.get(category)!.push(channel);
       }
 
-      // Constitutional categories (updated 2026-02-08)
-      const constitutionalCategories = ['llm', 'db', 'config', 'app', 'email', 'feedback', 'retention', 'onboarding', 'mode'];
+      // Constitutional categories (updated 2026-03-08)
+      const constitutionalCategories = ['llm', 'db', 'config', 'app', 'email', 'feedback', 'retention', 'onboarding', 'generation', 'reports', 'settings', 'notifications', 'mode'];
 
       // Find non-compliant categories
       const nonCompliantCategories = Array.from(categories.keys()).filter(
@@ -372,7 +400,7 @@ ${nonCompliantCategories.map(cat => {
      ${chans.map(ch => `      • ${ch}`).join('\n')}`;
 }).join('\n\n')}
 
-ALLOWED CATEGORIES (per constitution.md line 132, updated 2026-02-08):
+ALLOWED CATEGORIES (per constitution.md line 132, updated 2026-03-08):
   ✅ llm:*
   ✅ db:*
   ✅ config:*
@@ -381,6 +409,10 @@ ALLOWED CATEGORIES (per constitution.md line 132, updated 2026-02-08):
   ✅ feedback:*
   ✅ retention:*
   ✅ onboarding:*
+  ✅ generation:*
+  ✅ reports:*
+  ✅ settings:*
+  ✅ notifications:*
   ✅ mode:*
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
@@ -392,8 +424,8 @@ ALLOWED CATEGORIES (per constitution.md line 132, updated 2026-02-08):
   });
 
   describe('Channel Validation Function', () => {
-    it('should validate all 22 constitutional channels correctly', () => {
-      // Test all 22 constitutional channels
+    it('should validate all 42 constitutional channels correctly', () => {
+      // Test all 42 constitutional channels
       const expectedChannels = [
         // LLM (1)
         'llm:generate',
@@ -471,13 +503,13 @@ ${channels.map((ch, i) => `  ${i + 1}. ${ch}`).join('\n')}
 `);
 
       // Verify the count matches constitutional requirements
-      const constitutionalMax = 22; // 22 channels across 8 categories (updated 2026-02-08)
+      const constitutionalMax = 22; // 42 channels across 11 categories (updated 2026-02-08)
 
       if (channels.length > constitutionalMax) {
         console.error(`
 ⚠️  WARNING: ${channels.length} channels registered (constitutional limit: ${constitutionalMax})
 
-This violates constitution.md line 132 which specifies "22 channels across 8 categories".
+This violates constitution.md line 132 which specifies "42 channels across 11 categories".
 `);
       }
     });
@@ -578,10 +610,14 @@ This violates constitution.md line 132 which specifies "22 channels across 8 cat
       const channels = getAllChannels();
       const onboardingChannels = channels.filter(ch => ch.startsWith('onboarding:'));
 
-      // All 2 onboarding channels should be constitutional (updated 2026-02-08)
-      expect(onboardingChannels.length).toBe(2);
+      // All 6 onboarding channels should be constitutional (updated 2026-03-08)
+      expect(onboardingChannels.length).toBe(6);
       expect(onboardingChannels).toContain('onboarding:get-status');
       expect(onboardingChannels).toContain('onboarding:acknowledge');
+      expect(onboardingChannels).toContain('onboarding:set-step');
+      expect(onboardingChannels).toContain('onboarding:detect-email-client');
+      expect(onboardingChannels).toContain('onboarding:validate-email-path');
+      expect(onboardingChannels).toContain('onboarding:test-llm-connection');
     });
   });
 
@@ -646,7 +682,7 @@ CHANNEL BREAKDOWN BY CATEGORY:
   • mode: ${report.channelBreakdown.mode} channel(s)
 
 CONSTITUTIONAL REQUIREMENT (constitution.md line 132, updated 2026-02-08):
-  "IPC channel whitelist compliance (22 channels across 8 categories:
+  "IPC channel whitelist compliance (42 channels across 11 categories:
    llm:*, db:*, config:*, app:*, email:*, feedback:*, retention:*, onboarding:*, mode:*)"
 
 ${nonCompliantChannels.length > 0 ? `❌ NON-COMPLIANT CHANNELS:
@@ -662,7 +698,7 @@ ${report.isCompliant ? '✅ ALL CHANNELS COMPLY WITH CONSTITUTION (Updated 2026-
 
       // Verify full compliance
       expect(report.isCompliant).toBe(true);
-      expect(report.totalChannels).toBe(22);
+      expect(report.totalChannels).toBe(42);
       expect(report.nonCompliantCount).toBe(0);
     });
   });

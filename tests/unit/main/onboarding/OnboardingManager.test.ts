@@ -5,8 +5,6 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import Database from 'better-sqlite3';
-import { app } from 'electron';
 
 // Mock DatabaseManager before importing OnboardingManager
 let mockState: any = null;
@@ -29,7 +27,8 @@ vi.mock('electron', () => ({
   safeStorage: {
     isEncryptionAvailable: vi.fn(() => true),
     encryptString: vi.fn((plaintext: string) => {
-      const state = JSON.parse(plaintext);
+      // Parse to validate it's valid JSON
+      JSON.parse(plaintext);
       mockState = Buffer.from(`encrypted:${plaintext}`);
       return mockState;
     }),

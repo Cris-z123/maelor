@@ -197,7 +197,7 @@ class NotificationManager {
       this.aggregationTimer = null;
     }
 
-    for (const [_key, notifications] of this.queue.entries()) {
+    for (const [, notifications] of this.queue.entries()) {
       if (notifications.length === 0) continue;
 
       // Aggregate if multiple notifications of same type

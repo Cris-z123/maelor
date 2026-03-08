@@ -4,8 +4,7 @@
  * Tests the notification system implementation
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { Notification, BrowserWindow } from 'electron';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import NotificationManager, {
   NotificationType,
   NotificationPriority,

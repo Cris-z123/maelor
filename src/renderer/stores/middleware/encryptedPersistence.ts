@@ -43,7 +43,7 @@ export function createEncryptedPersistence<T extends object>({
   name,
   sensitiveFields,
   safeStorage,
-  storage,
+  storage: _storage,
 }: EncryptedPersistenceConfig<T>) {
   const encryptionAvailable = safeStorage.isEncryptionAvailable();
 

@@ -10,6 +10,8 @@
 import DatabaseManager from '../database/Database.js';
 import { logger } from '../config/logger.js';
 import { safeStorage } from 'electron';
+import fs from 'fs';
+import * as path from 'path';
 
 /**
  * Onboarding state structure
@@ -232,11 +234,8 @@ class OnboardingManager {
    * Validate email client path
    * Checks if path exists and contains email files
    */
-  static validateEmailClientPath(path: string, clientType: string): boolean {
+  static validateEmailClientPath(path: string, _clientType: string): boolean {
     try {
-      const fs = require('fs');
-      const pathModule = require('path');
-
       // Check if path exists
       if (!fs.existsSync(path)) {
         return false;
@@ -250,7 +249,7 @@ class OnboardingManager {
 
       // Check for email files based on client type
       const hasEmailFiles = fs.readdirSync(path).some((file: string) => {
-        const ext = pathModule.extname(file).toLowerCase();
+        const ext = path.extname(file).toLowerCase();
         return ['.msf', '.mbx', '.mbox', '.eml'].includes(ext);
       });
 
@@ -327,17 +326,16 @@ class OnboardingManager {
    */
   static async detectEmailClient() {
     const { EmailClientDetector } = await import('./EmailClientDetector');
-    const detector = new EmailClientDetector();
 
     // Use platformDefaults for auto-detection
     const defaults = EmailClientDetector.platformDefaults();
     const clients = [];
 
-    for (const [type, path] of Object.entries(defaults)) {
-      if (path) {
+    for (const [type, clientPath] of Object.entries(defaults)) {
+      if (clientPath) {
         clients.push({
           type,
-          path,
+          path: clientPath,
           confidence: 'high'
         });
       }

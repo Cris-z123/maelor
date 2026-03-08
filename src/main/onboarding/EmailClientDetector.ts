@@ -8,6 +8,7 @@
  */
 
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 import { app } from 'electron';
 import { logger } from '../config/logger.js';
@@ -34,7 +35,17 @@ export interface ValidationResult {
   valid: boolean;
   error?: string;
   emailFileCount?: number;
+  clientType?: 'thunderbird' | 'outlook' | 'apple-mail';
 }
+
+/**
+ * Platform-specific default paths
+ */
+export type PlatformDefaults = {
+  readonly thunderbird: string;
+  readonly outlook: string;
+  readonly appleMail: string;
+};
 
 /**
  * Email Client Detector
@@ -393,6 +404,130 @@ class EmailClientDetector {
     ];
     return allClients.filter((client) => this.isClientSupported(client));
   }
+
+  /**
+   * Async validate email client path (T019)
+   * Checks if path exists and contains email files using fs/promises
+   * Returns validation result with detected client type
+   */
+  static async validatePathAsync(userPath: string): Promise<{
+    valid: boolean;
+    error?: string;
+    clientType?: 'thunderbird' | 'outlook' | 'apple-mail';
+  }> {
+    try {
+      // Check if path exists
+      await fsPromises.access(userPath);
+
+      // Read directory contents
+      const files = await fsPromises.readdir(userPath);
+
+      // Check for email files and determine client type
+      const clientType = this.detectClientTypeFromFiles(files);
+
+      if (!clientType) {
+        return {
+          valid: false,
+          error: 'No email files found in directory',
+        };
+      }
+
+      return {
+        valid: true,
+        clientType,
+      };
+    } catch (error) {
+      // Handle specific error codes
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return {
+          valid: false,
+          error: 'Path not found',
+        };
+      }
+
+      if ((error as NodeJS.ErrnoException).code === 'EACCES') {
+        return {
+          valid: false,
+          error: 'Permission denied',
+        };
+      }
+
+      // Generic error
+      return {
+        valid: false,
+        error: 'Path validation failed',
+      };
+    }
+  }
+
+  /**
+   * Detect client type from file list (T019 helper)
+   * Uses EMAIL_EXTENSIONS constant for consistency
+   * Priority: Check unique extensions first, then shared extensions
+   */
+  private static detectClientTypeFromFiles(files: string[]): 'thunderbird' | 'outlook' | 'apple-mail' | null {
+    // Convert files to lowercase for case-insensitive matching
+    const lowerFiles = files.map((f) => f.toLowerCase());
+
+    // Check for unique extensions first
+    const hasEmlx = lowerFiles.some((file) => file.endsWith('.emlx'));
+    const hasMsf = lowerFiles.some((file) => file.endsWith('.msf'));
+    const hasMbx = lowerFiles.some((file) => file.endsWith('.mbx'));
+    const hasPst = lowerFiles.some((file) => file.endsWith('.pst'));
+    const hasOst = lowerFiles.some((file) => file.endsWith('.ost'));
+
+    // .emlx is unique to Apple Mail
+    if (hasEmlx) return 'apple-mail';
+
+    // .msf and .mbx are unique to Thunderbird
+    if (hasMsf || hasMbx) return 'thunderbird';
+
+    // .pst and .ost are unique to Outlook
+    if (hasPst || hasOst) return 'outlook';
+
+    // .mbox is shared between Thunderbird and Apple Mail
+    // In this case, we need more context, but we'll default to Apple Mail
+    // since it's more commonly associated with .mbox files
+    const hasMbox = lowerFiles.some((file) => file.endsWith('.mbox'));
+    if (hasMbox) return 'apple-mail';
+
+    return null;
+  }
+
+  /**
+   * Platform-specific default paths for email clients (T018)
+   * Returns default executable/data paths for each client on current platform
+   */
+  static platformDefaults(): PlatformDefaults {
+    const platform = process.platform;
+
+    if (platform === 'win32') {
+      return {
+        thunderbird: 'C:\\Program Files\\Mozilla Thunderbird\\thunderbird.exe',
+        outlook: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\OUTLOOK.EXE',
+        appleMail: '', // Not available on Windows
+      };
+    }
+
+    if (platform === 'darwin') {
+      return {
+        thunderbird: '/Applications/Thunderbird.app/Contents/MacOS/thunderbird',
+        outlook: '/Applications/Microsoft Outlook.app/Contents/MacOS/Microsoft Outlook',
+        appleMail: '/System/Applications/Mail.app/Contents/MacOS/Mail',
+      };
+    }
+
+    if (platform === 'linux') {
+      return {
+        thunderbird: '/usr/bin/thunderbird',
+        outlook: '', // Not available on Linux
+        appleMail: '', // Not available on Linux
+      };
+    }
+
+    return { thunderbird: '', outlook: '', appleMail: '' };
+  }
 }
 
+export { EmailClientDetector };
 export default EmailClientDetector;

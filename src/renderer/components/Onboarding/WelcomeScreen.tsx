@@ -18,7 +18,7 @@ interface PermissionStatus {
 }
 
 export function WelcomeScreen(): React.ReactElement {
-  const [permissions, setPermissions] = useState<PermissionStatus>({
+  const [permissions] = useState<PermissionStatus>({
     fileSystem: 'pending',
     notifications: 'pending',
   });

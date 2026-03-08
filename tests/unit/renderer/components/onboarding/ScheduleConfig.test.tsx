@@ -1,7 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ScheduleConfig } from '@renderer/components/onboarding/ScheduleConfig'
-import * as onboardingStore from '@renderer/stores/onboardingStore'
 
 // Mock onboardingStore
 const mockSetScheduleTime = vi.fn()

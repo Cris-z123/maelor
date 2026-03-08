@@ -26,6 +26,14 @@ const ToastContext = React.createContext<{
 export function Toaster({ children }: { children?: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<ToastState[]>([])
 
+  const removeToast = React.useCallback((id: string) => {
+    setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, open: false } : t)))
+    // Remove from array after animation
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 300)
+  }, [])
+
   const addToast = React.useCallback((toast: ToastProps) => {
     const id = Math.random().toString(36).substr(2, 9)
     const newToast: ToastState = {
@@ -41,19 +49,11 @@ export function Toaster({ children }: { children?: React.ReactNode }) {
     setTimeout(() => {
       removeToast(id)
     }, duration)
-  }, [])
-
-  const removeToast = React.useCallback((id: string) => {
-    setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, open: false } : t)))
-    // Remove from array after animation
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 300)
-  }, [])
+  }, [removeToast])
 
   return (
     <ToastContext.Provider value={{ toasts, addToast, removeToast }}>
-      {props.children}
+      {children}
       <ToastViewport />
     </ToastContext.Provider>
   )
@@ -74,17 +74,11 @@ function ToastViewport() {
   )
 }
 
-function Toast({ title, description, variant = "default" }: ToastState) {
+function Toast({ id, title, description, variant = "default", open: _open }: ToastState) {
   const context = React.useContext(ToastContext)
   if (!context) return null
 
-  const { removeToast, id } = context
-
-  React.useEffect(() => {
-    if (!context.open) {
-      removeToast(id!)
-    }
-  }, [context.open, id, removeToast])
+  const { removeToast } = context
 
   const variantStyles = {
     default: "bg-background border-border",
@@ -105,7 +99,7 @@ function Toast({ title, description, variant = "default" }: ToastState) {
         {description && <div className="text-sm opacity-90">{description}</div>}
       </div>
       <button
-        onClick={() => removeToast(id!)}
+        onClick={() => removeToast(id)}
         className="absolute right-2 top-2 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-2 group-hover:opacity-100"
       >
         ✕

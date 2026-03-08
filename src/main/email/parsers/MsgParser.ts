@@ -19,6 +19,7 @@ import type { EmailParser, ParsedEmail } from './EmailParser.js';
 import { formatISO8601 } from '../../../shared/utils/dateUtils.js';
 
 // Load MsgReader dynamically to work around TypeScript NodeNext + CommonJS interop issue
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const MsgReader = require('@kenjiuno/msgreader');
 
 /**

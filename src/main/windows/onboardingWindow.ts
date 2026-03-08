@@ -37,16 +37,16 @@ export function createOnboardingWindow(): BrowserWindow {
     webPreferences: {
       contextIsolation: true,
       sandbox: true,
-      preload: path.join(__dirname, '../preload/index.js'),
+      preload: path.join(__dirname, '../../../electron/preload.js'),
     },
   });
 
   // Load onboarding page
   if (process.env.NODE_ENV === 'development') {
-    window.loadURL('http://localhost:5173/onboarding');
+    window.loadURL('http://localhost:3000/onboarding.html');
     window.webContents.openDevTools();
   } else {
-    window.loadFile(path.join(__dirname, '../renderer/onboarding.html'));
+    window.loadFile(path.join(__dirname, '../../renderer/onboarding.html'));
   }
 
   // Show window when ready

@@ -137,11 +137,15 @@ export const onboardingStore = create<OnboardingStore>((set, get) => ({
     try {
       const result = await ipcClient.detectEmailClient(get().emailClient.type);
 
-      if (result.detectedPath) {
+      // Find the detected path for the current client type
+      const currentClientType = get().emailClient.type;
+      const detectedClient = result.clients.find((c) => c.type === currentClientType);
+
+      if (detectedClient && detectedClient.path) {
         set((state) => ({
           emailClient: {
             ...state.emailClient,
-            detectedPath: result.detectedPath,
+            detectedPath: detectedClient.path,
             isDetecting: false,
           },
         }));
@@ -151,7 +155,7 @@ export const onboardingStore = create<OnboardingStore>((set, get) => ({
             ...state.emailClient,
             isDetecting: false,
           },
-          error: result.error || 'No email client detected',
+          error: `No ${currentClientType} installation detected on ${result.platform}`,
         }));
       }
     } catch (error) {

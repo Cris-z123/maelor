@@ -41,6 +41,15 @@ const electronAPI = {
     fetchMeta: (filePath, format) => ipcRenderer.invoke('email:fetch-meta', { filePath, format }),
   },
 
+  // Onboarding Operations
+  onboarding: {
+    getStatus: () => ipcRenderer.invoke('onboarding:get-status'),
+    setStep: (step) => ipcRenderer.invoke('onboarding:set-step', step),
+    detectEmailClient: (type) => ipcRenderer.invoke('onboarding:detect-email-client', type),
+    validateEmailPath: (path) => ipcRenderer.invoke('onboarding:validate-email-path', path),
+    testLLMConnection: (config) => ipcRenderer.invoke('onboarding:test-llm-connection', config),
+  },
+
   // Event listeners for renderer-to-main communication
   on: (channel, callback) => {
     const validChannels = [

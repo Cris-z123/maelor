@@ -12,7 +12,7 @@ export const ConfidenceDisplaySchema = z.object({
   level: ConfidenceLevelSchema,
 });
 
-export const FeedbackTypeSchema = z.enum([
+export const ReportFeedbackTypeSchema = z.enum([
   'content_error',
   'priority_error',
   'not_actionable',
@@ -21,11 +21,11 @@ export const FeedbackTypeSchema = z.enum([
 
 export const FeedbackSubmissionSchema = z.object({
   itemId: z.string().uuid(),
-  feedbackType: FeedbackTypeSchema,
+  feedbackType: ReportFeedbackTypeSchema,
   timestamp: z.number(),
 });
 
-export const ItemSourceRefSchema = z.object({
+export const ReportItemSourceRefSchema = z.object({
   hash: z.string(),
   senderName: z.string(),
   senderDomain: z.string(),
@@ -45,11 +45,16 @@ export const ReportDisplayItemSchema = z.object({
   }),
   confidence: ConfidenceDisplaySchema,
   sourceStatus: z.enum(['verified', 'unverified']),
-  sourceEmails: z.array(ItemSourceRefSchema),
+  sourceEmails: z.array(ReportItemSourceRefSchema),
 });
 
 // Type exports
 export type ConfidenceLevel = z.infer<typeof ConfidenceLevelSchema>;
 export type ConfidenceDisplay = z.infer<typeof ConfidenceDisplaySchema>;
-export type FeedbackType = z.infer<typeof FeedbackTypeSchema>;
+export type ReportFeedbackType = z.infer<typeof ReportFeedbackTypeSchema>;
 export type ReportDisplayItem = z.infer<typeof ReportDisplayItemSchema>;
+
+// Legacy exports for compatibility
+export const FeedbackTypeSchema = ReportFeedbackTypeSchema;
+export type FeedbackType = ReportFeedbackType;
+export const ItemSourceRefSchema = ReportItemSourceRefSchema;

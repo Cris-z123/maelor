@@ -11,7 +11,8 @@ import DatabaseManager from '../database/Database.js';
 import { logger } from '../config/logger.js';
 import { safeStorage } from 'electron';
 import fs from 'fs';
-import * as path from 'path';
+import path from 'path';
+import type { Database } from 'better-sqlite3';
 
 /**
  * Onboarding state structure
@@ -69,7 +70,10 @@ export type OnboardingUpdate = Partial<Omit<OnboardingState, 'lastUpdated'>>;
  */
 class OnboardingManager {
   private static readonly CONFIG_KEY = 'onboarding';
-  private static readonly db = DatabaseManager.getDatabase();
+
+  private static get db(): Database {
+    return DatabaseManager.getDatabase();
+  }
 
   /**
    * Get current onboarding state
@@ -234,21 +238,21 @@ class OnboardingManager {
    * Validate email client path
    * Checks if path exists and contains email files
    */
-  static validateEmailClientPath(path: string, _clientType: string): boolean {
+  static validateEmailClientPath(userPath: string): boolean {
     try {
       // Check if path exists
-      if (!fs.existsSync(path)) {
+      if (!fs.existsSync(userPath)) {
         return false;
       }
 
       // Check if directory
-      const stat = fs.statSync(path);
+      const stat = fs.statSync(userPath);
       if (!stat.isDirectory()) {
         return false;
       }
 
       // Check for email files based on client type
-      const hasEmailFiles = fs.readdirSync(path).some((file: string) => {
+      const hasEmailFiles = fs.readdirSync(userPath).some((file: string) => {
         const ext = path.extname(file).toLowerCase();
         return ['.msf', '.mbx', '.mbox', '.eml'].includes(ext);
       });
@@ -256,7 +260,7 @@ class OnboardingManager {
       return hasEmailFiles;
     } catch (error) {
       logger.error('OnboardingManager', 'Path validation failed', {
-        path,
+        path: userPath,
         error: error instanceof Error ? error.message : String(error),
       });
       return false;
@@ -325,7 +329,7 @@ class OnboardingManager {
    * Detect email client (T020)
    */
   static async detectEmailClient() {
-    const { EmailClientDetector } = await import('./EmailClientDetector');
+    const { EmailClientDetector } = await import('./EmailClientDetector.js');
 
     // Use platformDefaults for auto-detection
     const defaults = EmailClientDetector.platformDefaults();
@@ -350,10 +354,9 @@ class OnboardingManager {
   /**
    * Validate email path (T020)
    */
-  static async validateEmailPath(path: string, _clientType: string) {
-    const { EmailClientDetector } = await import('./EmailClientDetector');
-    const detector = new EmailClientDetector();
-    return await detector.validatePathAsync(path);
+  static async validateEmailPath(userPath: string, _clientType: string) {
+    const { EmailClientDetector } = await import('./EmailClientDetector.js');
+    return await EmailClientDetector.validatePathAsync(userPath);
   }
 
   /**
@@ -364,7 +367,7 @@ class OnboardingManager {
     endpoint: string;
     apiKey: string;
   }) {
-    const { ConnectionTester } = await import('../llm/ConnectionTester');
+    const { ConnectionTester } = await import('../llm/ConnectionTester.js');
 
     const result = await ConnectionTester.testConnection({
       mode: config.mode as 'local' | 'remote',

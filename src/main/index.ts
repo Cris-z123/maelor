@@ -15,7 +15,7 @@ import { registerSettingsValidators } from './ipc/validators/settings.js';
 import { checkForUpdates, downloadAndInstallUpdate } from './app/lifecycle.js';
 import { errorHandler } from './error-handler.js';
 import { createOnboardingWindow } from './windows/onboardingWindow.js';
-import { OnboardingManager } from './onboarding/OnboardingManager.js';
+import OnboardingManager from './onboarding/OnboardingManager.js';
 
 /**
  * Main Process Entry Point
@@ -33,6 +33,11 @@ class Application {
   private isQuitting = false;
 
   constructor() {
+    // Disable CSP warning in development (Vite HMR requires unsafe-eval)
+    if (process.env.NODE_ENV === 'development') {
+      process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+    }
+
     // Initialize global error handler (T104 - per plan v2.7)
     errorHandler.initialize();
     logger.info('ErrorHandler', 'Global error handler initialized');
@@ -86,7 +91,7 @@ class Application {
       logger.info('Config', 'Configuration initialized');
 
       // Setup IPC handlers
-      this.setupIPCHandlers();
+      await this.setupIPCHandlers();
       logger.info('IPC', 'IPC handlers registered');
 
       // Check onboarding status and create appropriate window
@@ -187,7 +192,7 @@ class Application {
   /**
    * Setup IPC handlers
    */
-  private setupIPCHandlers(): void {
+  private async setupIPCHandlers(): Promise<void> {
     // Register onboarding validators (T014 - IPC Validation System)
     const db = DatabaseManager.getDatabase();
     registerOnboardingValidators(IPCValidatorRegistry, db);
@@ -196,6 +201,44 @@ class Application {
     // Register settings validators (T014 - IPC Validation System)
     registerSettingsValidators(IPCValidatorRegistry, db);
     logger.info('IPC', 'Settings validators registered (Zod validation enabled)');
+
+    // Register Onboarding IPC handlers
+    const { handleGetStatusV2, handleSetStepV2, handleDetectEmailClientV2, handleValidateEmailPathV2, handleTestLLMConnectionV2 } = await import('./ipc/handlers/onboardingHandler.js');
+
+    // Remove any existing handlers first (in case validators already registered them)
+    ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_GET_STATUS);
+    ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_SET_STEP);
+    ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_DETECT_EMAIL_CLIENT);
+    ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_VALIDATE_EMAIL_PATH);
+    ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_TEST_LLM_CONNECTION);
+
+    // Now register the new handlers
+    ipcMain.handle(IPC_CHANNELS.ONBOARDING_GET_STATUS, async (_event) => {
+      logger.debug('IPC', 'Onboarding get-status request received');
+      return await handleGetStatusV2(_event);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.ONBOARDING_SET_STEP, async (_event, step) => {
+      logger.debug('IPC', 'Onboarding set-step request received', { step });
+      return await handleSetStepV2(_event, step);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.ONBOARDING_DETECT_EMAIL_CLIENT, async (_event, type) => {
+      logger.debug('IPC', 'Onboarding detect-email-client request received', { type });
+      return await handleDetectEmailClientV2(_event, type);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.ONBOARDING_VALIDATE_EMAIL_PATH, async (_event, path, clientType) => {
+      logger.debug('IPC', 'Onboarding validate-email-path request received', { path, clientType });
+      return await handleValidateEmailPathV2(_event, path, clientType);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.ONBOARDING_TEST_LLM_CONNECTION, async (_event, config) => {
+      logger.debug('IPC', 'Onboarding test-llm-connection request received');
+      return await handleTestLLMConnectionV2(_event, config);
+    });
+
+    logger.info('IPC', 'Onboarding handlers registered');
 
     // Note: Other handlers (generation, reports, notifications)
     // will be migrated to validator system incrementally in T018+

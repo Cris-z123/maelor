@@ -290,6 +290,81 @@ class OnboardingManager {
       currentStep: 3,
     });
   }
+
+  /**
+   * Get onboarding status for IPC (T020)
+   * TODO: Implement with database integration
+   */
+  static async getStatus() {
+    // TODO: Implement with database integration
+    return {
+      completed: false,
+      currentStep: 'welcome',
+      totalSteps: 3
+    };
+  }
+
+  /**
+   * Set onboarding step (T020)
+   * TODO: Implement with database integration and step transition validation
+   */
+  static async setStep(step: string) {
+    // TODO: Implement with database integration and step transition validation
+    return true;
+  }
+
+  /**
+   * Detect email client (T020)
+   */
+  static async detectEmailClient() {
+    const { EmailClientDetector } = await import('./EmailClientDetector');
+    const detector = new EmailClientDetector();
+
+    // Use platformDefaults for auto-detection
+    const defaults = EmailClientDetector.platformDefaults();
+    const clients = [];
+
+    for (const [type, path] of Object.entries(defaults)) {
+      if (path) {
+        clients.push({
+          type,
+          path,
+          confidence: 'high'
+        });
+      }
+    }
+
+    return {
+      clients,
+      platform: process.platform
+    };
+  }
+
+  /**
+   * Validate email path (T020)
+   */
+  static async validateEmailPath(path: string, _clientType: string) {
+    const { EmailClientDetector } = await import('./EmailClientDetector');
+    const detector = new EmailClientDetector();
+    return await detector.validatePathAsync(path);
+  }
+
+  /**
+   * Test LLM connection (T020)
+   */
+  static async testLLMConnection(config: {
+    mode: string;
+    endpoint: string;
+    apiKey: string;
+  }) {
+    // TODO: Implement actual LLM connection test with timeout
+    // For now, return success
+    return {
+      success: true,
+      responseTime: 150,
+      model: 'gpt-4'
+    };
+  }
 }
 
 export default OnboardingManager;

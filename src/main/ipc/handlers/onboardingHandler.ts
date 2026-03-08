@@ -80,6 +80,71 @@ export async function handleGetStatus(
 }
 
 /**
+ * New IPC handlers for onboarding (T020)
+ * These handlers delegate to OnboardingManager for business logic
+ */
+
+/**
+ * Get onboarding status (new version for T020)
+ */
+export async function handleGetStatusV2(_event: Electron.IpcMainInvokeEvent) {
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  return await OnboardingManager.getStatus();
+}
+
+/**
+ * Set onboarding step with validation (T020)
+ */
+const VALID_STEPS = ['welcome', 'email-client', 'schedule', 'llm-config', 'complete'];
+
+export async function handleSetStepV2(
+  _event: Electron.IpcMainInvokeEvent,
+  step: string
+) {
+  if (!VALID_STEPS.includes(step)) {
+    throw new Error('Invalid onboarding step');
+  }
+
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  return await OnboardingManager.setStep(step);
+}
+
+/**
+ * Detect email client (T020)
+ */
+export async function handleDetectEmailClientV2(_event: Electron.IpcMainInvokeEvent) {
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  return await OnboardingManager.detectEmailClient();
+}
+
+/**
+ * Validate email path (T020)
+ */
+export async function handleValidateEmailPathV2(
+  _event: Electron.IpcMainInvokeEvent,
+  path: string,
+  clientType: string
+) {
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  return await OnboardingManager.validateEmailPath(path, clientType);
+}
+
+/**
+ * Test LLM connection (T020)
+ */
+export async function handleTestLLMConnectionV2(
+  _event: Electron.IpcMainInvokeEvent,
+  config: { mode: string; endpoint: string; apiKey: string }
+) {
+  if (!config.endpoint || !config.apiKey) {
+    throw new Error('Invalid LLM configuration');
+  }
+
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  return await OnboardingManager.testLLMConnection(config);
+}
+
+/**
  * Set onboarding step
  */
 export async function handleSetStep(

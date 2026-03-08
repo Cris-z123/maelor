@@ -3,6 +3,6 @@
  */
 
 export { useReportStore } from './reportStore';
+export { onboardingStore } from './onboardingStore';
 // Future stores will be added here:
-// export { useOnboardingStore } from './onboardingStore';
 // export { useSettingsStore } from './settingsStore';

@@ -7,14 +7,32 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import Database from 'better-sqlite3';
 import { app } from 'electron';
-import DatabaseManager from '../../../src/main/database/Database.js';
-import OnboardingManager from '../../../src/main/onboarding/OnboardingManager.js';
+
+// Mock DatabaseManager before importing OnboardingManager
+let mockState: any = null;
+vi.mock('@/database/Database', () => {
+  const mockDb = {
+    prepare: vi.fn(() => ({
+      get: vi.fn(() => mockState),
+      run: vi.fn(),
+    })),
+  };
+  return {
+    default: {
+      getDatabase: vi.fn(() => mockDb),
+    },
+  };
+});
 
 // Mock Electron safeStorage
 vi.mock('electron', () => ({
   safeStorage: {
     isEncryptionAvailable: vi.fn(() => true),
-    encryptString: vi.fn((plaintext: string) => Buffer.from(`encrypted:${plaintext}`)),
+    encryptString: vi.fn((plaintext: string) => {
+      const state = JSON.parse(plaintext);
+      mockState = Buffer.from(`encrypted:${plaintext}`);
+      return mockState;
+    }),
     decryptString: vi.fn((encrypted: Buffer) => {
       const data = encrypted.toString();
       if (data.startsWith('encrypted:')) {
@@ -32,22 +50,20 @@ vi.mock('electron', () => ({
   },
 }));
 
+// Mock ConnectionTester
+vi.mock('@/llm/ConnectionTester', () => ({
+  ConnectionTester: {
+    testConnection: vi.fn(),
+  },
+}));
+
+import OnboardingManager from '@/onboarding/OnboardingManager';
+
 describe('T011: OnboardingManager Implementation', () => {
-  let db: Database.Database;
-
   beforeEach(() => {
-    // Create in-memory database for testing
-    db = new Database(':memory:');
-    DatabaseManager.setInstanceForTesting(db);
-
-    // Initialize schema
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS user_config (
-        config_key TEXT PRIMARY KEY,
-        config_value BLOB NOT NULL,
-        updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-      ) STRICT;
-    `);
+    // Reset mocks and state before each test
+    mockState = null;
+    vi.clearAllMocks();
   });
 
   describe('State Management', () => {
@@ -81,6 +97,19 @@ describe('T011: OnboardingManager Implementation', () => {
       const update = {
         completed: true,
         currentStep: 3 as const,
+        emailClient: {
+          type: 'thunderbird' as const,
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+        llm: {
+          mode: 'remote' as const,
+          localEndpoint: 'http://localhost:11434',
+          remoteEndpoint: 'https://api.openai.com/v1',
+          apiKey: 'test',
+          connectionStatus: 'success' as const,
+        },
       };
 
       OnboardingManager.updateState(update);
@@ -93,7 +122,16 @@ describe('T011: OnboardingManager Implementation', () => {
 
   describe('Step Validation', () => {
     it('should reject moving backward from step 2 to step 1', () => {
-      OnboardingManager.updateState({ currentStep: 2 });
+      // First set up valid state at step 2
+      OnboardingManager.updateState({
+        currentStep: 2,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+      });
 
       expect(() => {
         OnboardingManager.updateState({ currentStep: 1 });
@@ -115,6 +153,17 @@ describe('T011: OnboardingManager Implementation', () => {
     });
 
     it('should validate schedule hour range (0-23)', () => {
+      // First set up valid state at step 2
+      OnboardingManager.updateState({
+        currentStep: 2,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+      });
+
       expect(() => {
         OnboardingManager.updateState({
           currentStep: 3,
@@ -127,6 +176,17 @@ describe('T011: OnboardingManager Implementation', () => {
     });
 
     it('should validate schedule minute range (0-59)', () => {
+      // First set up valid state at step 2
+      OnboardingManager.updateState({
+        currentStep: 2,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+      });
+
       expect(() => {
         OnboardingManager.updateState({
           currentStep: 3,
@@ -171,9 +231,19 @@ describe('T011: OnboardingManager Implementation', () => {
 
   describe('Completion', () => {
     it('should complete onboarding after successful LLM test', () => {
-      // Setup: step 3 with successful connection
+      // Setup: step 3 with successful connection and validated email client
       OnboardingManager.updateState({
         currentStep: 3,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+        schedule: {
+          generationTime: { hour: 18, minute: 0 },
+          skipWeekends: true,
+        },
         llm: {
           mode: 'remote',
           localEndpoint: 'http://localhost:11434',
@@ -192,7 +262,22 @@ describe('T011: OnboardingManager Implementation', () => {
     it('should return completion status', () => {
       expect(OnboardingManager.isComplete()).toBe(false);
 
-      OnboardingManager.updateState({ completed: true });
+      OnboardingManager.updateState({
+        completed: true,
+        emailClient: {
+          type: 'thunderbird',
+          path: '/test',
+          detectedPath: null,
+          validated: true,
+        },
+        llm: {
+          mode: 'remote',
+          localEndpoint: 'http://localhost:11434',
+          remoteEndpoint: 'https://api.openai.com/v1',
+          apiKey: 'test',
+          connectionStatus: 'success',
+        },
+      });
 
       expect(OnboardingManager.isComplete()).toBe(true);
     });
@@ -204,6 +289,106 @@ describe('T011: OnboardingManager Implementation', () => {
       const validator = OnboardingManager.validateEmailClientPath;
 
       expect(typeof validator).toBe('function');
+    });
+  });
+
+  describe('T027: TODO Method Implementations', () => {
+    beforeEach(() => {
+      // Reset state before T027 tests
+      OnboardingManager.resetState();
+    });
+
+    describe('getStatus()', () => {
+      it('should return status with correct structure', async () => {
+        const status = await OnboardingManager.getStatus();
+
+        expect(status).toHaveProperty('completed');
+        expect(status).toHaveProperty('currentStep');
+        expect(status).toHaveProperty('totalSteps');
+        expect(status.totalSteps).toBe(3);
+        expect(typeof status.currentStep).toBe('string');
+        expect(status.currentStep).toMatch(/^step-[1-3]$/);
+      });
+    });
+
+    describe('setStep()', () => {
+      it('should set step-1 from step name', async () => {
+        const result = await OnboardingManager.setStep('step-1');
+        expect(result).toBe(true);
+      });
+
+      it('should throw error for invalid step name', async () => {
+        await expect(OnboardingManager.setStep('invalid')).rejects.toThrow('Invalid step name');
+      });
+
+      it('should throw error for empty string', async () => {
+        await expect(OnboardingManager.setStep('')).rejects.toThrow('Invalid step name');
+      });
+
+      it('should throw error for step-4', async () => {
+        await expect(OnboardingManager.setStep('step-4')).rejects.toThrow('Invalid step name');
+      });
+    });
+
+    describe('testLLMConnection()', () => {
+      it('should test LLM connection and return result', async () => {
+        // Mock ConnectionTester
+        const { ConnectionTester } = await import('@/llm/ConnectionTester');
+        vi.mocked(ConnectionTester).testConnection.mockResolvedValue({
+          success: true,
+          responseTime: 150,
+          model: 'gpt-4',
+        });
+
+        const result = await OnboardingManager.testLLMConnection({
+          mode: 'remote',
+          endpoint: 'https://api.openai.com/v1',
+          apiKey: 'test-key',
+        });
+
+        expect(result.success).toBe(true);
+        expect(result.responseTime).toBe(150);
+        expect(result.model).toBe('gpt-4');
+      });
+
+      it('should handle connection failure', async () => {
+        // Mock ConnectionTester
+        const { ConnectionTester } = await import('@/llm/ConnectionTester');
+        vi.mocked(ConnectionTester).testConnection.mockResolvedValue({
+          success: false,
+          error: 'Connection failed',
+        });
+
+        const result = await OnboardingManager.testLLMConnection({
+          mode: 'remote',
+          endpoint: 'https://api.openai.com/v1',
+          apiKey: 'invalid-key',
+        });
+
+        expect(result.success).toBe(false);
+        expect(result.error).toBe('Connection failed');
+      });
+
+      it('should call ConnectionTester with correct config', async () => {
+        // Mock ConnectionTester
+        const { ConnectionTester } = await import('@/llm/ConnectionTester');
+        vi.mocked(ConnectionTester).testConnection.mockResolvedValue({
+          success: true,
+          responseTime: 200,
+        });
+
+        await OnboardingManager.testLLMConnection({
+          mode: 'local',
+          endpoint: 'http://localhost:11434',
+          apiKey: '',
+        });
+
+        expect(ConnectionTester.testConnection).toHaveBeenCalledWith({
+          mode: 'local',
+          endpoint: 'http://localhost:11434',
+          apiKey: '',
+        });
+      });
     });
   });
 });

@@ -66,10 +66,10 @@ This is an Electron desktop application with main/renderer process separation:
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T018 [P] [US1] Unit test for EmailClientDetector.platformDefaults in tests/unit/main/onboarding/EmailClientDetector.test.ts covering Windows/macOS/Linux path detection
-- [ ] T019 [P] [US1] Unit test for EmailClientDetector.validatePath in tests/unit/main/onboarding/EmailClientDetector.test.ts covering invalid path, no email files scenarios
-- [ ] T020 [P] [US1] Integration test for onboarding IPC channels (onboarding:get-status, onboarding:set-step, onboarding:detect-email-client, onboarding:validate-email-path, onboarding:test-llm-connection) in tests/integration/ipc/onboarding.test.ts
-- [ ] T021 [P] [US1] Component test for WelcomeScreen in tests/unit/renderer/components/onboarding/WelcomeScreen.test.tsx
+- [X] T018 [P] [US1] Unit test for EmailClientDetector.platformDefaults in tests/unit/main/onboarding/EmailClientDetector.test.ts covering Windows/macOS/Linux path detection
+- [X] T019 [P] [US1] Unit test for EmailClientDetector.validatePath in tests/unit/main/onboarding/EmailClientDetector.test.ts covering invalid path, no email files scenarios
+- [X] T020 [P] [US1] Integration test for onboarding IPC channels (onboarding:get-status, onboarding:set-step, onboarding:detect-email-client, onboarding:validate-email-path, onboarding:test-llm-connection) in tests/integration/ipc/onboarding.test.ts
+- [X] T021 [P] [US1] Component test for WelcomeScreen in tests/unit/renderer/components/onboarding/WelcomeScreen.test.tsx
 
 ### Implementation for User Story 1
 

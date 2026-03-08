@@ -14,6 +14,8 @@ import { registerOnboardingValidators } from './ipc/validators/onboarding.js';
 import { registerSettingsValidators } from './ipc/validators/settings.js';
 import { checkForUpdates, downloadAndInstallUpdate } from './app/lifecycle.js';
 import { errorHandler } from './error-handler.js';
+import { createOnboardingWindow } from './windows/onboardingWindow.js';
+import { OnboardingManager } from './onboarding/OnboardingManager.js';
 
 /**
  * Main Process Entry Point
@@ -27,6 +29,7 @@ import { errorHandler } from './error-handler.js';
 
 class Application {
   private mainWindow: BrowserWindow | null = null;
+  private onboardingWindow: BrowserWindow | null = null;
   private isQuitting = false;
 
   constructor() {
@@ -86,9 +89,14 @@ class Application {
       this.setupIPCHandlers();
       logger.info('IPC', 'IPC handlers registered');
 
-      // Create main window
-      this.createMainWindow();
-      logger.info('Window', 'Main window created');
+      // Check onboarding status and create appropriate window
+      if (!OnboardingManager.isComplete()) {
+        this.createOnboardingWindow();
+        logger.info('Window', 'Onboarding window created (first launch)');
+      } else {
+        this.createMainWindow();
+        logger.info('Window', 'Main window created (onboarding complete)');
+      }
 
       // Check for updates (if in remote mode)
       const config = await ConfigManager.get(['llm.mode']);
@@ -103,6 +111,24 @@ class Application {
       logger.error('Application', 'Failed to initialize application', error);
       throw error;
     }
+  }
+
+  /**
+   * Create onboarding wizard window
+   */
+  private createOnboardingWindow(): void {
+    this.onboardingWindow = createOnboardingWindow();
+
+    // Handle onboarding window closed
+    this.onboardingWindow.on('closed', () => {
+      this.onboardingWindow = null;
+
+      // If onboarding completed, create main window
+      if (OnboardingManager.isComplete()) {
+        this.createMainWindow();
+      }
+      logger.info('Window', 'Onboarding window closed');
+    });
   }
 
   /**
@@ -293,7 +319,11 @@ class Application {
   private onActivate(): void {
     // On macOS, re-create window when dock icon is clicked
     if (BrowserWindow.getAllWindows().length === 0) {
-      this.createMainWindow();
+      if (!OnboardingManager.isComplete()) {
+        this.createOnboardingWindow();
+      } else {
+        this.createMainWindow();
+      }
     }
   }
 

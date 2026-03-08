@@ -238,7 +238,6 @@ describe('T012: EmailClientDetector Implementation', () => {
 describe('EmailClientDetector.validatePath', () => {
   const mockAccess = vi.mocked(fsPromises.access);
   const mockReaddir = vi.mocked(fsPromises.readdir);
-  const mockStat = vi.mocked(fsPromises.stat);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -287,10 +286,10 @@ describe('EmailClientDetector.validatePath', () => {
     expect(mockReaddir).toHaveBeenCalledWith(emptyPath);
   });
 
-  it('should detect Thunderbird email files (.msf, .wdseml)', async () => {
+  it('should detect Thunderbird email files (.msf, .mbx, .mbox)', async () => {
     const thunderbirdPath = '/thunderbird/profile';
     mockAccess.mockResolvedValue(undefined);
-    mockReaddir.mockResolvedValue(['Inbox.msf', 'sent.wdseml', 'Trash.msf']);
+    mockReaddir.mockResolvedValue(['Inbox.msf', 'sent.mbx', 'Trash.mbox']);
 
     const result = await EmailClientDetector.validatePathAsync(thunderbirdPath);
 

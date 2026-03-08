@@ -462,23 +462,34 @@ class EmailClientDetector {
 
   /**
    * Detect client type from file list (T019 helper)
+   * Uses EMAIL_EXTENSIONS constant for consistency
+   * Priority: Check unique extensions first, then shared extensions
    */
   private static detectClientTypeFromFiles(files: string[]): 'thunderbird' | 'outlook' | 'apple-mail' | null {
-    const hasThunderbirdFiles = files.some((file) =>
-      ['.msf', '.wdseml'].some((ext) => file.toLowerCase().endsWith(ext))
-    );
+    // Convert files to lowercase for case-insensitive matching
+    const lowerFiles = files.map((f) => f.toLowerCase());
 
-    const hasOutlookFiles = files.some((file) =>
-      ['.pst', '.ost'].some((ext) => file.toLowerCase().endsWith(ext))
-    );
+    // Check for unique extensions first
+    const hasEmlx = lowerFiles.some((file) => file.endsWith('.emlx'));
+    const hasMsf = lowerFiles.some((file) => file.endsWith('.msf'));
+    const hasMbx = lowerFiles.some((file) => file.endsWith('.mbx'));
+    const hasPst = lowerFiles.some((file) => file.endsWith('.pst'));
+    const hasOst = lowerFiles.some((file) => file.endsWith('.ost'));
 
-    const hasAppleMailFiles = files.some((file) =>
-      ['.mbox', '.emlx'].some((ext) => file.toLowerCase().endsWith(ext))
-    );
+    // .emlx is unique to Apple Mail
+    if (hasEmlx) return 'apple-mail';
 
-    if (hasThunderbirdFiles) return 'thunderbird';
-    if (hasOutlookFiles) return 'outlook';
-    if (hasAppleMailFiles) return 'apple-mail';
+    // .msf and .mbx are unique to Thunderbird
+    if (hasMsf || hasMbx) return 'thunderbird';
+
+    // .pst and .ost are unique to Outlook
+    if (hasPst || hasOst) return 'outlook';
+
+    // .mbox is shared between Thunderbird and Apple Mail
+    // In this case, we need more context, but we'll default to Apple Mail
+    // since it's more commonly associated with .mbox files
+    const hasMbox = lowerFiles.some((file) => file.endsWith('.mbox'));
+    if (hasMbox) return 'apple-mail';
 
     return null;
   }

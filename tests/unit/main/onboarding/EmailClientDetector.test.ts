@@ -6,10 +6,52 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { app } from 'electron';
-import EmailClientDetector, {
-  type DetectionResult,
-  type ValidationResult,
-} from '../../../src/main/onboarding/EmailClientDetector.js';
+import { EmailClientDetector, type DetectionResult, type ValidationResult } from '@/main/onboarding/EmailClientDetector';
+
+/**
+ * T018: EmailClientDetector.platformDefaults Unit Tests
+ *
+ * Tests the platform-specific default paths for email clients
+ */
+describe('EmailClientDetector.platformDefaults', () => {
+  it('should return default paths for current platform', () => {
+    const defaults = EmailClientDetector.platformDefaults();
+
+    expect(defaults).toHaveProperty('thunderbird');
+    expect(defaults).toHaveProperty('outlook');
+    expect(defaults).toHaveProperty('appleMail');
+  });
+
+  it('should return absolute paths', () => {
+    const defaults = EmailClientDetector.platformDefaults();
+
+    Object.values(defaults).forEach((path) => {
+      if (path) {
+        // Skip empty strings for unsupported clients
+        if (process.platform === 'win32') {
+          expect(path).toMatch(/^[A-Z]:\\/);
+        } else {
+          expect(path).toMatch(/^\//);
+        }
+      }
+    });
+  });
+
+  it('should only return paths for current platform', () => {
+    const defaults = EmailClientDetector.platformDefaults();
+    const platform = process.platform;
+
+    // Apple Mail should be empty on Windows
+    if (platform === 'win32') {
+      expect(defaults.appleMail).toBe('');
+    }
+
+    // Outlook should be empty on Linux
+    if (platform === 'linux') {
+      expect(defaults.outlook).toBe('');
+    }
+  });
+});
 
 // Mock Electron app
 vi.mock('electron', () => ({

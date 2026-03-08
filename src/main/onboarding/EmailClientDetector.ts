@@ -393,6 +393,41 @@ class EmailClientDetector {
     ];
     return allClients.filter((client) => this.isClientSupported(client));
   }
+
+  /**
+   * Get platform-specific default paths for email clients (T018)
+   * Returns default executable/data paths for each client on current platform
+   */
+  static platformDefaults(): Record<string, string> {
+    const platform = process.platform;
+
+    if (platform === 'win32') {
+      return {
+        thunderbird: 'C:\\Program Files\\Mozilla Thunderbird\\thunderbird.exe',
+        outlook: 'C:\\Program Files\\Microsoft Office\\root\\Office16\\OUTLOOK.EXE',
+        appleMail: '', // Not available on Windows
+      };
+    }
+
+    if (platform === 'darwin') {
+      return {
+        thunderbird: '/Applications/Thunderbird.app/Contents/MacOS/thunderbird',
+        outlook: '/Applications/Microsoft Outlook.app/Contents/MacOS/Microsoft Outlook',
+        appleMail: '/System/Applications/Mail.app/Contents/MacOS/Mail',
+      };
+    }
+
+    if (platform === 'linux') {
+      return {
+        thunderbird: '/usr/bin/thunderbird',
+        outlook: '', // Not available on Linux
+        appleMail: '', // Not available on Linux
+      };
+    }
+
+    return { thunderbird: '', outlook: '', appleMail: '' };
+  }
 }
 
+export { EmailClientDetector };
 export default EmailClientDetector;

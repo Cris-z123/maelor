@@ -293,23 +293,32 @@ class OnboardingManager {
 
   /**
    * Get onboarding status for IPC (T020)
-   * TODO: Implement with database integration
    */
   static async getStatus() {
-    // TODO: Implement with database integration
+    const state = this.getState();
     return {
-      completed: false,
-      currentStep: 'welcome',
-      totalSteps: 3
+      completed: state.completed,
+      currentStep: `step-${state.currentStep}`, // Map 1/2/3 to step-1/step-2/step-3
+      totalSteps: 3,
     };
   }
 
   /**
    * Set onboarding step (T020)
-   * TODO: Implement with database integration and step transition validation
    */
-  static async setStep(step: string) {
-    // TODO: Implement with database integration and step transition validation
+  static async setStep(stepName: string): Promise<boolean> {
+    const stepMap: Record<string, 1 | 2 | 3> = {
+      'step-1': 1,
+      'step-2': 2,
+      'step-3': 3,
+    };
+
+    const stepNum = stepMap[stepName];
+    if (!stepNum) {
+      throw new Error(`Invalid step name: ${stepName}`);
+    }
+
+    this.updateState({ currentStep: stepNum });
     return true;
   }
 
@@ -357,13 +366,22 @@ class OnboardingManager {
     endpoint: string;
     apiKey: string;
   }) {
-    // TODO: Implement actual LLM connection test with timeout
-    // For now, return success
-    return {
-      success: true,
-      responseTime: 150,
-      model: 'gpt-4'
-    };
+    const { ConnectionTester } = await import('../llm/ConnectionTester');
+
+    const result = await ConnectionTester.testConnection({
+      mode: config.mode as 'local' | 'remote',
+      endpoint: config.endpoint,
+      apiKey: config.apiKey,
+    });
+
+    // Update connection status in state
+    if (result.success) {
+      this.updateLLMConnectionStatus('success', result.responseTime);
+    } else {
+      this.updateLLMConnectionStatus('failed');
+    }
+
+    return result;
   }
 }
 

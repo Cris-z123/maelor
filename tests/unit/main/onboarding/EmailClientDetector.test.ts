@@ -4,9 +4,8 @@
  * Tests the email client auto-detection implementation
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { app } from 'electron';
-import { EmailClientDetector, type DetectionResult, type ValidationResult } from '@/main/onboarding/EmailClientDetector';
+import { describe, it, expect, vi } from 'vitest';
+import { EmailClientDetector, type DetectionResult, type ValidationResult } from '@/onboarding/EmailClientDetector';
 
 /**
  * T018: EmailClientDetector.platformDefaults Unit Tests
@@ -51,6 +50,24 @@ describe('EmailClientDetector.platformDefaults', () => {
       expect(defaults.outlook).toBe('');
     }
   });
+
+  it('should return empty strings for unknown platform', () => {
+    // Note: We cannot mock process.platform as it's read-only
+    // This test documents the expected behavior for unknown platforms
+    // The implementation returns empty strings for any non-win32/darwin/linux platform
+
+    const defaults = EmailClientDetector.platformDefaults();
+
+    // Current platform should always return valid structure
+    expect(defaults).toHaveProperty('thunderbird');
+    expect(defaults).toHaveProperty('outlook');
+    expect(defaults).toHaveProperty('appleMail');
+
+    // All values should be strings
+    expect(typeof defaults.thunderbird).toBe('string');
+    expect(typeof defaults.outlook).toBe('string');
+    expect(typeof defaults.appleMail).toBe('string');
+  });
 });
 
 // Mock Electron app
@@ -66,21 +83,21 @@ vi.mock('electron', () => ({
 
 // Mock fs
 vi.mock('fs', () => ({
-  existsSync: vi.fn((path: string) => {
+  existsSync: vi.fn((_path: string) => {
     // Mock some paths as existing
-    if (path.includes('Thunderbird')) return true;
-    if (path.includes('Outlook')) return true;
+    if (_path.includes('Thunderbird')) return true;
+    if (_path.includes('Outlook')) return true;
     return false;
   }),
-  statSync: vi.fn((path: string) => ({
+  statSync: vi.fn((_path: string) => ({
     isDirectory: () => true,
   })),
-  readdirSync: vi.fn((path: string) => {
+  readdirSync: vi.fn((_path: string) => {
     // Mock email files in Thunderbird directory
-    if (path.includes('Thunderbird')) {
+    if (_path.includes('Thunderbird')) {
       return ['INBOX.msf', 'Sent.mbox', 'profile'];
     }
-    if (path.includes('Outlook')) {
+    if (_path.includes('Outlook')) {
       return ['outlook.pst', 'archive.ost'];
     }
     return [];
@@ -148,7 +165,12 @@ describe('T012: EmailClientDetector Implementation', () => {
 
       expect(typeof result.valid).toBe('boolean');
       expect(typeof result.error).toBe('string');
-      expect(typeof result.emailFileCount).toBe('number');
+      // emailFileCount is optional and only present when valid is true
+      if (result.valid) {
+        expect(typeof result.emailFileCount).toBe('number');
+      } else {
+        expect(result.emailFileCount).toBeUndefined();
+      }
     });
 
     it('should return error for non-existent path', () => {

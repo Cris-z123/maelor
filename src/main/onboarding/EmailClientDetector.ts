@@ -37,6 +37,15 @@ export interface ValidationResult {
 }
 
 /**
+ * Platform-specific default paths
+ */
+export type PlatformDefaults = {
+  readonly thunderbird: string;
+  readonly outlook: string;
+  readonly appleMail: string;
+};
+
+/**
  * Email Client Detector
  *
  * Features:
@@ -395,10 +404,10 @@ class EmailClientDetector {
   }
 
   /**
-   * Get platform-specific default paths for email clients (T018)
+   * Platform-specific default paths for email clients (T018)
    * Returns default executable/data paths for each client on current platform
    */
-  static platformDefaults(): Record<string, string> {
+  static platformDefaults(): PlatformDefaults {
     const platform = process.platform;
 
     if (platform === 'win32') {

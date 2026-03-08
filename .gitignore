@@ -62,6 +62,13 @@ coverage/
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
+
+# Test databases (better-sqlite3)
+tests/test-*.db
+tests/test-*.db-shm
+tests/test-*.db-wal
 
 # Temporary files
 .cache/

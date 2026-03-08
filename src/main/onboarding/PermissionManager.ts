@@ -72,16 +72,8 @@ class PermissionManager {
         return false;
       }
 
-      const permission = Notification.permissionChecker?.();
-
-      if (permission === 'granted') {
-        return true;
-      }
-
-      if (permission === 'denied') {
-        return false;
-      }
-
+      // Electron Notification doesn't have a permission property
+      // Notifications are either supported or not
       return true;
     } catch (error) {
       logger.error('PermissionManager', 'Failed to request notification permission', {
@@ -97,11 +89,9 @@ class PermissionManager {
    */
   static async checkPermissions(): Promise<PermissionCheckResult> {
     const fileSystem: PermissionStatus = 'granted';
-    const notifications: PermissionStatus =
-      Notification.isSupported() &&
-      (!Notification.permissionChecker || Notification.permissionChecker?.() !== 'denied')
-        ? 'granted'
-        : 'denied';
+    const notifications: PermissionStatus = Notification.isSupported()
+      ? 'granted'
+      : 'denied';
 
     return {
       fileSystem,

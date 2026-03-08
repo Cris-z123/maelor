@@ -66,8 +66,21 @@ class IPCClient {
       onboarding: {
         getStatus: async () => ({
           completed: false,
-          currentStep: 1,
-          canProceed: true
+          currentStep: 'step-1',
+          totalSteps: 3
+        }),
+        setStep: async () => true,
+        detectEmailClient: async () => ({
+          clients: [],
+          platform: process.platform || 'unknown'
+        }),
+        validateEmailPath: async () => ({
+          valid: false,
+          error: 'Mock: Not running in Electron'
+        }),
+        testLLMConnection: async () => ({
+          success: false,
+          error: 'Mock: Not running in Electron'
         })
       }
     };
@@ -292,11 +305,11 @@ class IPCClient {
    * Channel: onboarding:detect-email-client
    */
   async detectEmailClient(type: 'thunderbird' | 'outlook' | 'apple-mail'): Promise<{
-    detectedPath: string | null;
-    error?: string;
+    clients: Array<{ type: string; path: string; confidence: string }>;
+    platform: string;
   }> {
     try {
-      const response = await this.api.onboarding.detectEmailClient({ type });
+      const response = await this.api.onboarding.detectEmailClient(type);
       return response;
     } catch (error) {
       console.error('[IPC] Onboarding detect-email-client failed:', error);

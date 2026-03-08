@@ -73,17 +73,17 @@ This is an Electron desktop application with main/renderer process separation:
 
 ### Implementation for User Story 1
 
-- [ ] T022 [P] [US1] Create onboardingStore in src/renderer/stores/onboardingStore.ts with Zustand for tracking currentStep, emailClient config, schedule, llm config
-- [ ] T023 [P] [US1] Create WelcomeScreen component in src/renderer/components/onboarding/WelcomeScreen.tsx with app introduction and file system permission requests
-- [ ] T024 [P] [US1] Create EmailClientConfig component in src/renderer/components/onboarding/EmailClientConfig.tsx with radio buttons (Thunderbird/Outlook/Apple Mail), auto-detection display, manual path selection
-- [ ] T025 [P] [US1] Create ScheduleConfig component in src/renderer/components/onboarding/ScheduleConfig.tsx with time picker (hour/minute), skip weekends toggle
-- [ ] T026 [P] [US1] Create LLMConfig component in src/renderer/components/onboarding/LLMConfig.tsx with mode switch (remote/local), endpoint inputs, API key field, test connection button
-- [ ] T027 [US1] Implement onboarding IPC handlers in src/main/onboarding/ipc-handlers.ts for channels: onboarding:get-status, onboarding:set-step, onboarding:detect-email-client, onboarding:validate-email-path, onboarding:test-llm-connection
-- [ ] T028 [US1] Implement LLM connection test with timeout (30 seconds) and response time tracking in src/main/llm/ConnectionTester.ts
-- [ ] T029 [US1] Implement step validation logic (email path required before step 2, LLM connection success before completion) in src/main/onboarding/OnboardingManager.ts
-- [ ] T030 [US1] Create onboarding wizard container in src/renderer/components/onboarding/OnboardingWizard.tsx with step navigation, progress indicator, resume from last completed step
-- [ ] T031 [US1] Add file system permission request handling with restricted mode fallback if denied in src/main/onboarding/PermissionManager.ts
-- [ ] T032 [US1] Handle first launch detection and redirect to onboarding wizard in src/main/index.ts
+- [X] T022 [P] [US1] Create onboardingStore in src/renderer/stores/onboardingStore.ts with Zustand for tracking currentStep, emailClient config, schedule, llm config
+- [X] T023 [P] [US1] Create WelcomeScreen component in src/renderer/components/onboarding/WelcomeScreen.tsx with app introduction and file system permission requests
+- [X] T024 [P] [US1] Create EmailClientConfig component in src/renderer/components/onboarding/EmailClientConfig.tsx with radio buttons (Thunderbird/Outlook/Apple Mail), auto-detection display, manual path selection
+- [X] T025 [P] [US1] Create ScheduleConfig component in src/renderer/components/onboarding/ScheduleConfig.tsx with time picker (hour/minute), skip weekends toggle
+- [X] T026 [P] [US1] Create LLMConfig component in src/renderer/components/onboarding/LLMConfig.tsx with mode switch (remote/local), endpoint inputs, API key field, test connection button
+- [X] T027 [US1] Implement onboarding IPC handlers in src/main/ipc/handlers/onboardingHandler.ts for channels: onboarding:get-status, onboarding:set-step, onboarding:detect-email-client, onboarding:validate-email-path, onboarding:test-llm-connection
+- [X] T028 [US1] Implement LLM connection test with timeout (30 seconds) and response time tracking in src/main/llm/ConnectionTester.ts
+- [X] T029 [US1] Implement step validation logic (email path required before step 2, LLM connection success before completion) in src/main/onboarding/OnboardingManager.ts
+- [X] T030 [US1] Create onboarding wizard container in src/renderer/components/onboarding/OnboardingWizard.tsx with step navigation, progress indicator, resume from last completed step
+- [X] T031 [US1] Add file system permission request handling with restricted mode fallback if denied in src/main/onboarding/PermissionManager.ts
+- [X] T032 [US1] Handle first launch detection and redirect to onboarding wizard in src/main/index.ts
 
 **Checkpoint**: At this point, User Story 1 should be fully functional - users can complete setup and access main interface
 

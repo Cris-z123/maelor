@@ -20,7 +20,7 @@ export const ScheduleConfigSchema = z.object({
   skipWeekends: z.boolean(),
 });
 
-export const LLMConfigSchema = z.object({
+export const OnboardingLLMConfigSchema = z.object({
   mode: z.enum(['local', 'remote']),
   localEndpoint: z.string().url('请输入有效的本地服务地址'),
   remoteEndpoint: z.string().url('请输入有效的HTTPS地址'),
@@ -33,12 +33,16 @@ export const OnboardingStateSchema = z.object({
   currentStep: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   emailClient: EmailClientConfigSchema,
   schedule: ScheduleConfigSchema,
-  llm: LLMConfigSchema,
+  llm: OnboardingLLMConfigSchema,
   lastUpdated: z.number(),
 });
 
 // Type exports
 export type EmailClientConfig = z.infer<typeof EmailClientConfigSchema>;
 export type ScheduleConfig = z.infer<typeof ScheduleConfigSchema>;
-export type LLMConfig = z.infer<typeof LLMConfigSchema>;
+export type OnboardingLLMConfig = z.infer<typeof OnboardingLLMConfigSchema>;
 export type OnboardingState = z.infer<typeof OnboardingStateSchema>;
+
+// Legacy exports for compatibility
+export const LLMConfigSchema = OnboardingLLMConfigSchema;
+export type LLMConfig = OnboardingLLMConfig;

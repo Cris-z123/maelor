@@ -9,6 +9,12 @@ export default defineConfig({
   build: {
     outDir: '../../dist/renderer',
     emptyOutDir: true,
+    rollupOptions: {
+      input: {
+        index: path.resolve(__dirname, 'src/renderer/index.html'),
+        onboarding: path.resolve(__dirname, 'src/renderer/onboarding.html'),
+      },
+    },
   },
   resolve: {
     alias: {

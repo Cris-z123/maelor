@@ -14,6 +14,7 @@
  */
 
 import type { Database } from 'better-sqlite3';
+import { logger } from '../../config/logger.js';
 
 interface OnboardingStatus {
   hasAcknowledgedDisclosure: boolean;
@@ -88,7 +89,7 @@ export async function handleGetStatus(
  * Get onboarding status (new version for T020)
  */
 export async function handleGetStatusV2(_event: Electron.IpcMainInvokeEvent) {
-  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
   return await OnboardingManager.getStatus();
 }
 
@@ -105,16 +106,29 @@ export async function handleSetStepV2(
     throw new Error('Invalid onboarding step');
   }
 
-  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
   return await OnboardingManager.setStep(step);
 }
 
 /**
  * Detect email client (T020)
  */
-export async function handleDetectEmailClientV2(_event: Electron.IpcMainInvokeEvent) {
-  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
-  return await OnboardingManager.detectEmailClient();
+export async function handleDetectEmailClientV2(
+  _event: Electron.IpcMainInvokeEvent,
+  _type?: 'thunderbird' | 'outlook' | 'apple-mail'
+) {
+  try {
+    logger.info('OnboardingHandler', 'Detect email client requested', { type: _type });
+    const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
+    const result = await OnboardingManager.detectEmailClient();
+    logger.info('OnboardingHandler', 'Detect email client succeeded', result);
+    return result;
+  } catch (error) {
+    logger.error('OnboardingHandler', 'Detect email client failed', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
 }
 
 /**
@@ -125,7 +139,7 @@ export async function handleValidateEmailPathV2(
   path: string,
   clientType: string
 ) {
-  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
   return await OnboardingManager.validateEmailPath(path, clientType);
 }
 
@@ -140,7 +154,7 @@ export async function handleTestLLMConnectionV2(
     throw new Error('Invalid LLM configuration');
   }
 
-  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager');
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
   return await OnboardingManager.testLLMConnection(config);
 }
 

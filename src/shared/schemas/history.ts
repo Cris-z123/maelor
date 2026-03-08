@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ConfidenceLevelSchema } from './reports';
+import { ConfidenceLevelSchema } from './reports.js';
 
 /**
  * Zod schemas for historical search

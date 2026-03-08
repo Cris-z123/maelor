@@ -4,8 +4,18 @@
  * Tests the email client auto-detection implementation
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EmailClientDetector, type DetectionResult, type ValidationResult } from '@/onboarding/EmailClientDetector';
+import fsPromises from 'fs/promises';
+
+// Mock fs/promises for validatePath tests
+vi.mock('fs/promises', () => ({
+  default: {
+    access: vi.fn(),
+    readdir: vi.fn(),
+    stat: vi.fn(),
+  },
+}));
 
 /**
  * T018: EmailClientDetector.platformDefaults Unit Tests
@@ -217,5 +227,115 @@ describe('T012: EmailClientDetector Implementation', () => {
         expect(typeof thunderbirdResult).toBe('object');
       }
     });
+  });
+});
+
+/**
+ * T019: EmailClientDetector.validatePath Unit Tests
+ *
+ * Tests the path validation functionality
+ */
+describe('EmailClientDetector.validatePath', () => {
+  const mockAccess = vi.mocked(fsPromises.access);
+  const mockReaddir = vi.mocked(fsPromises.readdir);
+  const mockStat = vi.mocked(fsPromises.stat);
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should reject non-existent paths', async () => {
+    const nonExistentPath = '/nonexistent/path';
+    const enoentError: NodeJS.ErrnoException = new Error('Path not found');
+    enoentError.code = 'ENOENT';
+    enoentError.errno = -2;
+
+    mockAccess.mockRejectedValue(enoentError);
+
+    const result = await EmailClientDetector.validatePathAsync(nonExistentPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Path not found');
+    expect(mockAccess).toHaveBeenCalledWith(nonExistentPath);
+  });
+
+  it('should reject paths without permission', async () => {
+    const noPermissionPath = '/root/protected/path';
+    const eaccesError: NodeJS.ErrnoException = new Error('Permission denied');
+    eaccesError.code = 'EACCES';
+    eaccesError.errno = -13;
+
+    mockAccess.mockRejectedValue(eaccesError);
+
+    const result = await EmailClientDetector.validatePathAsync(noPermissionPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('Permission denied');
+    expect(mockAccess).toHaveBeenCalledWith(noPermissionPath);
+  });
+
+  it('should reject paths with no email files', async () => {
+    const emptyPath = '/empty/directory';
+    mockAccess.mockResolvedValue(undefined);
+    mockReaddir.mockResolvedValue(['document.txt', 'image.jpg', 'video.mp4']);
+
+    const result = await EmailClientDetector.validatePathAsync(emptyPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toBe('No email files found in directory');
+    expect(mockAccess).toHaveBeenCalledWith(emptyPath);
+    expect(mockReaddir).toHaveBeenCalledWith(emptyPath);
+  });
+
+  it('should detect Thunderbird email files (.msf, .wdseml)', async () => {
+    const thunderbirdPath = '/thunderbird/profile';
+    mockAccess.mockResolvedValue(undefined);
+    mockReaddir.mockResolvedValue(['Inbox.msf', 'sent.wdseml', 'Trash.msf']);
+
+    const result = await EmailClientDetector.validatePathAsync(thunderbirdPath);
+
+    expect(result.valid).toBe(true);
+    expect(result.clientType).toBe('thunderbird');
+    expect(mockAccess).toHaveBeenCalledWith(thunderbirdPath);
+    expect(mockReaddir).toHaveBeenCalledWith(thunderbirdPath);
+  });
+
+  it('should detect Outlook email files (.pst, .ost)', async () => {
+    const outlookPath = '/outlook/data';
+    mockAccess.mockResolvedValue(undefined);
+    mockReaddir.mockResolvedValue(['Outlook.pst', 'archive.ost', 'backup.pst']);
+
+    const result = await EmailClientDetector.validatePathAsync(outlookPath);
+
+    expect(result.valid).toBe(true);
+    expect(result.clientType).toBe('outlook');
+    expect(mockAccess).toHaveBeenCalledWith(outlookPath);
+    expect(mockReaddir).toHaveBeenCalledWith(outlookPath);
+  });
+
+  it('should reject unsupported file types', async () => {
+    const invalidPath = '/invalid/files';
+    mockAccess.mockResolvedValue(undefined);
+    mockReaddir.mockResolvedValue(['document.txt', 'image.jpg', 'data.json']);
+
+    const result = await EmailClientDetector.validatePathAsync(invalidPath);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('No email files');
+    expect(mockAccess).toHaveBeenCalledWith(invalidPath);
+    expect(mockReaddir).toHaveBeenCalledWith(invalidPath);
+  });
+
+  it('should detect Apple Mail email files (.mbox, .emlx)', async () => {
+    const appleMailPath = '/library/mail/v8';
+    mockAccess.mockResolvedValue(undefined);
+    mockReaddir.mockResolvedValue(['inbox.mbox', 'sent.emlx', 'archive.mbox']);
+
+    const result = await EmailClientDetector.validatePathAsync(appleMailPath);
+
+    expect(result.valid).toBe(true);
+    expect(result.clientType).toBe('apple-mail');
+    expect(mockAccess).toHaveBeenCalledWith(appleMailPath);
+    expect(mockReaddir).toHaveBeenCalledWith(appleMailPath);
   });
 });

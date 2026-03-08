@@ -8,6 +8,7 @@
  */
 
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import path from 'path';
 import { app } from 'electron';
 import { logger } from '../config/logger.js';
@@ -34,6 +35,7 @@ export interface ValidationResult {
   valid: boolean;
   error?: string;
   emailFileCount?: number;
+  clientType?: 'thunderbird' | 'outlook' | 'apple-mail';
 }
 
 /**
@@ -401,6 +403,84 @@ class EmailClientDetector {
       'apple-mail',
     ];
     return allClients.filter((client) => this.isClientSupported(client));
+  }
+
+  /**
+   * Async validate email client path (T019)
+   * Checks if path exists and contains email files using fs/promises
+   * Returns validation result with detected client type
+   */
+  static async validatePathAsync(userPath: string): Promise<{
+    valid: boolean;
+    error?: string;
+    clientType?: 'thunderbird' | 'outlook' | 'apple-mail';
+  }> {
+    try {
+      // Check if path exists
+      await fsPromises.access(userPath);
+
+      // Read directory contents
+      const files = await fsPromises.readdir(userPath);
+
+      // Check for email files and determine client type
+      const clientType = this.detectClientTypeFromFiles(files);
+
+      if (!clientType) {
+        return {
+          valid: false,
+          error: 'No email files found in directory',
+        };
+      }
+
+      return {
+        valid: true,
+        clientType,
+      };
+    } catch (error) {
+      // Handle specific error codes
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        return {
+          valid: false,
+          error: 'Path not found',
+        };
+      }
+
+      if ((error as NodeJS.ErrnoException).code === 'EACCES') {
+        return {
+          valid: false,
+          error: 'Permission denied',
+        };
+      }
+
+      // Generic error
+      return {
+        valid: false,
+        error: 'Path validation failed',
+      };
+    }
+  }
+
+  /**
+   * Detect client type from file list (T019 helper)
+   */
+  private static detectClientTypeFromFiles(files: string[]): 'thunderbird' | 'outlook' | 'apple-mail' | null {
+    const hasThunderbirdFiles = files.some((file) =>
+      ['.msf', '.wdseml'].some((ext) => file.toLowerCase().endsWith(ext))
+    );
+
+    const hasOutlookFiles = files.some((file) =>
+      ['.pst', '.ost'].some((ext) => file.toLowerCase().endsWith(ext))
+    );
+
+    const hasAppleMailFiles = files.some((file) =>
+      ['.mbox', '.emlx'].some((ext) => file.toLowerCase().endsWith(ext))
+    );
+
+    if (hasThunderbirdFiles) return 'thunderbird';
+    if (hasOutlookFiles) return 'outlook';
+    if (hasAppleMailFiles) return 'apple-mail';
+
+    return null;
   }
 
   /**

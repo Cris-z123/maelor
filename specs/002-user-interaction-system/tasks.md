@@ -97,9 +97,9 @@ This is an Electron desktop application with main/renderer process separation:
 
 ### Tests for User Story 2
 
-- [ ] T033 [P] [US2] Unit test for confidence level classification (getConfidenceLevel, getConfidenceDisplay) in tests/unit/shared/reports/confidence.test.ts
-- [ ] T034 [P] [US2] Integration test for reports IPC channels (reports:get-today, reports:get-by-date, reports:expand-item, reports:copy-search-term) in tests/integration/ipc/reports.test.ts
-- [ ] T035 [P] [US2] Component test for ItemCard expand/collapse animation in tests/unit/renderer/components/reports/ItemCard.test.tsx
+- [X] T033 [P] [US2] Unit test for confidence level classification (getConfidenceLevel, getConfidenceDisplay) in tests/unit/shared/reports/confidence.test.ts
+- [X] T034 [P] [US2] Integration test for reports IPC channels (reports:get-today, reports:get-by-date, reports:expand-item, reports:copy-search-term) in tests/integration/ipc/reports.test.ts
+- [X] T035 [P] [US2] Component test for ItemCard expand/collapse animation in tests/unit/renderer/components/reports/ItemCard.test.tsx
 
 ### Implementation for User Story 2
 

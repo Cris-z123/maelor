@@ -14,7 +14,7 @@ import { ipcClient } from '@renderer/services/ipc';
  * Report store interface
  */
 interface ReportStore extends ReportViewState {
-  // Actions
+  // Existing actions
   loadReport: (reportDate: string) => Promise<void>;
   generateItems: (
     emails: Array<{ filePath: string; format: string }>,
@@ -26,6 +26,13 @@ interface ReportStore extends ReportViewState {
   filterByConfidence: (minConfidence: number) => void;
   filterByStatus: (status: 'verified' | 'unverified') => void;
   sortByConfidence: (order: 'asc' | 'desc') => void;
+
+  // NEW actions for US2
+  toggleExpand: (itemId: string) => void;
+  expandAll: () => void;
+  collapseAll: () => void;
+  setAiExplanationMode: (enabled: boolean) => void;
+  setItems: (items: DisplayItem[]) => void; // Helper for testing
 }
 
 /**
@@ -37,6 +44,8 @@ const initialState: ReportViewState = {
   error: null,
   reportDate: null,
   summary: null,
+  expandedItems: new Set<string>(),
+  aiExplanationMode: false,
 };
 
 /**
@@ -195,6 +204,52 @@ export const useReportStore = create<ReportStore>((set) => ({
       return { items: sorted };
     });
   },
+
+  /**
+   * Toggle item expansion state
+   */
+  toggleExpand: (itemId: string) => {
+    set((state) => {
+      const newExpanded = new Set(state.expandedItems);
+      if (newExpanded.has(itemId)) {
+        newExpanded.delete(itemId);
+      } else {
+        newExpanded.add(itemId);
+      }
+      return { expandedItems: newExpanded };
+    });
+  },
+
+  /**
+   * Expand all items
+   */
+  expandAll: () => {
+    set((state) => {
+      const allIds = state.items.map((item) => item.id);
+      return { expandedItems: new Set(allIds) };
+    });
+  },
+
+  /**
+   * Collapse all items
+   */
+  collapseAll: () => {
+    set({ expandedItems: new Set() });
+  },
+
+  /**
+   * Set AI explanation mode
+   */
+  setAiExplanationMode: (enabled: boolean) => {
+    set({ aiExplanationMode: enabled });
+  },
+
+  /**
+   * Set items (helper for testing)
+   */
+  setItems: (items: DisplayItem[]) => {
+    set({ items });
+  },
 }));
 
 /**
@@ -214,5 +269,19 @@ export const selectMediumConfidenceItems = (state: ReportStore) =>
   state.items.filter((item) => item.confidence_score >= 0.6 && item.confidence_score < 0.8);
 export const selectLowConfidenceItems = (state: ReportStore) =>
   state.items.filter((item) => item.confidence_score < 0.6);
+
+// NEW selectors for US2
+export const selectExpandedItems = (state: ReportStore) => state.expandedItems;
+export const selectIsItemExpanded = (itemId: string) => (state: ReportStore) =>
+  state.expandedItems.has(itemId);
+export const selectAiExplanationMode = (state: ReportStore) => state.aiExplanationMode;
+
+// Grouped selectors for ReportView sections
+export const selectCompletedItems = (state: ReportStore) =>
+  state.items.filter((item) => item.item_type === 'completed');
+export const selectPendingItems = (state: ReportStore) =>
+  state.items.filter((item) => item.item_type === 'pending');
+export const selectReviewCount = (state: ReportStore) =>
+  state.items.filter((item) => item.confidence_score < 0.6).length;
 
 export default useReportStore;

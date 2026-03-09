@@ -221,4 +221,62 @@ export class ConfidenceThresholds {
       return levels.includes(result.level);
     });
   }
+
+  /**
+   * Get confidence level from score
+   * Per T033 task specification:
+   * - ≥0.8: "high"
+   * - 0.6-0.79: "medium"
+   * - <0.6: "low"
+   * - Invalid scores: "low" (fail-safe)
+   *
+   * Unlike classify(), this method is fail-safe and returns 'low' for invalid inputs
+   * instead of throwing errors.
+   *
+   * @param score - Confidence score (0-1)
+   * @returns Confidence level
+   */
+  static getConfidenceLevel(score: number): 'high' | 'medium' | 'low' {
+    // Handle invalid scores (fail-safe - return 'low')
+    if (typeof score !== 'number' || isNaN(score) || score < 0 || score > 1) {
+      console.warn(`[ConfidenceThresholds] Invalid score: ${score}, returning 'low'`);
+      return 'low';
+    }
+
+    // Classify based on thresholds
+    if (score >= this.HIGH_THRESHOLD) return 'high';
+    if (score >= this.MEDIUM_THRESHOLD) return 'medium';
+    return 'low';
+  }
+
+  /**
+   * Get display label and level for confidence score
+   * Per T033 task specification with Chinese labels:
+   * - High: "✓准确"
+   * - Medium: "!需复核"
+   * - Low: "!!需复核"
+   *
+   * Unlike classify(), this method is fail-safe and returns 'low' for invalid inputs
+   * instead of throwing errors.
+   *
+   * @param score - Confidence score (0-1)
+   * @returns Object with label (Chinese) and level
+   */
+  static getConfidenceDisplay(score: number): {
+    label: string;
+    level: 'high' | 'medium' | 'low';
+  } {
+    const level = this.getConfidenceLevel(score);
+
+    const labels: Record<'high' | 'medium' | 'low', string> = {
+      high: '✓准确',
+      medium: '!需复核',
+      low: '!!需复核'
+    };
+
+    return {
+      label: labels[level],
+      level
+    };
+  }
 }

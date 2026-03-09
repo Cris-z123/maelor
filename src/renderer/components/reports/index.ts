@@ -7,6 +7,7 @@
 export { ConfidenceBadge } from './ConfidenceBadge';
 export { ConfidenceSummaryBanner } from './ConfidenceSummaryBanner';
 export { FeedbackButtons } from './FeedbackButtons';
+export { ItemCard } from './ItemCard';
 export {
   FeedbackDialog,
   type FeedbackDialogProps,

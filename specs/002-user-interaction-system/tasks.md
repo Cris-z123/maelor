@@ -103,13 +103,13 @@ This is an Electron desktop application with main/renderer process separation:
 
 ### Implementation for User Story 2
 
-- [ ] T036 [P] [US2] Create reportStore in src/renderer/stores/reportStore.ts with Zustand for today's report data, expanded items, AI explanation mode
-- [ ] T037 [P] [US2] Create ConfidenceBadge component in src/renderer/components/reports/ConfidenceBadge.tsx with visual indicators (✓准确, !需复核, !!需复核) per confidence levels
-- [ ] T038 [P] [US2] Create SummaryBanner component in src/renderer/components/reports/SummaryBanner.tsx with template "今天共处理 {total} 封邮件,其中 {review_count} 件需要你重点关注"
-- [ ] T039 [P] [US2] Create ItemCard component in src/renderer/components/reports/ItemCard.tsx with confidence badge, title, priority, feedback buttons, expand/collapse icon, 300ms animation
-- [ ] T040 [P] [US2] Create ItemDetails component in src/renderer/components/reports/ItemDetails.tsx with extraction rationale, email metadata list, "Copy Search Term" button
-- [ ] T041 [P] [US2] Create EmptyState component in src/renderer/components/shared/EmptyState.tsx with scheduled time display, "Generate Now" button for no-report scenario
-- [ ] T042 [P] [US2] Create celebratory empty state variant in src/renderer/components/reports/CelebratoryEmptyState.tsx for zero items scenario
+- [X] T036 [P] [US2] Create reportStore in src/renderer/stores/reportStore.ts with Zustand for today's report data, expanded items, AI explanation mode
+- [X] T037 [P] [US2] Create ConfidenceBadge component in src/renderer/components/reports/ConfidenceBadge.tsx with visual indicators (✓准确, !需复核, !!需复核) per confidence levels
+- [X] T038 [P] [US2] Create SummaryBanner component in src/renderer/components/reports/SummaryBanner.tsx with template "今天共处理 {total} 封邮件,其中 {review_count} 件需要你重点关注"
+- [X] T039 [P] [US2] Create ItemCard component in src/renderer/components/reports/ItemCard.tsx with confidence badge, title, priority, feedback buttons, expand/collapse icon, 300ms animation
+- [X] T040 [P] [US2] Create ItemDetails component in src/renderer/components/reports/ItemDetails.tsx with extraction rationale, email metadata list, "Copy Search Term" button
+- [X] T041 [P] [US2] Create EmptyState component in src/renderer/components/shared/EmptyState.tsx with scheduled time display, "Generate Now" button for no-report scenario
+- [X] T042 [P] [US2] Create celebratory empty state variant in src/renderer/components/reports/CelebratoryEmptyState.tsx for zero items scenario
 - [X] T043 [US2] Implement reports IPC handlers in src/main/ipc/handlers.ts for channels: reports:get-today, reports:get-by-date, reports:expand-item, reports:copy-search-term
 
 **Note**: Satisfied by existing T034 implementation with more efficient architecture:
@@ -119,10 +119,10 @@ This is an Electron desktop application with main/renderer process separation:
 - reports:copy-search-term: Handled via shared utility (SearchTermGenerator) - more efficient than IPC
 
 T034 implementation provides better performance by reducing IPC overhead for state-managed features.
-- [ ] T044 [US2] Implement confidence display mode switching (default vs AI explanation) in src/renderer/components/reports/ReportView.tsx based on settings.display.aiExplanationMode
-- [ ] T045 [US2] Create ReportView container in src/renderer/components/reports/ReportView.tsx with completed/pending sections, expand all/collapse all, keyboard navigation (Tab, Enter, Esc)
-- [ ] T046 [US2] Implement search keyword generation (format: `from:{sender} {subject_keywords}`) in src/main/reports/SearchTermGenerator.ts
-- [ ] T047 [US2] Add clipboard integration for "Copy Search Term" with 1-second confirmation toast in src/renderer/hooks/useClipboard.ts
+- [X] T044 [US2] Implement confidence display mode switching (default vs AI explanation) in src/renderer/components/reports/ReportView.tsx based on settings.display.aiExplanationMode
+- [X] T045 [US2] Create ReportView container in src/renderer/components/reports/ReportView.tsx with completed/pending sections, expand all/collapse all, keyboard navigation (Tab, Enter, Esc)
+- [X] T046 [US2] Implement search keyword generation (format: `from:{sender} {subject_keywords}`) in src/main/reports/SearchTermGenerator.ts
+- [X] T047 [US2] Add clipboard integration for "Copy Search Term" with 1-second confirmation toast in src/renderer/hooks/useClipboard.ts
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work - users can complete setup and view daily reports
 

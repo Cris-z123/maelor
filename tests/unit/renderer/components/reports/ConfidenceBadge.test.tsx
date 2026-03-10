@@ -21,14 +21,14 @@ describe('ConfidenceBadge - Default Mode', () => {
   });
 
   it('should display gray badge for medium confidence (0.6-0.79)', () => {
-    const { container } = render(<ConfidenceBadge confidence={0.7} mode="default" />);
+    render(<ConfidenceBadge confidence={0.7} mode="default" />);
     const badge = screen.getByTestId('confidence-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveTextContent('[建议复核]');
   });
 
   it('should display red badge for low confidence (<0.6)', () => {
-    const { container } = render(<ConfidenceBadge confidence={0.5} mode="default" />);
+    render(<ConfidenceBadge confidence={0.5} mode="default" />);
     const badge = screen.getByTestId('confidence-badge');
     expect(badge).toBeInTheDocument();
     expect(badge).toHaveTextContent('[来源待确认]');
@@ -85,7 +85,7 @@ describe('ConfidenceBadge - Mode Switching', () => {
 
 describe('ConfidenceBadge - Custom Styling', () => {
   it('should apply custom className', () => {
-    const { container } = render(
+    render(
       <ConfidenceBadge confidence={0.85} mode="default" className="custom-class" />
     );
     const badge = screen.getByTestId('confidence-badge');
@@ -93,7 +93,7 @@ describe('ConfidenceBadge - Custom Styling', () => {
   });
 
   it('should maintain default styling with custom className', () => {
-    const { container } = render(
+    render(
       <ConfidenceBadge confidence={0.85} mode="default" className="custom-class" />
     );
     const badge = screen.getByTestId('confidence-badge');

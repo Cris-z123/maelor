@@ -18,8 +18,12 @@ import { MsgParser } from '@/email/parsers/MsgParser';
 
 // Hoist mocks for fs and @kenjiuno/msgreader
 const mockReadFileSync = vi.hoisted(() => vi.fn());
-const mockMsgReaderClass = vi.hoisted(() => vi.fn());
-const mockGetFileData = vi.hoisted(() => vi.fn());
+
+// Create a proper constructor mock for MsgReader
+const createMockMsgReaderInstance = vi.hoisted(() => ({
+  getFileData: vi.fn(),
+}));
+const mockMsgReaderConstructor = vi.hoisted(() => vi.fn(() => createMockMsgReaderInstance));
 
 // Mock fs module
 vi.mock('fs', () => ({
@@ -29,9 +33,9 @@ vi.mock('fs', () => ({
   readFileSync: mockReadFileSync,
 }));
 
-// Mock @kenjiuno/msgreader
+// Mock @kenjiuno/msgreader - properly mock the constructor
 vi.mock('@kenjiuno/msgreader', () => ({
-  default: mockMsgReaderClass,
+  default: mockMsgReaderConstructor,
 }));
 
 // Mock logger
@@ -68,10 +72,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -91,10 +92,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -112,10 +110,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -133,10 +128,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -155,10 +147,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -178,10 +167,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -199,10 +185,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -220,10 +203,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -241,10 +221,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -261,10 +238,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -282,10 +256,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -305,10 +276,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -326,10 +294,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -347,10 +312,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -368,10 +330,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -391,10 +350,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -411,10 +367,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -443,10 +396,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -478,10 +428,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -500,10 +447,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -524,10 +468,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -547,10 +488,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -571,10 +509,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -594,10 +529,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -617,10 +549,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -638,10 +567,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -662,10 +588,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result1 = await parser.parse('/test/email.msg');
       const result2 = await parser.parse('/test/email.msg');
@@ -693,10 +616,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValueOnce(mockMsg1).mockReturnValueOnce(mockMsg2);
+      createMockMsgReaderInstance.getFileData.mockReturnValueOnce(mockMsg1).mockReturnValueOnce(mockMsg2);
 
       const result1 = await parser.parse('/test/email1.msg');
       const result2 = await parser.parse('/test/email2.msg');
@@ -714,10 +634,7 @@ describe('MsgParser', () => {
       };
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/email.msg');
 
@@ -730,10 +647,7 @@ describe('MsgParser', () => {
   describe('Error Handling', () => {
     it('should throw error when @kenjiuno/msgreader throws', async () => {
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockImplementation(() => {
+      createMockMsgReaderInstance.getFileData.mockImplementation(() => {
         throw new Error('Invalid MSG file format');
       });
 
@@ -742,10 +656,7 @@ describe('MsgParser', () => {
 
     it('should throw error with file path in error message', async () => {
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockImplementation(() => {
+      createMockMsgReaderInstance.getFileData.mockImplementation(() => {
         throw new Error('Cannot read file');
       });
 
@@ -755,10 +666,7 @@ describe('MsgParser', () => {
     it('should handle missing properties gracefully', async () => {
       const mockMsg = {}; // Empty object
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
-      mockGetFileData.mockReturnValue(mockMsg);
+      createMockMsgReaderInstance.getFileData.mockReturnValue(mockMsg);
 
       const result = await parser.parse('/test/empty.msg');
 
@@ -812,14 +720,11 @@ describe('MsgParser', () => {
       }
 
       mockReadFileSync.mockReturnValue(Buffer.from('mock buffer'));
-      mockMsgReaderClass.mockImplementation(() => ({
-        getFileData: mockGetFileData,
-      }));
 
       let successCount = 0;
 
       for (const mockMsg of testCases) {
-        mockGetFileData.mockReturnValueOnce(mockMsg);
+        createMockMsgReaderInstance.getFileData.mockReturnValueOnce(mockMsg);
         const result = await parser.parse(`/test/email${successCount}.msg`);
         if (result.message_id) {
           successCount++;

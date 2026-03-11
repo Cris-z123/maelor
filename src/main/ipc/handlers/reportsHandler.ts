@@ -15,7 +15,7 @@ import {
   GetByDateSchema,
   ExpandItemSchema,
   CopySearchTermSchema
-} from '../validators/reports';
+} from '../validators/reports.js';
 
 /**
  * Register all reports IPC handlers
@@ -32,7 +32,7 @@ export function registerReportsHandlers(): void {
   });
 
   // reports:get-by-date
-  ipcMain.handle('reports:get-by-date', async (event, data) => {
+  ipcMain.handle('reports:get-by-date', async (_event, data) => {
     const validated = GetByDateSchema.parse(data);
     // TODO: Implement actual database query
     return {
@@ -43,7 +43,7 @@ export function registerReportsHandlers(): void {
   });
 
   // reports:expand-item
-  ipcMain.handle('reports:expand-item', async (event, data) => {
+  ipcMain.handle('reports:expand-item', async (_event, data) => {
     const validated = ExpandItemSchema.parse(data);
     // TODO: Implement actual database update
     return {
@@ -54,7 +54,7 @@ export function registerReportsHandlers(): void {
   });
 
   // reports:copy-search-term
-  ipcMain.handle('reports:copy-search-term', async (event, data) => {
+  ipcMain.handle('reports:copy-search-term', async (_event, data) => {
     const validated = CopySearchTermSchema.parse(data);
     // TODO: Implement actual search term generation and clipboard copy
     // Generate search term from validated.itemId using actual item data

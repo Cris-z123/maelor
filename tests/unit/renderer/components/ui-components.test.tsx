@@ -14,7 +14,8 @@ describe('shadcn/ui Components', () => {
 
     it('displays current month and year', () => {
       render(<Calendar />);
-      const currentMonth = new Date().toLocaleString('default', { month: 'long' });
+      // Calendar component displays month in English
+      const currentMonth = new Date().toLocaleString('en-US', { month: 'long' });
       const currentYear = new Date().getFullYear();
       expect(screen.getByText(new RegExp(currentMonth, 'i'))).toBeInTheDocument();
       expect(screen.getByText(new RegExp(currentYear.toString(), 'i'))).toBeInTheDocument();

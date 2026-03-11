@@ -503,7 +503,7 @@ ${channels.map((ch, i) => `  ${i + 1}. ${ch}`).join('\n')}
 `);
 
       // Verify the count matches constitutional requirements
-      const constitutionalMax = 22; // 42 channels across 11 categories (updated 2026-02-08)
+      const constitutionalMax = 42; // 42 channels across 11 categories (updated 2026-02-08)
 
       if (channels.length > constitutionalMax) {
         console.error(`

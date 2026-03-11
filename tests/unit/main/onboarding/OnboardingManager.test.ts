@@ -11,7 +11,7 @@ let mockState: any = null;
 vi.mock('@/database/Database', () => {
   const mockDb = {
     prepare: vi.fn(() => ({
-      get: vi.fn(() => mockState),
+      get: vi.fn(() => mockState ? { config_value: mockState } : undefined),
       run: vi.fn(),
     })),
   };
@@ -29,10 +29,14 @@ vi.mock('electron', () => ({
     encryptString: vi.fn((plaintext: string) => {
       // Parse to validate it's valid JSON
       JSON.parse(plaintext);
-      mockState = Buffer.from(`encrypted:${plaintext}`);
-      return mockState;
+      const encrypted = Buffer.from(`encrypted:${plaintext}`);
+      mockState = encrypted;
+      return encrypted;
     }),
     decryptString: vi.fn((encrypted: Buffer) => {
+      if (!encrypted || encrypted.length === 0) {
+        return '';
+      }
       const data = encrypted.toString();
       if (data.startsWith('encrypted:')) {
         return data.replace('encrypted:', '');
@@ -194,7 +198,7 @@ describe('T011: OnboardingManager Implementation', () => {
             skipWeekends: true,
           },
         });
-      }).toThrow('Invalid minute');
+      }).toThrow('Invalid minute (must be 0-59)');
     });
 
     it('should reject completion without LLM success', () => {

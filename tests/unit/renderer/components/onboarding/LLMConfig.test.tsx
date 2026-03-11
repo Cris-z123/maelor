@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { LLMConfig } from '@renderer/components/onboarding/LLMConfig';
 import { onboardingStore } from '@renderer/stores/onboardingStore';
 import { ipcClient } from '@renderer/services/ipc';
@@ -215,10 +215,12 @@ describe('LLMConfig', () => {
       render(<LLMConfig />);
 
       const testButton = screen.getByRole('button', { name: /测试连接/ });
-      fireEvent.click(testButton);
 
-      // Wait for async operation
-      await new Promise((resolve) => setTimeout(resolve, 150));
+      await act(async () => {
+        fireEvent.click(testButton);
+        // Wait for async operation
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
 
       expect(ipcClient.testLLMConnection).toHaveBeenCalledWith({
         mode: 'remote',

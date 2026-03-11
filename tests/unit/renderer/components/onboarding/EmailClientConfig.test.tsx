@@ -252,7 +252,9 @@ describe('EmailClientConfig', () => {
     const input = screen.getByLabelText(/邮件客户端路径/);
 
     // Trigger input change
-    fireEvent.change(input, { target: { value: 'C:\\Test\\Path' } });
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'C:\\Test\\Path' } });
+    });
 
     // Wait for debounced validation
     await waitFor(

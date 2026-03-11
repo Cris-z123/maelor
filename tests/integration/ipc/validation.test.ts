@@ -29,7 +29,7 @@ vi.mock('electron', () => ({
 describe('IPC Validation Integration', () => {
   let db: Database.Database;
   let testDbPath: string;
-  const mockHandlers = new Map<string, Function>();
+  const mockHandlers = new Map<string, (...args: unknown[]) => unknown>();
   const originalEnv = process.env.NODE_ENV;
 
   beforeEach(async () => {
@@ -51,7 +51,7 @@ describe('IPC Validation Integration', () => {
     DatabaseManager.setInstanceForTesting(db);
 
     // Setup ipcMain mock
-    vi.mocked(ipcMain.handle).mockImplementation((channel: string, handler: Function) => {
+    vi.mocked(ipcMain.handle).mockImplementation((channel: string, handler: (...args: unknown[]) => unknown) => {
       mockHandlers.set(channel, handler);
     });
 

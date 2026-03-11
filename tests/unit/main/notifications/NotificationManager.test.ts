@@ -8,7 +8,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import NotificationManager, {
   NotificationType,
   NotificationPriority,
-  type NotificationConfig,
 } from '../../../src/main/notifications/NotificationManager.js';
 
 // Mock Electron Notification API

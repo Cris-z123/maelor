@@ -100,27 +100,29 @@ describe('IPCClient - Onboarding Channels', () => {
   describe('detectEmailClient', () => {
     it('should detect email client path', async () => {
       mockOnboardingAPI.detectEmailClient = vi.fn().mockResolvedValue({
-        detectedPath: '/path/to/thunderbird'
+        clients: [{ type: 'thunderbird', path: '/path/to/thunderbird', confidence: 'high' }],
+        platform: 'linux'
       });
 
       const result = await ipcClient.detectEmailClient('thunderbird');
 
-      expect(result).toEqual({ detectedPath: '/path/to/thunderbird' });
-      expect(mockOnboardingAPI.detectEmailClient).toHaveBeenCalledWith({
-        type: 'thunderbird'
+      expect(result).toEqual({
+        clients: [{ type: 'thunderbird', path: '/path/to/thunderbird', confidence: 'high' }],
+        platform: 'linux'
       });
+      expect(mockOnboardingAPI.detectEmailClient).toHaveBeenCalledWith('thunderbird');
     });
 
-    it('should return null when not detected', async () => {
+    it('should return empty array when not detected', async () => {
       mockOnboardingAPI.detectEmailClient = vi.fn().mockResolvedValue({
-        detectedPath: null,
-        error: 'Not found'
+        clients: [],
+        platform: 'linux'
       });
 
       const result = await ipcClient.detectEmailClient('outlook');
 
-      expect(result.detectedPath).toBeNull();
-      expect(result.error).toBe('Not found');
+      expect(result.clients).toEqual([]);
+      expect(result.platform).toBe('linux');
     });
   });
 

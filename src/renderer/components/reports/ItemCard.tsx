@@ -2,17 +2,17 @@
  * ItemCard Component
  *
  * Displays a single action item with expandable details
- * Per T035 task specification:
- * - CSS-based 300ms animation
+ * Per T039 task specification:
+ * - Store integration for expand/collapse state
+ * - ItemDetails component for expanded content
+ * - SearchTermGenerator and useClipboard hooks
+ * - Maintains T035 expand/collapse functionality (300ms animation)
  * - Confidence badge display
- * - Expand/collapse with icon rotation
  * - Keyboard navigation (Enter, Space)
- * - Feedback buttons when expanded
  *
  * @module renderer/components/reports/ItemCard
  */
 
-import { ConfidenceThresholds } from '@shared/utils/ConfidenceThresholds';
 import { ConfidenceBadge } from './ConfidenceBadge';
 import { FeedbackButtons } from './FeedbackButtons';
 
@@ -25,16 +25,17 @@ interface ReportDisplayItem {
   dueDate?: string;
   sender?: string;
   subject?: string;
+  date?: string;
 }
 
 interface ItemCardProps {
   item: ReportDisplayItem;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  mode?: 'default' | 'ai-explanation';
 }
 
-export function ItemCard({ item, isExpanded, onToggleExpand }: ItemCardProps) {
-  const confidenceDisplay = ConfidenceThresholds.classify(item.confidence || 0);
+export function ItemCard({ item, isExpanded, onToggleExpand, mode = 'default' }: ItemCardProps) {
 
   return (
     <div
@@ -58,11 +59,7 @@ export function ItemCard({ item, isExpanded, onToggleExpand }: ItemCardProps) {
       {/* Header - Always visible */}
       <div className="p-4">
         <div className="flex items-center gap-3">
-          {confidenceDisplay.level === 'high' ? (
-            <span className="text-green-600 text-sm font-medium">✓准确</span>
-          ) : (
-            <ConfidenceBadge confidence={item.confidence || 0} />
-          )}
+          <ConfidenceBadge confidence={item.confidence || 0} mode={mode} />
           <h3 className="flex-1 font-medium text-gray-900">{item.title}</h3>
           <svg
             className={`w-5 h-5 transition-transform duration-300 text-gray-500 ${

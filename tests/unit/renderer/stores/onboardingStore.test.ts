@@ -110,7 +110,8 @@ describe('onboardingStore', () => {
       const { detectEmailClient } = onboardingStore.getState();
 
       vi.mocked(ipcClient.detectEmailClient).mockResolvedValue({
-        detectedPath: 'C:\\Program Files\\Thunderbird',
+        clients: [{ type: 'thunderbird', path: 'C:\\Program Files\\Thunderbird', confidence: 'high' }],
+        platform: 'win32'
       });
 
       await detectEmailClient();
@@ -125,8 +126,8 @@ describe('onboardingStore', () => {
       const { detectEmailClient } = onboardingStore.getState();
 
       vi.mocked(ipcClient.detectEmailClient).mockResolvedValue({
-        detectedPath: null,
-        error: 'No email client found',
+        clients: [],
+        platform: 'win32'
       });
 
       await detectEmailClient();

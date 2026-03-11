@@ -36,6 +36,10 @@ export interface ReportViewState {
   error: string | null;
   reportDate: string | null;
   summary: DailyReportSummary | null;
+  // US2: Item expansion state
+  expandedItems: Set<string>;
+  // US2: AI explanation mode toggle
+  aiExplanationMode: boolean;
 }
 
 /**

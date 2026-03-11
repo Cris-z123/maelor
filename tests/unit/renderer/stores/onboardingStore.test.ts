@@ -135,7 +135,7 @@ describe('onboardingStore', () => {
       const state = onboardingStore.getState();
       expect(state.emailClient.detectedPath).toBeNull();
       expect(state.emailClient.isDetecting).toBe(false);
-      expect(state.error).toBe('No email client found');
+      expect(state.error).toBe('No thunderbird installation detected on win32');
     });
 
     it('should handle detection errors', async () => {
@@ -162,7 +162,8 @@ describe('onboardingStore', () => {
             setTimeout(
               () =>
                 resolve({
-                  detectedPath: 'C:\\Program Files\\Thunderbird',
+                  clients: [{ type: 'thunderbird', path: 'C:\\Program Files\\Thunderbird', confidence: 'high' }],
+                  platform: 'win32'
                 }),
               10
             );
@@ -564,7 +565,8 @@ describe('onboardingStore', () => {
       setEmailClientType('outlook');
 
       vi.mocked(ipcClient.detectEmailClient).mockResolvedValue({
-        detectedPath: 'C:\\Program Files\\Outlook',
+        clients: [{ type: 'outlook', path: 'C:\\Program Files\\Outlook', confidence: 'high' }],
+        platform: 'win32'
       });
       await detectEmailClient();
 
@@ -622,7 +624,8 @@ describe('onboardingStore', () => {
 
       // Second attempt succeeds
       vi.mocked(ipcClient.detectEmailClient).mockResolvedValueOnce({
-        detectedPath: 'C:\\Thunderbird',
+        clients: [{ type: 'thunderbird', path: 'C:\\Thunderbird', confidence: 'high' }],
+        platform: 'win32'
       });
 
       await detectEmailClient();

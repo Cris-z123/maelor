@@ -1,25 +1,17 @@
 /**
- * Inter Variable Font Configuration
+ * Custom Fonts for MailCopilot
  *
- * This file imports the Inter variable font family.
- * For production Electron apps, consider downloading font files locally
- * for offline capability.
- *
- * Local font installation (optional):
- * 1. Download Inter font files from https://github.com/rsms/inter/releases
- * 2. Place in src/renderer/assets/fonts/
- * 3. Update import to use local files with @font-face
+ * Design Philosophy:
+ * - Playfair Display: Elegant, characterful display font for headings
+ * - IBM Plex Sans: Refined, highly-readable body font
+ * - JetBrains Mono: Technical details and code paths
  */
 
-/* CDN import - requires internet connection */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+/* Playfair Display - Display Headings */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
 
-/* Alternative: Local font installation (uncomment and configure paths) */
-/*
-@font-face {
-  font-family: 'Inter';
-  src: url('./assets/fonts/Inter-Variable.ttf') format('truetype');
-  font-weight: 100 900;
-  font-display: swap;
-}
-*/
+/* IBM Plex Sans - Body Text */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+/* JetBrains Mono - Technical/Code */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');

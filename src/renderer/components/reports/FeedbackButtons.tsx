@@ -1,78 +1,38 @@
 /**
- * FeedbackButtons Component (T060)
+ * FeedbackButtons Component - Redesigned
  *
- * User Story 3: Local Privacy-Preserving Feedback System
- *
- * Displays ✓ and ✗ buttons for marking action items as correct or incorrect.
- * Each button has a tooltip: "✓ 标记准确" and "✗ 标记错误".
- *
+ * User feedback buttons with enhanced visual design.
  * Features:
- * - TailwindCSS v3.4 styling
- * - shadcn/ui Button component
- * - Tooltip on hover
- * - Icons from Lucide React
- * - onClick callbacks for parent component handling
- *
- * Per plan.md:
- * - FR-021: Feedback button visibility (hover tooltips)
- * - FR-022: 4 error categories when marking incorrect
- * - Local-only feedback (no network transmission)
+ * - Larger, more prominent buttons
+ * - Smooth animations
+ * - Icon-based design
+ * - Gradient hover effects
  */
 
 import { Check, X } from 'lucide-react';
 import { Button } from '@renderer/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@renderer/components/ui/tooltip';
+import { cn } from '@renderer/lib/utils';
 
-/**
- * Feedback button props
- */
 export interface FeedbackButtonsProps {
-  /**
-   * Callback when user marks item as correct (✓)
-   */
   onMarkCorrect: () => void;
-
-  /**
-   * Callback when user marks item as incorrect (✗)
-   */
   onMarkIncorrect: () => void;
-
-  /**
-   * Disable buttons (e.g., during submission)
-   */
   disabled?: boolean;
-
-  /**
-   * Additional CSS class name
-   */
   className?: string;
-
-  /**
-   * Button size variant
-   */
   size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
-/**
- * FeedbackButtons component
- *
- * Renders two buttons side-by-side:
- * - ✓ button with green tint for "Mark as Correct"
- * - ✗ button with red tint for "Mark as Incorrect"
- *
- * Each button displays a tooltip on hover with Chinese text.
- */
 export const FeedbackButtons = ({
   onMarkCorrect,
   onMarkIncorrect,
   disabled = false,
   className = '',
-  size = 'sm',
+  size = 'default',
 }: FeedbackButtonsProps) => {
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      {/* Mark Correct Button (✓) */}
+    <div className={cn('flex items-center gap-3', className)}>
       <TooltipProvider>
+        {/* Mark Correct Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -80,20 +40,24 @@ export const FeedbackButtons = ({
               size={size}
               onClick={onMarkCorrect}
               disabled={disabled}
-              className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+              className={cn(
+                'group relative overflow-hidden transition-all duration-200',
+                'border-success/30 hover:border-success/50',
+                'hover:bg-success/10 hover:shadow-md',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
               aria-label="标记准确"
             >
-              <Check className="h-4 w-4" />
+              <div className="absolute inset-0 bg-gradient-to-r from-success/0 via-success/10 to-success/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <Check className="h-5 w-5 text-success relative z-10 transition-transform group-hover:scale-110" strokeWidth={2.5} />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>✓ 标记准确</p>
+          <TooltipContent side="top">
+            <p className="font-medium">标记准确</p>
           </TooltipContent>
         </Tooltip>
-      </TooltipProvider>
 
-      {/* Mark Incorrect Button (✗) */}
-      <TooltipProvider>
+        {/* Mark Incorrect Button */}
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -101,14 +65,20 @@ export const FeedbackButtons = ({
               size={size}
               onClick={onMarkIncorrect}
               disabled={disabled}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+              className={cn(
+                'group relative overflow-hidden transition-all duration-200',
+                'border-destructive/30 hover:border-destructive/50',
+                'hover:bg-destructive/10 hover:shadow-md',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
               aria-label="标记错误"
             >
-              <X className="h-4 w-4" />
+              <div className="absolute inset-0 bg-gradient-to-r from-destructive/0 via-destructive/10 to-destructive/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <X className="h-5 w-5 text-destructive relative z-10 transition-transform group-hover:scale-110" strokeWidth={2.5} />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
-            <p>✗ 标记错误</p>
+          <TooltipContent side="top">
+            <p className="font-medium">标记错误</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -117,16 +87,14 @@ export const FeedbackButtons = ({
 };
 
 /**
- * Compact version of FeedbackButtons for inline display
- *
- * Smaller buttons with minimal spacing for tight UI layouts.
+ * Compact version for inline display
  */
 export const FeedbackButtonsCompact = (props: FeedbackButtonsProps) => {
   return (
     <FeedbackButtons
       {...props}
       size="icon"
-      className="gap-1"
+      className="gap-2"
     />
   );
 };

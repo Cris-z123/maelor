@@ -1,49 +1,26 @@
 /**
- * ConfidenceBadge Component
+ * ConfidenceBadge Component - Redesigned
  *
- * Displays confidence level badge for action items.
- * Per FR-011:
- * - ≥0.8: High confidence
- * - 0.6-0.79: Medium confidence (needs review)
- * - <0.6: Low confidence (source unconfirmed)
- *
- * Display modes (T044):
- * - Default mode: "✓准确" for high, badges for medium/low
- * - AI mode: "置信度 0.85 (高/中/低)" format
- *
- * Task: T051 [US2], T044 [US2]
- * @module renderer/components/reports/ConfidenceBadge
+ * Displays confidence level badge with enhanced visual design.
+ * Features:
+ * - Icon-based indicators
+ * - Gradient backgrounds
+ * - Smooth animations
+ * - Multiple display modes
  */
 
 import React from 'react';
+import { Check, AlertTriangle, AlertCircle } from 'lucide-react';
 import { Badge } from '@renderer/components/ui/badge';
 import { ConfidenceThresholds } from '@shared/utils/ConfidenceThresholds';
+import { cn } from '@renderer/lib/utils';
 
-/**
- * ConfidenceBadge props
- */
 export interface ConfidenceBadgeProps {
-  /** Confidence score (0-1) */
   confidence: number;
-  /** Display mode */
   mode?: 'default' | 'ai-explanation';
-  /** Additional CSS classes */
   className?: string;
 }
 
-/**
- * ConfidenceBadge component
- *
- * Shows appropriate badge based on confidence level and display mode:
- *
- * Default mode:
- * - High confidence (≥0.8): "✓准确"
- * - Medium confidence (0.6-0.79): Gray "[建议复核]"
- * - Low confidence (<0.6): Prominent red "[来源待确认]"
- *
- * AI explanation mode:
- * - All levels: "置信度 X.XX (高/中/低)" format
- */
 export const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({
   confidence,
   mode = 'default',
@@ -51,7 +28,7 @@ export const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({
 }) => {
   const classification = ConfidenceThresholds.classify(confidence);
 
-  // AI explanation mode: show numeric score with level
+  // AI explanation mode
   if (mode === 'ai-explanation') {
     const levelTextMap = {
       high: '高',
@@ -59,49 +36,80 @@ export const ConfidenceBadge: React.FC<ConfidenceBadgeProps> = ({
       low: '低',
     };
 
-    return (
-      <span
-        className={`text-sm ${className}`}
-        data-testid="confidence-badge"
-      >
-        置信度 {confidence.toFixed(2)} ({levelTextMap[classification.level]})
-      </span>
-    );
-  }
+    const colors = {
+      high: 'from-success/20 to-success/5 border-success/50 text-success',
+      medium: 'from-warning/20 to-warning/5 border-warning/50 text-warning',
+      low: 'from-destructive/20 to-destructive/5 border-destructive/50 text-destructive',
+    };
 
-  // Default mode: "✓准确" for high confidence
-  if (classification.level === 'high') {
-    return (
-      <span
-        className={`text-green-600 text-sm font-medium ${className}`}
-        data-testid="confidence-badge"
-      >
-        ✓准确
-      </span>
-    );
-  }
-
-  // Default mode: gray badge for medium confidence
-  if (classification.level === 'medium') {
     return (
       <Badge
-        variant="secondary"
-        className={`bg-gray-100 text-gray-700 border border-gray-300 font-medium ${className}`}
+        variant="outline"
+        className={cn(
+          'font-mono text-xs px-3 py-1 bg-gradient-to-r',
+          colors[classification.level],
+          className
+        )}
         data-testid="confidence-badge"
       >
-        {classification.label}
+        {confidence.toFixed(2)} ({levelTextMap[classification.level]})
       </Badge>
     );
   }
 
-  // Default mode: prominent red badge for low confidence
+  // Default mode with icons
+  if (classification.level === 'high') {
+    return (
+      <div
+        className={cn(
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg',
+          'bg-gradient-to-r from-success/10 to-success/5',
+          'border border-success/30',
+          'text-success font-medium text-sm',
+          'transition-all duration-200',
+          className
+        )}
+        data-testid="confidence-badge"
+      >
+        <Check className="w-4 h-4" strokeWidth={2.5} />
+        <span>准确</span>
+      </div>
+    );
+  }
+
+  if (classification.level === 'medium') {
+    return (
+      <div
+        className={cn(
+          'flex items-center gap-1.5 px-3 py-1.5 rounded-lg',
+          'bg-gradient-to-r from-warning/10 to-warning/5',
+          'border border-warning/30',
+          'text-warning font-medium text-sm',
+          'transition-all duration-200',
+          className
+        )}
+        data-testid="confidence-badge"
+      >
+        <AlertTriangle className="w-4 h-4" />
+        <span>需复核</span>
+      </div>
+    );
+  }
+
   return (
-    <Badge
-      variant="destructive"
-      className={`bg-red-100 text-red-700 border-2 border-red-300 font-semibold ${className}`}
+    <div
+      className={cn(
+        'flex items-center gap-1.5 px-3 py-1.5 rounded-lg',
+        'bg-gradient-to-r from-destructive/10 to-destructive/5',
+        'border border-destructive/30',
+        'text-destructive font-semibold text-sm',
+        'transition-all duration-200 animate-pulse',
+        className
+      )}
       data-testid="confidence-badge"
     >
-      {classification.label}
-    </Badge>
+      <AlertCircle className="w-4 h-4" />
+      <span>需复核</span>
+    </div>
   );
 };

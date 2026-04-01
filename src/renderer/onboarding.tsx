@@ -1,16 +1,11 @@
-/**
- * Onboarding Entry Point
- *
- * This is the entry point for the onboarding wizard window.
- * Loaded separately from the main app window.
- */
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { OnboardingWizard } from './components/Onboarding/OnboardingWizard';
+
+import OnboardingApp from './app/OnboardingApp';
+import './styles/globals.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <OnboardingWizard />
+    <OnboardingApp />
   </React.StrictMode>
 );

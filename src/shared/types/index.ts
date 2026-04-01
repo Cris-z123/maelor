@@ -6,6 +6,14 @@
  */
 
 import type { Item, TodoItemWithSources, DailyReportSummary, ItemSourceRef } from '../schemas/validation.js';
+import type {
+  MvpConnectionResult,
+  MvpOnboardingStatus,
+  MvpRunDetail,
+  MvpRunSummary,
+  MvpSettingsView,
+  MvpValidationResult,
+} from './mvp.js';
 
 // Re-export frequently used types from schemas
 export type { Item, TodoItemWithSources, DailyReportSummary, ItemSourceRef };
@@ -139,11 +147,7 @@ export interface ElectronAPI {
     }>;
   };
   onboarding: {
-    getStatus: () => Promise<{
-      completed: boolean;
-      currentStep: 1 | 2 | 3;
-      canProceed: boolean;
-    }>;
+    getStatus: () => Promise<MvpOnboardingStatus>;
     setStep: (request: {
       step: 1 | 2 | 3;
       data?: {
@@ -158,23 +162,28 @@ export interface ElectronAPI {
       };
     }) => Promise<{ success: boolean; error?: string }>;
     detectEmailClient: (request: { type: 'thunderbird' | 'outlook' | 'apple-mail' }) => Promise<{
-      detectedPath: string | null;
-      error?: string;
+      clients: Array<{ type: string; path: string; confidence: string }>;
+      platform: string;
     }>;
-    validateEmailPath: (request: { path: string }) => Promise<{
-      valid: boolean;
-      message: string;
-    }>;
+    validateEmailPath: (request: { path: string; clientType?: string }) => Promise<MvpValidationResult>;
     testLLMConnection: (config: {
       mode: 'local' | 'remote';
       localEndpoint?: string;
       remoteEndpoint?: string;
       apiKey?: string;
-    }) => Promise<{
-      success: boolean;
-      responseTime: number;
-      error?: string;
-    }>;
+    }) => Promise<MvpConnectionResult>;
+    completeSetup: (request: {
+      directoryPath: string;
+      baseUrl: string;
+      apiKey: string;
+      model: string;
+    }) => Promise<{ success: boolean }>;
+  };
+  runs: {
+    start: () => Promise<{ success: boolean; runId: string | null; message: string }>;
+    getLatest: () => Promise<MvpRunDetail | null>;
+    getById: (request: { runId: string }) => Promise<MvpRunDetail | null>;
+    listRecent: (request?: { limit?: number }) => Promise<MvpRunSummary[]>;
   };
   generation: {
     start: () => Promise<{ success: boolean; emailCount?: number; error?: string }>;
@@ -232,6 +241,9 @@ export interface ElectronAPI {
       section: 'email' | 'schedule' | 'llm' | 'display' | 'notifications' | 'data';
       updates: Partial<any>;
     }) => Promise<{ success: boolean; error?: string }>;
+    getDataSummary: () => Promise<MvpSettingsView>;
+    clearRuns: () => Promise<{ success: boolean; deletedRunCount: number }>;
+    rebuildIndex: () => Promise<{ success: boolean; message: string }>;
     cleanupData: (request: { dateRange: string }) => Promise<{
       cutoffDate: string;
       reportCount: number;
@@ -261,3 +273,15 @@ declare global {
 }
 
 export default {};
+
+export type {
+  MvpActionItemView,
+  MvpConnectionResult,
+  MvpEvidenceView,
+  MvpOnboardingStatus,
+  MvpRunDetail,
+  MvpRunSummary,
+  MvpSettingsView,
+  MvpValidationFile,
+  MvpValidationResult,
+} from './mvp.js';

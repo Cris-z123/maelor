@@ -100,6 +100,17 @@ Structured logging and performance monitoring are MANDATORY:
 
 **Rationale**: Desktop application performance directly impacts user productivity. Resource limits prevent system overload. Structured logs enable troubleshooting while protecting user privacy.
 
+### VIII. MVP Scope Lock
+
+During an active MVP reset, mailCopilot MUST enforce a single delivery boundary until the active feature spec is completed:
+
+- **Single Active Feature**: Only one feature under `specs/` MAY be active for implementation. Older features MUST be treated as historical reference only
+- **No Scope Expansion During Execution**: New client types, new input formats, and new product surfaces MUST NOT be added directly in code once an MVP feature spec is active
+- **Spec-First Expansion**: Any scope expansion MUST update the active `spec.md`, `plan.md`, and `tasks.md` before implementation starts
+- **MVP Guardrail for 003**: The Outlook PST MVP is restricted to Windows + classic Outlook + PST-only directory scanning. OST, Thunderbird, Apple Mail, feedback, notifications, auto-update, inline editing, and calendar/search history are out of scope
+
+**Rationale**: Prior features expanded across multiple documents and code paths at the same time, which broke the single source of truth. An MVP reset only works if scope is locked and implementation follows the active spec exactly.
+
 ## Data Security Requirements
 
 ### Device Binding & Data Loss Scenarios

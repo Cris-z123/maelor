@@ -384,6 +384,31 @@ class OnboardingManager {
 
     return result;
   }
+
+  static async completeSetup(config: {
+    directoryPath: string;
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+  }): Promise<OnboardingState> {
+    return this.updateState({
+      completed: true,
+      currentStep: 3,
+      emailClient: {
+        type: 'outlook',
+        path: config.directoryPath,
+        detectedPath: config.directoryPath,
+        validated: true,
+      },
+      llm: {
+        ...this.getState().llm,
+        mode: 'remote',
+        remoteEndpoint: config.baseUrl,
+        apiKey: config.apiKey,
+        connectionStatus: 'success',
+      },
+    });
+  }
 }
 
 export default OnboardingManager;

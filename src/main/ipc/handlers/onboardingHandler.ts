@@ -90,7 +90,14 @@ export async function handleGetStatus(
  */
 export async function handleGetStatusV2(_event: Electron.IpcMainInvokeEvent) {
   const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
-  return await OnboardingManager.getStatus();
+  const state = OnboardingManager.getState();
+
+  return {
+    completed: state.completed,
+    currentStep: state.currentStep,
+    readablePstCount: state.emailClient.validated ? 1 : 0,
+    outlookDirectory: state.emailClient.path || null,
+  };
 }
 
 /**
@@ -137,10 +144,10 @@ export async function handleDetectEmailClientV2(
 export async function handleValidateEmailPathV2(
   _event: Electron.IpcMainInvokeEvent,
   path: string,
-  clientType: string
+  _clientType: string
 ) {
-  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
-  return await OnboardingManager.validateEmailPath(path, clientType);
+  const { default: PstDiscovery } = await import('../../outlook/PstDiscovery.js');
+  return PstDiscovery.validateDirectory(path);
 }
 
 /**

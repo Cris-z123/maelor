@@ -1,17 +1,2 @@
-/**
- * Custom Fonts for MailCopilot
- *
- * Design Philosophy:
- * - Playfair Display: Elegant, characterful display font for headings
- * - IBM Plex Sans: Refined, highly-readable body font
- * - JetBrains Mono: Technical details and code paths
- */
-
-/* Playfair Display - Display Headings */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&display=swap');
-
-/* IBM Plex Sans - Body Text */
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
-
-/* JetBrains Mono - Technical/Code */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');

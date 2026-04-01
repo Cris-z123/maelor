@@ -46,8 +46,24 @@ const electronAPI = {
     getStatus: () => ipcRenderer.invoke('onboarding:get-status'),
     setStep: (step) => ipcRenderer.invoke('onboarding:set-step', step),
     detectEmailClient: (type) => ipcRenderer.invoke('onboarding:detect-email-client', type),
-    validateEmailPath: (path) => ipcRenderer.invoke('onboarding:validate-email-path', path),
+    validateEmailPath: (path, clientType) => ipcRenderer.invoke('onboarding:validate-email-path', path, clientType),
     testLLMConnection: (config) => ipcRenderer.invoke('onboarding:test-llm-connection', config),
+    completeSetup: (request) => ipcRenderer.invoke('onboarding:complete-setup', request),
+  },
+
+  runs: {
+    start: () => ipcRenderer.invoke('runs:start'),
+    getLatest: () => ipcRenderer.invoke('runs:get-latest'),
+    getById: (request) => ipcRenderer.invoke('runs:get-by-id', request),
+    listRecent: (request) => ipcRenderer.invoke('runs:list-recent', request),
+  },
+
+  settings: {
+    getAll: () => ipcRenderer.invoke('settings:get-all'),
+    update: (request) => ipcRenderer.invoke('settings:update', request),
+    getDataSummary: () => ipcRenderer.invoke('settings:get-data-summary'),
+    clearRuns: () => ipcRenderer.invoke('settings:clear-runs'),
+    rebuildIndex: () => ipcRenderer.invoke('settings:rebuild-index'),
   },
 
   // Event listeners for renderer-to-main communication

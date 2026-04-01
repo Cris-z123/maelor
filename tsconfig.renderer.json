@@ -11,12 +11,24 @@
     "allowImportingTsExtensions": false
   },
   "include": [
-    "src/renderer/**/*",
+    "src/renderer/main.tsx",
+    "src/renderer/onboarding.tsx",
+    "src/renderer/global.d.ts",
+    "src/renderer/app/App.tsx",
+    "src/renderer/app/OnboardingApp.tsx",
+    "src/renderer/app/OnboardingFlow.tsx",
+    "src/renderer/app/mvpApi.ts",
+    "src/renderer/styles/**/*",
     "src/shared/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "src/main"
+    "src/main",
+    "src/renderer/components",
+    "src/renderer/hooks",
+    "src/renderer/lib",
+    "src/renderer/services",
+    "src/renderer/stores"
   ]
 }

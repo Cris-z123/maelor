@@ -16,6 +16,8 @@ import { checkForUpdates, downloadAndInstallUpdate } from './app/lifecycle.js';
 import { errorHandler } from './error-handler.js';
 import { createOnboardingWindow } from './windows/onboardingWindow.js';
 import OnboardingManager from './onboarding/OnboardingManager.js';
+import PstDiscovery from './outlook/PstDiscovery.js';
+import RunRepository, { MVP_CONFIG_KEYS } from './runs/RunRepository.js';
 
 /**
  * Main Process Entry Point
@@ -211,6 +213,7 @@ class Application {
     ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_DETECT_EMAIL_CLIENT);
     ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_VALIDATE_EMAIL_PATH);
     ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_TEST_LLM_CONNECTION);
+    ipcMain.removeHandler(IPC_CHANNELS.ONBOARDING_COMPLETE_SETUP);
 
     // Now register the new handlers
     ipcMain.handle(IPC_CHANNELS.ONBOARDING_GET_STATUS, async (_event) => {
@@ -236,6 +239,33 @@ class Application {
     ipcMain.handle(IPC_CHANNELS.ONBOARDING_TEST_LLM_CONNECTION, async (_event, config) => {
       logger.debug('IPC', 'Onboarding test-llm-connection request received');
       return await handleTestLLMConnectionV2(_event, config);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.ONBOARDING_COMPLETE_SETUP, async (_event, request) => {
+      logger.debug('IPC', 'Onboarding complete-setup request received');
+
+      const validation = PstDiscovery.validateDirectory(request.directoryPath);
+      if (!validation.valid) {
+        return { success: false, error: validation.message };
+      }
+
+      await ConfigManager.set({
+        [MVP_CONFIG_KEYS.outlookDirectory]: request.directoryPath,
+        [MVP_CONFIG_KEYS.aiBaseUrl]: request.baseUrl,
+        [MVP_CONFIG_KEYS.aiModel]: request.model,
+        'llm.remoteEndpoint': request.baseUrl,
+        'llm.apiKey': request.apiKey,
+        'llm.model': request.model,
+      });
+
+      await OnboardingManager.completeSetup({
+        directoryPath: request.directoryPath,
+        baseUrl: request.baseUrl,
+        apiKey: request.apiKey,
+        model: request.model,
+      });
+
+      return { success: true };
     });
 
     logger.info('IPC', 'Onboarding handlers registered');
@@ -279,6 +309,97 @@ class Application {
       logger.debug('IPC', 'Config set request received');
       const updated = await ConfigManager.set(request.updates);
       return { success: true, updated };
+    });
+
+    ipcMain.handle(IPC_CHANNELS.RUNS_START, async () => {
+      logger.debug('IPC', 'Runs start request received');
+      const settingsSeed = await RunRepository.getSettingsSeed();
+      const validation = PstDiscovery.validateDirectory(settingsSeed.outlookDirectory);
+
+      if (!validation.valid) {
+        return {
+          success: false,
+          runId: null,
+          message: validation.message,
+        };
+      }
+
+      const run = await RunRepository.createEmptyRun(
+        validation.files.filter((file) => file.readability === 'readable'),
+        settingsSeed.outlookDirectory
+      );
+      await RunRepository.saveRun(run);
+
+      return {
+        success: true,
+        runId: run.runId,
+        message: run.message,
+      };
+    });
+
+    ipcMain.handle(IPC_CHANNELS.RUNS_GET_LATEST, async () => {
+      logger.debug('IPC', 'Runs get-latest request received');
+      return await RunRepository.getLatest();
+    });
+
+    ipcMain.handle(IPC_CHANNELS.RUNS_GET_BY_ID, async (_event, request) => {
+      logger.debug('IPC', 'Runs get-by-id request received', request);
+      return await RunRepository.getById(request.runId);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.RUNS_LIST_RECENT, async (_event, request) => {
+      logger.debug('IPC', 'Runs list-recent request received', request);
+      return await RunRepository.listRecent(request?.limit ?? 20);
+    });
+
+    ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_ALL, async () => {
+      logger.debug('IPC', 'Settings get-all request received');
+      const seed = await RunRepository.getSettingsSeed();
+      return {
+        outlookDirectory: seed.outlookDirectory,
+        aiBaseUrl: seed.aiBaseUrl,
+        aiModel: seed.aiModel,
+      };
+    });
+
+    ipcMain.handle(IPC_CHANNELS.SETTINGS_UPDATE, async (_event, request) => {
+      logger.debug('IPC', 'Settings update request received', request?.section);
+      await ConfigManager.set({
+        ...(typeof request?.updates?.outlookDirectory === 'string'
+          ? { [MVP_CONFIG_KEYS.outlookDirectory]: request.updates.outlookDirectory }
+          : {}),
+        ...(typeof request?.updates?.aiBaseUrl === 'string'
+          ? { [MVP_CONFIG_KEYS.aiBaseUrl]: request.updates.aiBaseUrl }
+          : {}),
+        ...(typeof request?.updates?.aiModel === 'string'
+          ? { [MVP_CONFIG_KEYS.aiModel]: request.updates.aiModel }
+          : {}),
+      });
+      return { success: true };
+    });
+
+    ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_DATA_SUMMARY, async () => {
+      logger.debug('IPC', 'Settings get-data-summary request received');
+      const seed = await RunRepository.getSettingsSeed();
+      return {
+        outlookDirectory: seed.outlookDirectory,
+        aiBaseUrl: seed.aiBaseUrl,
+        aiModel: seed.aiModel,
+        databasePath: DatabaseManager.getPath(),
+        databaseSizeBytes: DatabaseManager.getSize(),
+      };
+    });
+
+    ipcMain.handle(IPC_CHANNELS.SETTINGS_CLEAR_RUNS, async () => {
+      logger.debug('IPC', 'Settings clear-runs request received');
+      const deletedRunCount = await RunRepository.clearRuns();
+      return { success: true, deletedRunCount };
+    });
+
+    ipcMain.handle(IPC_CHANNELS.SETTINGS_REBUILD_INDEX, async () => {
+      logger.debug('IPC', 'Settings rebuild-index request received');
+      DatabaseManager.vacuum();
+      return { success: true, message: '索引与数据库维护已完成。' };
     });
 
     // App check update

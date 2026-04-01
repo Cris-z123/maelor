@@ -48,6 +48,7 @@ export const IPC_CHANNELS = {
   ONBOARDING_DETECT_EMAIL_CLIENT: 'onboarding:detect-email-client',
   ONBOARDING_VALIDATE_EMAIL_PATH: 'onboarding:validate-email-path',
   ONBOARDING_TEST_LLM_CONNECTION: 'onboarding:test-llm-connection',
+  ONBOARDING_COMPLETE_SETUP: 'onboarding:complete-setup',
 
   // Report generation
   GENERATION_START: 'generation:start',
@@ -77,6 +78,15 @@ export const IPC_CHANNELS = {
   MODE_GET: 'mode:get',
   MODE_SWITCH: 'mode:switch',
   MODE_CANCEL: 'mode:cancel',
+
+  // MVP run flow
+  RUNS_START: 'runs:start',
+  RUNS_GET_LATEST: 'runs:get-latest',
+  RUNS_GET_BY_ID: 'runs:get-by-id',
+  RUNS_LIST_RECENT: 'runs:list-recent',
+  SETTINGS_GET_DATA_SUMMARY: 'settings:get-data-summary',
+  SETTINGS_CLEAR_RUNS: 'settings:clear-runs',
+  SETTINGS_REBUILD_INDEX: 'settings:rebuild-index',
 } as const;
 
 export type IPCChannel = typeof IPC_CHANNELS[keyof typeof IPC_CHANNELS];

@@ -7,7 +7,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock Electron Notification
-const { MockNotification, mockShow, mockClose } = vi.hoisted(() => {
+const { MockNotification, mockShow } = vi.hoisted(() => {
   const mockShow = vi.fn();
   const mockClose = vi.fn();
 
@@ -17,7 +17,7 @@ const { MockNotification, mockShow, mockClose } = vi.hoisted(() => {
     constructor(public options: any) {}
   };
 
-  return { MockNotification, mockShow, mockClose };
+  return { MockNotification, mockShow };
 });
 
 vi.mock('electron', () => ({

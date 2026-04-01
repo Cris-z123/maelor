@@ -3,7 +3,7 @@
  * Per data-model.md section 6
  */
 
-import { EmailClientConfig, ScheduleConfig, LLMConfig } from './onboarding.js';
+import type { EmailClientConfig, ScheduleConfig, LLMConfig } from './onboarding.js';
 
 export interface NotificationSettings {
   enabled: boolean;

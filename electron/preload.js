@@ -14,58 +14,29 @@ const { contextBridge, ipcRenderer } = require('electron');
  * Only specific IPC channels are exposed (whitelist approach per constitution Principle V)
  */
 const electronAPI = {
-  // LLM Operations
-  llm: {
-    generate: (emailBatch) => ipcRenderer.invoke('llm:generate', emailBatch),
-  },
-
-  // Database Operations (exposed as 'db' for renderer ipcClient)
-  db: {
-    queryHistory: (request) => ipcRenderer.invoke('db:query:history', request),
-    export: (request) => ipcRenderer.invoke('db:export', request),
-  },
-
-  // Configuration Management
-  config: {
-    get: (keys) => ipcRenderer.invoke('config:get', { keys }),
-    set: (updates) => ipcRenderer.invoke('config:set', { updates }),
-  },
-
-  // Application Updates
-  app: {
-    checkUpdate: (mode) => ipcRenderer.invoke('app:check-update', mode),
-  },
-
-  // Email Metadata Fetching
-  email: {
-    fetchMeta: (filePath, format) => ipcRenderer.invoke('email:fetch-meta', { filePath, format }),
-  },
-
   // Onboarding Operations
   onboarding: {
     getStatus: () => ipcRenderer.invoke('onboarding:get-status'),
     setStep: (step) => ipcRenderer.invoke('onboarding:set-step', step),
-    detectEmailClient: (type) => ipcRenderer.invoke('onboarding:detect-email-client', type),
-    validateEmailPath: (path) => ipcRenderer.invoke('onboarding:validate-email-path', path),
+    detectOutlookDir: () => ipcRenderer.invoke('onboarding:detect-email-client'),
+    validateOutlookDir: ({ directoryPath }) => ipcRenderer.invoke('onboarding:validate-email-path', directoryPath, 'outlook'),
     testLLMConnection: (config) => ipcRenderer.invoke('onboarding:test-llm-connection', config),
+    complete: (request) => ipcRenderer.invoke('onboarding:complete-setup', request),
   },
 
-  // Event listeners for renderer-to-main communication
-  on: (channel, callback) => {
-    const validChannels = [
-      'llm:progress',
-      'llm:complete',
-      'llm:error',
-      'config:changed',
-    ];
-    if (validChannels.includes(channel)) {
-      ipcRenderer.on(channel, (event, ...args) => callback(...args));
-    }
+  runs: {
+    start: () => ipcRenderer.invoke('runs:start'),
+    getLatest: () => ipcRenderer.invoke('runs:get-latest'),
+    getById: (request) => ipcRenderer.invoke('runs:get-by-id', request),
+    listRecent: (request) => ipcRenderer.invoke('runs:list-recent', request),
   },
 
-  // Remove event listener
-  removeListener: (channel, callback) => {
-    ipcRenderer.removeListener(channel, callback);
+  settings: {
+    getAll: () => ipcRenderer.invoke('settings:get-all'),
+    update: (request) => ipcRenderer.invoke('settings:update', { updates: request }),
+    getDataSummary: () => ipcRenderer.invoke('settings:get-data-summary'),
+    clearRuns: () => ipcRenderer.invoke('settings:clear-runs'),
+    rebuildIndex: () => ipcRenderer.invoke('settings:rebuild-index'),
   },
 };
 

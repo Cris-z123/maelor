@@ -1,397 +1,83 @@
-/**
- * Verification Tests for OnboardingManager (T011)
- *
- * Tests the onboarding state management implementation
- */
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { app } from 'electron';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock DatabaseManager before importing OnboardingManager
-let mockState: any = null;
-vi.mock('@/database/Database', () => {
-  const mockDb = {
-    prepare: vi.fn(() => ({
-      get: vi.fn(() => mockState ? { config_value: mockState } : undefined),
-      run: vi.fn(),
-    })),
-  };
-  return {
-    default: {
-      getDatabase: vi.fn(() => mockDb),
-    },
-  };
-});
-
-// Mock Electron safeStorage
-vi.mock('electron', () => ({
-  safeStorage: {
-    isEncryptionAvailable: vi.fn(() => true),
-    encryptString: vi.fn((plaintext: string) => {
-      // Parse to validate it's valid JSON
-      JSON.parse(plaintext);
-      const encrypted = Buffer.from(`encrypted:${plaintext}`);
-      mockState = encrypted;
-      return encrypted;
-    }),
-    decryptString: vi.fn((encrypted: Buffer) => {
-      if (!encrypted || encrypted.length === 0) {
-        return '';
-      }
-      const data = encrypted.toString();
-      if (data.startsWith('encrypted:')) {
-        return data.replace('encrypted:', '');
-      }
-      return data;
-    }),
-  },
-  app: {
-    getPath: vi.fn((name: string) => {
-      if (name === 'userData') return '/tmp/test-userdata';
-      if (name === 'home') return '/tmp/test-home';
-      return '/tmp/test';
-    }),
+vi.mock('@/database/Database', () => ({
+  default: {
+    getDatabase: vi.fn(),
   },
 }));
 
-// Mock ConnectionTester
-vi.mock('@/llm/ConnectionTester', () => ({
-  ConnectionTester: {
-    testConnection: vi.fn(),
-  },
-}));
-
+import DatabaseManager from '@/database/Database';
 import OnboardingManager from '@/onboarding/OnboardingManager';
 
-describe('T011: OnboardingManager Implementation', () => {
+describe('OnboardingManager.detectOutlookDirectory', () => {
+  let tempRoot: string;
+  let documentsPath: string;
+  let appDataPath: string;
+  let homePath: string;
+  let getPathSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
-    // Reset mocks and state before each test
-    mockState = null;
     vi.clearAllMocks();
-  });
 
-  describe('State Management', () => {
-    it('should return default state when no config exists', () => {
-      const state = OnboardingManager.getState();
+    tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mailcopilot-onboarding-'));
+    documentsPath = path.join(tempRoot, 'Documents');
+    appDataPath = path.join(tempRoot, 'AppData', 'Roaming');
+    homePath = path.join(tempRoot, 'Home');
 
-      expect(state.completed).toBe(false);
-      expect(state.currentStep).toBe(1);
-      expect(state.emailClient.validated).toBe(false);
-      expect(state.llm.connectionStatus).toBe('untested');
-    });
+    fs.mkdirSync(documentsPath, { recursive: true });
+    fs.mkdirSync(appDataPath, { recursive: true });
+    fs.mkdirSync(homePath, { recursive: true });
 
-    it('should persist state to database', () => {
-      const update = {
-        currentStep: 2 as const,
-        emailClient: {
-          type: 'thunderbird' as const,
-          path: '/test/path',
-          detectedPath: null,
-          validated: true,
-        },
-      };
-
-      const updated = OnboardingManager.updateState(update);
-
-      expect(updated.currentStep).toBe(2);
-      expect(updated.emailClient.validated).toBe(true);
-    });
-
-    it('should load persisted state', () => {
-      const update = {
-        completed: true,
-        currentStep: 3 as const,
-        emailClient: {
-          type: 'thunderbird' as const,
-          path: '/test',
-          detectedPath: null,
-          validated: true,
-        },
-        llm: {
-          mode: 'remote' as const,
-          localEndpoint: 'http://localhost:11434',
-          remoteEndpoint: 'https://api.openai.com/v1',
-          apiKey: 'test',
-          connectionStatus: 'success' as const,
-        },
-      };
-
-      OnboardingManager.updateState(update);
-      const loaded = OnboardingManager.getState();
-
-      expect(loaded.completed).toBe(true);
-      expect(loaded.currentStep).toBe(3);
+    getPathSpy = vi.spyOn(app, 'getPath').mockImplementation((name: string) => {
+      if (name === 'documents') return documentsPath;
+      if (name === 'appData') return appDataPath;
+      if (name === 'home') return homePath;
+      return tempRoot;
     });
   });
 
-  describe('Step Validation', () => {
-    it('should reject moving backward from step 2 to step 1', () => {
-      // First set up valid state at step 2
-      OnboardingManager.updateState({
-        currentStep: 2,
-        emailClient: {
-          type: 'thunderbird',
-          path: '/test',
-          detectedPath: null,
-          validated: true,
-        },
-      });
+  afterEach(() => {
+    getPathSpy.mockRestore();
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+  });
 
-      expect(() => {
-        OnboardingManager.updateState({ currentStep: 1 });
-      }).toThrow('Cannot move back');
-    });
+  it('returns the first default Outlook directory that contains a PST file', () => {
+    const outlookFilesDir = path.join(documentsPath, 'Outlook Files');
+    fs.mkdirSync(outlookFilesDir, { recursive: true });
+    fs.writeFileSync(path.join(outlookFilesDir, 'mailbox.pst'), 'pst');
 
-    it('should reject step 2 without email client validation', () => {
-      expect(() => {
-        OnboardingManager.updateState({
-          currentStep: 2,
-          emailClient: {
-            type: 'thunderbird',
-            path: '/test',
-            detectedPath: null,
-            validated: false,
-          },
-        });
-      }).toThrow('Email client must be validated');
-    });
+    const result = OnboardingManager.detectOutlookDirectory();
 
-    it('should validate schedule hour range (0-23)', () => {
-      // First set up valid state at step 2
-      OnboardingManager.updateState({
-        currentStep: 2,
-        emailClient: {
-          type: 'thunderbird',
-          path: '/test',
-          detectedPath: null,
-          validated: true,
-        },
-      });
-
-      expect(() => {
-        OnboardingManager.updateState({
-          currentStep: 3,
-          schedule: {
-            generationTime: { hour: 25, minute: 0 },
-            skipWeekends: true,
-          },
-        });
-      }).toThrow('Invalid hour');
-    });
-
-    it('should validate schedule minute range (0-59)', () => {
-      // First set up valid state at step 2
-      OnboardingManager.updateState({
-        currentStep: 2,
-        emailClient: {
-          type: 'thunderbird',
-          path: '/test',
-          detectedPath: null,
-          validated: true,
-        },
-      });
-
-      expect(() => {
-        OnboardingManager.updateState({
-          currentStep: 3,
-          schedule: {
-            generationTime: { hour: 18, minute: 60 },
-            skipWeekends: true,
-          },
-        });
-      }).toThrow('Invalid minute (must be 0-59)');
-    });
-
-    it('should reject completion without LLM success', () => {
-      expect(() => {
-        OnboardingManager.updateState({
-          completed: true,
-          llm: {
-            mode: 'remote',
-            localEndpoint: 'http://localhost:11434',
-            remoteEndpoint: 'https://api.openai.com/v1',
-            apiKey: '',
-            connectionStatus: 'untested',
-          },
-        });
-      }).toThrow('LLM connection must succeed');
+    expect(result).toEqual({
+      detectedPath: outlookFilesDir,
+      reason: 'Detected PST files in a default Outlook directory.',
     });
   });
 
-  describe('LLM Connection Status', () => {
-    it('should update LLM connection status', () => {
-      const updated = OnboardingManager.updateLLMConnectionStatus('success', 150);
+  it('falls back across default locations and ignores directories without PST files', () => {
+    fs.mkdirSync(path.join(documentsPath, 'Outlook Files'), { recursive: true });
+    const roamingOutlookDir = path.join(appDataPath, 'Microsoft', 'Outlook');
+    fs.mkdirSync(roamingOutlookDir, { recursive: true });
+    fs.writeFileSync(path.join(roamingOutlookDir, 'archive.PST'), 'pst');
 
-      expect(updated.llm.connectionStatus).toBe('success');
-      expect(updated.llm.responseTime).toBe(150);
-    });
+    const result = OnboardingManager.detectOutlookDirectory();
 
-    it('should mark as failed on connection failure', () => {
-      const updated = OnboardingManager.updateLLMConnectionStatus('failed');
-
-      expect(updated.llm.connectionStatus).toBe('failed');
-    });
+    expect(result.detectedPath).toBe(roamingOutlookDir);
+    expect(result.reason).toContain('Detected PST files');
   });
 
-  describe('Completion', () => {
-    it('should complete onboarding after successful LLM test', () => {
-      // Setup: step 3 with successful connection and validated email client
-      OnboardingManager.updateState({
-        currentStep: 3,
-        emailClient: {
-          type: 'thunderbird',
-          path: '/test',
-          detectedPath: null,
-          validated: true,
-        },
-        schedule: {
-          generationTime: { hour: 18, minute: 0 },
-          skipWeekends: true,
-        },
-        llm: {
-          mode: 'remote',
-          localEndpoint: 'http://localhost:11434',
-          remoteEndpoint: 'https://api.openai.com/v1',
-          apiKey: 'test-key',
-          connectionStatus: 'success',
-        },
-      });
+  it('returns an advisory null result and does not persist configuration when nothing is found', () => {
+    const result = OnboardingManager.detectOutlookDirectory();
 
-      const completed = OnboardingManager.completeOnboarding();
-
-      expect(completed.completed).toBe(true);
-      expect(completed.currentStep).toBe(3);
+    expect(result).toEqual({
+      detectedPath: null,
+      reason: 'No default Outlook PST directory was detected.',
     });
-
-    it('should return completion status', () => {
-      expect(OnboardingManager.isComplete()).toBe(false);
-
-      OnboardingManager.updateState({
-        completed: true,
-        emailClient: {
-          type: 'thunderbird',
-          path: '/test',
-          detectedPath: null,
-          validated: true,
-        },
-        llm: {
-          mode: 'remote',
-          localEndpoint: 'http://localhost:11434',
-          remoteEndpoint: 'https://api.openai.com/v1',
-          apiKey: 'test',
-          connectionStatus: 'success',
-        },
-      });
-
-      expect(OnboardingManager.isComplete()).toBe(true);
-    });
-  });
-
-  describe('Email Path Validation', () => {
-    it('should validate email client path contains email files', () => {
-      // This is a mock test - actual file system tests would need temp directories
-      const validator = OnboardingManager.validateEmailClientPath;
-
-      expect(typeof validator).toBe('function');
-    });
-  });
-
-  describe('T027: TODO Method Implementations', () => {
-    beforeEach(() => {
-      // Reset state before T027 tests
-      OnboardingManager.resetState();
-    });
-
-    describe('getStatus()', () => {
-      it('should return status with correct structure', async () => {
-        const status = await OnboardingManager.getStatus();
-
-        expect(status).toHaveProperty('completed');
-        expect(status).toHaveProperty('currentStep');
-        expect(status).toHaveProperty('totalSteps');
-        expect(status.totalSteps).toBe(3);
-        expect(typeof status.currentStep).toBe('string');
-        expect(status.currentStep).toMatch(/^step-[1-3]$/);
-      });
-    });
-
-    describe('setStep()', () => {
-      it('should set step-1 from step name', async () => {
-        const result = await OnboardingManager.setStep('step-1');
-        expect(result).toBe(true);
-      });
-
-      it('should throw error for invalid step name', async () => {
-        await expect(OnboardingManager.setStep('invalid')).rejects.toThrow('Invalid step name');
-      });
-
-      it('should throw error for empty string', async () => {
-        await expect(OnboardingManager.setStep('')).rejects.toThrow('Invalid step name');
-      });
-
-      it('should throw error for step-4', async () => {
-        await expect(OnboardingManager.setStep('step-4')).rejects.toThrow('Invalid step name');
-      });
-    });
-
-    describe('testLLMConnection()', () => {
-      it('should test LLM connection and return result', async () => {
-        // Mock ConnectionTester
-        const { ConnectionTester } = await import('@/llm/ConnectionTester');
-        vi.mocked(ConnectionTester).testConnection.mockResolvedValue({
-          success: true,
-          responseTime: 150,
-          model: 'gpt-4',
-        });
-
-        const result = await OnboardingManager.testLLMConnection({
-          mode: 'remote',
-          endpoint: 'https://api.openai.com/v1',
-          apiKey: 'test-key',
-        });
-
-        expect(result.success).toBe(true);
-        expect(result.responseTime).toBe(150);
-        expect(result.model).toBe('gpt-4');
-      });
-
-      it('should handle connection failure', async () => {
-        // Mock ConnectionTester
-        const { ConnectionTester } = await import('@/llm/ConnectionTester');
-        vi.mocked(ConnectionTester).testConnection.mockResolvedValue({
-          success: false,
-          error: 'Connection failed',
-        });
-
-        const result = await OnboardingManager.testLLMConnection({
-          mode: 'remote',
-          endpoint: 'https://api.openai.com/v1',
-          apiKey: 'invalid-key',
-        });
-
-        expect(result.success).toBe(false);
-        expect(result.error).toBe('Connection failed');
-      });
-
-      it('should call ConnectionTester with correct config', async () => {
-        // Mock ConnectionTester
-        const { ConnectionTester } = await import('@/llm/ConnectionTester');
-        vi.mocked(ConnectionTester).testConnection.mockResolvedValue({
-          success: true,
-          responseTime: 200,
-        });
-
-        await OnboardingManager.testLLMConnection({
-          mode: 'local',
-          endpoint: 'http://localhost:11434',
-          apiKey: '',
-        });
-
-        expect(ConnectionTester.testConnection).toHaveBeenCalledWith({
-          mode: 'local',
-          endpoint: 'http://localhost:11434',
-          apiKey: '',
-        });
-      });
-    });
+    expect(DatabaseManager.getDatabase).not.toHaveBeenCalled();
   });
 });

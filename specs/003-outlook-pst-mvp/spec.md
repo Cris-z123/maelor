@@ -94,6 +94,8 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **FR-017**: The system MUST provide only three settings groups: Outlook directory, AI configuration, and data management.
 - **FR-018**: The system MUST NOT expose feedback, notifications, auto-update management, inline editing, search history, or calendar history in the MVP UI.
 - **FR-019**: The preload and renderer-facing IPC surface MUST be narrowed to the MVP onboarding, runs, and settings contracts.
+- **FR-019a**: Active code MUST express the product surface through domain names, not `mvp`-prefixed runtime/module/type names; `MVP` is a planning scope label, not a product namespace.
+- **FR-019b**: Non-MVP runtime code paths, compatibility layers, and parallel legacy surfaces MUST be deleted or fully quarantined from the active product, rather than retained behind `mvp`-style naming.
 
 ### Key Entities *(include if feature involves data)*
 

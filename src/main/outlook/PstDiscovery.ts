@@ -77,7 +77,7 @@ export class PstDiscovery {
         readablePstCount: 0,
         unreadablePstCount: 0,
         files: [],
-        message: '请选择 Outlook 数据目录。',
+        message: 'Select an Outlook data directory.',
       };
     }
 
@@ -87,7 +87,7 @@ export class PstDiscovery {
         readablePstCount: 0,
         unreadablePstCount: 0,
         files: [],
-        message: '目录不存在。',
+        message: 'The selected directory does not exist.',
       };
     }
 
@@ -98,7 +98,7 @@ export class PstDiscovery {
         readablePstCount: 0,
         unreadablePstCount: 0,
         files: [],
-        message: '所选路径不是目录。',
+        message: 'The selected path is not a directory.',
       };
     }
 
@@ -113,8 +113,8 @@ export class PstDiscovery {
       files,
       message:
         readablePstCount > 0
-          ? `发现 ${readablePstCount} 个可读 PST 文件。`
-          : '未发现可读的 PST 文件。',
+          ? `Found ${readablePstCount} readable PST file(s).`
+          : 'No readable PST files were found.',
     };
   }
 }

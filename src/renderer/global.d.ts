@@ -4,10 +4,58 @@
  * Extends the global Window interface with Electron IPC APIs.
  */
 
-import { IpcRendererEvent } from 'electron';
+import type { IpcRendererEvent } from 'electron';
+import type {
+  MvpConnectionResult,
+  MvpOnboardingStatus,
+  MvpRunDetail,
+  MvpRunSummary,
+  MvpSettingsView,
+  MvpValidationResult,
+} from '@shared/types/mvp';
 
 declare global {
   interface Window {
+    electronAPI?: {
+      onboarding: {
+        getStatus: () => Promise<MvpOnboardingStatus>;
+        detectOutlookDir: () => Promise<{
+          detectedPath: string | null;
+          reason: string;
+        }>;
+        validateOutlookDir: (request: { directoryPath: string }) => Promise<MvpValidationResult>;
+        testLLMConnection: (config: {
+          baseUrl: string;
+          apiKey: string;
+          model: string;
+        }) => Promise<MvpConnectionResult>;
+        complete: (request: {
+          directoryPath: string;
+          baseUrl: string;
+          apiKey: string;
+          model: string;
+        }) => Promise<{ success: boolean; error?: string }>;
+      };
+      runs: {
+        start: () => Promise<{ success: boolean; runId: string | null; message: string }>;
+        getLatest: () => Promise<MvpRunDetail | null>;
+        getById: (request: { runId: string }) => Promise<MvpRunDetail | null>;
+        listRecent: (request?: { limit?: number }) => Promise<MvpRunSummary[]>;
+      };
+      settings: {
+        getAll: () => Promise<Pick<MvpSettingsView, 'outlookDirectory' | 'aiBaseUrl' | 'aiModel'>>;
+        update: (request: {
+          outlookDirectory?: string;
+          aiBaseUrl?: string;
+          apiKey?: string;
+          aiModel?: string;
+        }) => Promise<{ success: boolean; error?: string }>;
+        getDataSummary: () => Promise<MvpSettingsView>;
+        clearRuns: () => Promise<{ success: boolean; deletedRunCount: number }>;
+        rebuildIndex: () => Promise<{ success: boolean; message: string }>;
+      };
+    };
+
     /**
      * Electron IPC bridge for renderer-to-main communication
      */

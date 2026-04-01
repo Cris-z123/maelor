@@ -19,7 +19,7 @@
     "src/renderer/app/OnboardingFlow.tsx",
     "src/renderer/app/mvpApi.ts",
     "src/renderer/styles/**/*",
-    "src/shared/**/*"
+    "src/shared/types/mvp.ts"
   ],
   "exclude": [
     "node_modules",

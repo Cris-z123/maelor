@@ -26,8 +26,9 @@
 
 - [x] T005 Remove duplicate renderer report-view surface and keep one active run-review entry path
 - [x] T006 Narrow renderer compile scope to MVP pages/components only
-- [ ] T007 Narrow shared compile surface to MVP contracts/types only
-- [ ] T008 Remove non-MVP IPC channels from the active client/server surface
+- [x] T007 Narrow shared compile surface to MVP contracts/types only
+- [x] T008 Remove non-MVP IPC channels from the active client/server surface
+- [ ] T008b Remove `mvp`-prefixed active runtime/module/type/config naming and replace it with final domain naming; delete compatibility naming layers instead of keeping parallel product namespaces
 - [x] T008a Narrow `electron/preload.js` and renderer-side MVP API wrappers to the active onboarding/runs/settings contract only
 - [x] T009 Remove non-MVP stores and inactive UI modules from the active compile surface
 - [x] T010 Restore `pnpm run typecheck`
@@ -45,9 +46,9 @@
 
 ### Tests for User Story 1
 
-- [ ] T012 [P] [US1] Add unit tests for Outlook directory detection and validation in `tests/unit/main/onboarding/`
-- [ ] T013 [P] [US1] Add integration tests for onboarding IPC contracts in `tests/integration/ipc/`
-- [ ] T014 [P] [US1] Add renderer tests for the 3-step onboarding flow in `tests/unit/renderer/components/onboarding/`
+- [x] T012 [P] [US1] Add unit tests for Outlook directory detection and validation in `tests/unit/main/onboarding/`
+- [x] T013 [P] [US1] Add integration tests for onboarding IPC contracts in `tests/integration/ipc/`
+- [x] T014 [P] [US1] Add renderer tests for the 3-step onboarding flow in `tests/unit/renderer/components/onboarding/`
 
 ### Implementation for User Story 1
 

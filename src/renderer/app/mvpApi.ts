@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   MvpConnectionResult,
   MvpOnboardingStatus,
   MvpRunDetail,
@@ -40,9 +40,8 @@ export const mvpApi = {
     const api = getApi();
     if (!api) return null;
 
-    const result = await api.onboarding.detectEmailClient({ type: 'outlook' });
-    const match = result.clients.find((client) => client.type === 'outlook');
-    return match?.path ?? null;
+    const result = await api.onboarding.detectOutlookDir();
+    return result.detectedPath;
   },
 
   async validateOutlookDirectory(directoryPath: string): Promise<MvpValidationResult> {
@@ -57,10 +56,10 @@ export const mvpApi = {
       };
     }
 
-    return api.onboarding.validateEmailPath({ path: directoryPath, clientType: 'outlook' });
+    return api.onboarding.validateOutlookDir({ directoryPath });
   },
 
-  async testConnection(baseUrl: string, apiKey: string): Promise<MvpConnectionResult> {
+  async testConnection(baseUrl: string, apiKey: string, model: string): Promise<MvpConnectionResult> {
     const api = getApi();
     if (!api) {
       return {
@@ -71,9 +70,9 @@ export const mvpApi = {
     }
 
     return api.onboarding.testLLMConnection({
-      mode: 'remote',
-      remoteEndpoint: baseUrl,
+      baseUrl,
       apiKey,
+      model,
     });
   },
 
@@ -85,7 +84,7 @@ export const mvpApi = {
   }): Promise<{ success: boolean; error?: string }> {
     const api = getApi();
     if (!api) return { success: false, error: apiUnavailableMessage };
-    return api.onboarding.completeSetup(request);
+    return api.onboarding.complete(request);
   },
 
   async startRun(): Promise<{ success: boolean; runId: string | null; message: string }> {
@@ -125,11 +124,7 @@ export const mvpApi = {
     const api = getApi();
     if (!api) return false;
 
-    const result = await api.settings.update({
-      section: 'data',
-      updates,
-    });
-
+    const result = await api.settings.update(updates);
     return result.success;
   },
 

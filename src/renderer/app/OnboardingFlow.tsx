@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 
 import type { MvpConnectionResult, MvpValidationResult } from '@shared/types/mvp';
 
@@ -100,7 +100,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
     setMessage(null);
 
     try {
-      const result = await mvpApi.testConnection(baseUrl.trim(), apiKey.trim());
+      const result = await mvpApi.testConnection(baseUrl.trim(), apiKey.trim(), model.trim());
       setConnection(result);
       setStep(3);
       setMessage(result.message);

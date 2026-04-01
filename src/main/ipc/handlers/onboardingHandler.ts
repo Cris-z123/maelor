@@ -30,6 +30,10 @@ const DISCLOSURE_KEY = 'onboarding_disclosure';
  * Matches Zod schema inference where all fields are optional
  */
 interface StepData {
+  directoryPath?: string;
+  baseUrl?: string;
+  apiKey?: string;
+  model?: string;
   emailClient?: {
     type?: 'thunderbird' | 'outlook' | 'apple-mail';
     path?: string;
@@ -95,43 +99,43 @@ export async function handleGetStatusV2(_event: Electron.IpcMainInvokeEvent) {
   return {
     completed: state.completed,
     currentStep: state.currentStep,
-    readablePstCount: state.emailClient.validated ? 1 : 0,
-    outlookDirectory: state.emailClient.path || null,
+    readablePstCount: state.readablePstCount,
+    outlookDirectory: state.outlookDirectory || null,
   };
 }
 
 /**
  * Set onboarding step with validation (T020)
  */
-const VALID_STEPS = ['welcome', 'email-client', 'schedule', 'llm-config', 'complete'];
+const VALID_STEPS = [1, 2, 3] as const;
 
 export async function handleSetStepV2(
   _event: Electron.IpcMainInvokeEvent,
-  step: string
+  step: 1 | 2 | 3
 ) {
   if (!VALID_STEPS.includes(step)) {
     throw new Error('Invalid onboarding step');
   }
 
   const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
-  return await OnboardingManager.setStep(step);
+  OnboardingManager.updateState({ currentStep: step });
+  return { success: true };
 }
 
 /**
  * Detect email client (T020)
  */
 export async function handleDetectEmailClientV2(
-  _event: Electron.IpcMainInvokeEvent,
-  _type?: 'thunderbird' | 'outlook' | 'apple-mail'
+  _event: Electron.IpcMainInvokeEvent
 ) {
   try {
-    logger.info('OnboardingHandler', 'Detect email client requested', { type: _type });
+    logger.info('OnboardingHandler', 'Detect Outlook directory requested');
     const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
-    const result = await OnboardingManager.detectEmailClient();
-    logger.info('OnboardingHandler', 'Detect email client succeeded', result);
+    const result = OnboardingManager.detectOutlookDirectory();
+    logger.info('OnboardingHandler', 'Detect Outlook directory succeeded', result);
     return result;
   } catch (error) {
-    logger.error('OnboardingHandler', 'Detect email client failed', {
+    logger.error('OnboardingHandler', 'Detect Outlook directory failed', {
       error: error instanceof Error ? error.message : String(error),
     });
     throw error;
@@ -147,7 +151,10 @@ export async function handleValidateEmailPathV2(
   _clientType: string
 ) {
   const { default: PstDiscovery } = await import('../../outlook/PstDiscovery.js');
-  return PstDiscovery.validateDirectory(path);
+  const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
+  const result = PstDiscovery.validateDirectory(path);
+  OnboardingManager.recordValidation(path, result.readablePstCount);
+  return result;
 }
 
 /**
@@ -155,14 +162,14 @@ export async function handleValidateEmailPathV2(
  */
 export async function handleTestLLMConnectionV2(
   _event: Electron.IpcMainInvokeEvent,
-  config: { mode: string; endpoint: string; apiKey: string }
+  config: { baseUrl: string; apiKey: string; model: string }
 ) {
-  if (!config.endpoint || !config.apiKey) {
+  if (!config.baseUrl || !config.apiKey) {
     throw new Error('Invalid LLM configuration');
   }
 
   const { default: OnboardingManager } = await import('../../onboarding/OnboardingManager.js');
-  return await OnboardingManager.testLLMConnection(config);
+  return await OnboardingManager.testConnection(config);
 }
 
 /**
@@ -173,8 +180,6 @@ export async function handleSetStep(
   _step: 1 | 2 | 3,
   _data?: StepData
 ): Promise<{ success: boolean; error?: string }> {
-  // Implementation to be added based on OnboardingManager
-  // For now, return success
   return { success: true };
 }
 

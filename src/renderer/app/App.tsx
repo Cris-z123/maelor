@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 
 import type { MvpActionItemView, MvpRunDetail, MvpRunSummary, MvpSettingsView } from '@shared/types/mvp';
 
@@ -23,9 +23,7 @@ const emptySettings: MvpSettingsView = {
 
 function formatDate(timestamp: number | null): string {
   if (!timestamp) return '-';
-  return new Date(timestamp).toLocaleString('zh-CN', {
-    hour12: false,
-  });
+  return new Date(timestamp).toLocaleString('zh-CN', { hour12: false });
 }
 
 function formatConfidence(score: number): string {
@@ -60,8 +58,7 @@ export default function App() {
 
   useEffect(() => {
     const currentRun = selectedRun ?? latestRun;
-    const nextItemId = currentRun?.items[0]?.itemId ?? null;
-    setSelectedItemId(nextItemId);
+    setSelectedItemId(currentRun?.items[0]?.itemId ?? null);
   }, [latestRun, selectedRun]);
 
   async function refreshAppState(): Promise<void> {
@@ -138,6 +135,10 @@ export default function App() {
   }
 
   async function handleClearRuns(): Promise<void> {
+    if (!window.confirm('确定要清理所有历史运行记录吗？此操作不可撤销。')) {
+      return;
+    }
+
     setLoading(true);
     setStatusMessage(null);
 

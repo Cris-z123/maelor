@@ -148,36 +148,23 @@ export interface ElectronAPI {
   };
   onboarding: {
     getStatus: () => Promise<MvpOnboardingStatus>;
-    setStep: (request: {
-      step: 1 | 2 | 3;
-      data?: {
-        emailClient?: { type: 'thunderbird' | 'outlook' | 'apple-mail'; path: string };
-        schedule?: { generationTime: { hour: number; minute: number }; skipWeekends: boolean };
-        llm?: {
-          mode: 'local' | 'remote';
-          localEndpoint?: string;
-          remoteEndpoint?: string;
-          apiKey?: string;
-        };
-      };
-    }) => Promise<{ success: boolean; error?: string }>;
-    detectEmailClient: (request: { type: 'thunderbird' | 'outlook' | 'apple-mail' }) => Promise<{
-      clients: Array<{ type: string; path: string; confidence: string }>;
-      platform: string;
+    setStep: (step: 1 | 2 | 3) => Promise<{ success: boolean; error?: string }>;
+    detectOutlookDir: () => Promise<{
+      detectedPath: string | null;
+      reason: string;
     }>;
-    validateEmailPath: (request: { path: string; clientType?: string }) => Promise<MvpValidationResult>;
+    validateOutlookDir: (request: { directoryPath: string }) => Promise<MvpValidationResult>;
     testLLMConnection: (config: {
-      mode: 'local' | 'remote';
-      localEndpoint?: string;
-      remoteEndpoint?: string;
-      apiKey?: string;
+      baseUrl: string;
+      apiKey: string;
+      model: string;
     }) => Promise<MvpConnectionResult>;
-    completeSetup: (request: {
+    complete: (request: {
       directoryPath: string;
       baseUrl: string;
       apiKey: string;
       model: string;
-    }) => Promise<{ success: boolean }>;
+    }) => Promise<{ success: boolean; error?: string }>;
   };
   runs: {
     start: () => Promise<{ success: boolean; runId: string | null; message: string }>;
@@ -236,10 +223,12 @@ export interface ElectronAPI {
     copySearchTerm: (request: { itemId: string }) => Promise<{ success: boolean; searchTerm: string }>;
   };
   settings: {
-    getAll: () => Promise<any>;
+    getAll: () => Promise<MvpSettingsView>;
     update: (request: {
-      section: 'email' | 'schedule' | 'llm' | 'display' | 'notifications' | 'data';
-      updates: Partial<any>;
+      outlookDirectory?: string;
+      aiBaseUrl?: string;
+      apiKey?: string;
+      aiModel?: string;
     }) => Promise<{ success: boolean; error?: string }>;
     getDataSummary: () => Promise<MvpSettingsView>;
     clearRuns: () => Promise<{ success: boolean; deletedRunCount: number }>;

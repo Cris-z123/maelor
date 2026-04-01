@@ -1,4 +1,4 @@
-# Feature Specification: Outlook PST Direct-Connect MVP
+﻿# Feature Specification: Outlook PST Direct-Connect MVP
 
 **Feature Branch**: `003-outlook-pst-mvp`  
 **Created**: 2026-03-31  
@@ -36,11 +36,11 @@ As a configured user, I want to scan my Outlook PST files and review extracted i
 **Acceptance Scenarios**:
 
 1. **Given** the app is configured, **When** the user opens the main shell, **Then** the default page is `最新结果`.
-2. **Given** no run exists yet, **When** the latest results page loads, **Then** the app shows an empty state with a `立即扫描` action.
-3. **Given** a run is started, **When** processing finishes, **Then** the app stores the run summary, extracted items, and item evidence.
+2. **Given** no run exists yet, **When** the latest results page loads, **Then** the app shows an empty state with an `立即扫描` action.
+3. **Given** a run is started, **When** processing finishes, **Then** the app stores the run summary, extracted items, and item evidence in the MVP run tables.
 4. **Given** a completed run exists, **When** the latest results page opens, **Then** the left pane shows item cards and the right pane shows details for the selected item.
 5. **Given** an item has low confidence, **When** it appears in the list, **Then** its card uses a low-confidence visual treatment and its evidence region is expanded by default in the details pane.
-6. **Given** an item is selected, **When** the user clicks `复制搜索词`, **Then** the search term is copied and a success toast is shown.
+6. **Given** an item is selected, **When** the user clicks `复制搜索词`, **Then** the search term is copied and a success message is shown.
 
 ---
 
@@ -67,6 +67,7 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - What happens when the AI provider is reachable but returns invalid structured output?
 - What happens when a run is started while another run is already in progress?
 - What happens when the latest run has zero extracted items but did process PST files successfully?
+- What happens when auto-detection suggests a directory but the user overrides it before validation?
 
 ## Requirements *(mandatory)*
 
@@ -76,12 +77,14 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **FR-002**: The system MUST restrict the MVP to Windows + classic Outlook + PST-only directory scanning.
 - **FR-003**: The system MUST guide users through a 3-step onboarding flow: Outlook directory, PST validation, AI configuration.
 - **FR-004**: The system MUST allow automatic Outlook directory detection, but detection failure MUST NOT block manual configuration.
+- **FR-004a**: Automatic Outlook directory detection MUST be side-effect-free and MUST NOT persist configuration until validation or explicit completion.
 - **FR-005**: The system MUST validate that the selected Outlook directory exists and is readable.
 - **FR-006**: The system MUST discover PST files under the configured Outlook directory and classify them as readable or unreadable.
 - **FR-007**: The system MUST block onboarding completion when no readable PST file is available.
 - **FR-008**: The system MUST block onboarding completion when AI connection testing fails.
 - **FR-009**: The system MUST allow the user to manually start a scan from the latest-results page.
 - **FR-010**: The system MUST persist scan runs, discovered PST files, processed emails, extracted items, and item evidence.
+- **FR-010a**: The system MUST persist active run-review data in SQLite run tables; temporary config-based bulk JSON persistence is not an allowed steady-state design.
 - **FR-011**: The system MUST display the latest run as a two-column review layout with an item list and detail panel.
 - **FR-012**: The system MUST show each item with title, item type, confidence level, source status, sender, sent time, and subject snippet.
 - **FR-013**: The system MUST show detail-panel fields for item content, rationale, evidence, search term, file path, and source identifier/fingerprint.
@@ -90,6 +93,7 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **FR-016**: The system MUST provide a recent-runs view limited to the most recent 20 runs.
 - **FR-017**: The system MUST provide only three settings groups: Outlook directory, AI configuration, and data management.
 - **FR-018**: The system MUST NOT expose feedback, notifications, auto-update management, inline editing, search history, or calendar history in the MVP UI.
+- **FR-019**: The preload and renderer-facing IPC surface MUST be narrowed to the MVP onboarding, runs, and settings contracts.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -123,6 +127,7 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - Step 1 components:
   - `DirectoryPickerField`
   - `尝试自动检测` secondary action
+  - detected directory candidate fills the field only; it does not persist settings by itself
 - Step 2 components:
   - `PstValidationList`
   - readable/unreadable states
@@ -131,6 +136,7 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
   - Base URL, API key, model fields
 - Validation rules:
   - auto-detection failure does not block
+  - auto-detection success is advisory until validation or onboarding completion
   - no readable PST blocks completion
   - failed AI connection blocks completion
 

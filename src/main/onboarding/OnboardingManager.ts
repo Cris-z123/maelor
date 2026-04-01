@@ -1,73 +1,29 @@
-/**
- * OnboardingManager
- *
- * Manages first-time setup wizard state and configuration persistence.
- * Tracks completion through 3 steps: email client, schedule, LLM config.
- *
- * Per plan.md T011, data-model.md section 1
- */
-
-import DatabaseManager from '../database/Database.js';
-import { logger } from '../config/logger.js';
-import { safeStorage } from 'electron';
+import { app, safeStorage } from 'electron';
 import fs from 'fs';
 import path from 'path';
 import type { Database } from 'better-sqlite3';
 
-/**
- * Onboarding state structure
- */
+import DatabaseManager from '../database/Database.js';
+import { logger } from '../config/logger.js';
+
 export interface OnboardingState {
-  // Completion status
   completed: boolean;
   currentStep: 1 | 2 | 3;
-
-  // Step 1: Email client configuration
-  emailClient: {
-    type: 'thunderbird' | 'outlook' | 'apple-mail';
-    path: string;
-    detectedPath: string | null;
-    validated: boolean;
-  };
-
-  // Step 2: Schedule settings
-  schedule: {
-    generationTime: {
-      hour: number; // 0-23
-      minute: number; // 0-59
-    };
-    skipWeekends: boolean;
-  };
-
-  // Step 3: LLM configuration
+  outlookDirectory: string;
+  detectedOutlookDirectory: string | null;
+  readablePstCount: number;
   llm: {
-    mode: 'local' | 'remote';
-    localEndpoint: string;
-    remoteEndpoint: string;
-    apiKey: string; // Encrypted
+    baseUrl: string;
+    apiKey: string;
+    model: string;
     connectionStatus: 'untested' | 'success' | 'failed';
-    responseTime?: number; // Response time in ms
+    responseTimeMs: number | null;
   };
-
-  // Metadata
-  lastUpdated: number; // Unix timestamp
+  lastUpdated: number;
 }
 
-/**
- * Onboarding state update options
- */
 export type OnboardingUpdate = Partial<Omit<OnboardingState, 'lastUpdated'>>;
 
-/**
- * Onboarding Manager
- *
- * Features:
- * - Track wizard completion state (steps 1/2/3)
- * - Persist configuration to user_config table
- * - Validate step transitions
- * - Support resume from last completed step
- * - Encrypt sensitive data (API keys)
- */
 class OnboardingManager {
   private static readonly CONFIG_KEY = 'onboarding';
 
@@ -75,13 +31,8 @@ class OnboardingManager {
     return DatabaseManager.getDatabase();
   }
 
-  /**
-   * Get current onboarding state
-   * Returns default state if not found or safeStorage unavailable
-   */
   static getState(): OnboardingState {
     try {
-      // Check if safeStorage is available
       if (!safeStorage.isEncryptionAvailable()) {
         logger.warn('OnboardingManager', 'safeStorage not available, using default state');
         return this.getDefaultState();
@@ -95,16 +46,8 @@ class OnboardingManager {
         return this.getDefaultState();
       }
 
-      // Decrypt config value
-      const decryptedBytes = safeStorage.decryptString(row.config_value);
-      const state = JSON.parse(decryptedBytes) as OnboardingState;
-
-      logger.info('OnboardingManager', 'Loaded onboarding state', {
-        completed: state.completed,
-        currentStep: state.currentStep,
-      });
-
-      return state;
+      const decrypted = safeStorage.decryptString(row.config_value);
+      return this.mergeWithDefaults(JSON.parse(decrypted) as Partial<OnboardingState>);
     } catch (error) {
       logger.error('OnboardingManager', 'Failed to load state', {
         error: error instanceof Error ? error.message : String(error),
@@ -113,55 +56,25 @@ class OnboardingManager {
     }
   }
 
-  /**
-   * Update onboarding state
-   * Validates step transitions and persists to database
-   */
   static updateState(update: OnboardingUpdate): OnboardingState {
     const current = this.getState();
-    const updated = { ...current, ...update, lastUpdated: Date.now() };
+    const updated = this.mergeWithDefaults({
+      ...current,
+      ...update,
+      llm: {
+        ...current.llm,
+        ...(update.llm ?? {}),
+      },
+      lastUpdated: Date.now(),
+    });
 
-    // Validate step transitions
-    if (updated.currentStep < current.currentStep) {
-      throw new Error(
-        `Cannot move back from step ${current.currentStep} to ${updated.currentStep}`
-      );
-    }
+    this.validateStateTransition(current, updated);
 
-    // Step 2 requires step 1 email client validation
-    if (updated.currentStep >= 2 && !updated.emailClient.validated) {
-      throw new Error('Email client must be validated before proceeding to step 2');
-    }
-
-    // Step 3 requires step 2 schedule configuration
-    if (updated.currentStep >= 3) {
-      if (
-        updated.schedule.generationTime.hour < 0 ||
-        updated.schedule.generationTime.hour > 23
-      ) {
-        throw new Error('Invalid hour (must be 0-23)');
-      }
-      if (
-        updated.schedule.generationTime.minute < 0 ||
-        updated.schedule.generationTime.minute > 59
-      ) {
-        throw new Error('Invalid minute (must be 0-59)');
-      }
-    }
-
-    // Completion requires LLM connection test success
-    if (updated.completed && updated.llm.connectionStatus !== 'success') {
-      throw new Error('LLM connection must succeed before completion');
-    }
-
-    // Check if safeStorage is available before encrypting
     if (!safeStorage.isEncryptionAvailable()) {
       throw new Error('safeStorage not available - cannot encrypt onboarding state');
     }
 
-    // Encrypt and persist
-    const jsonState = JSON.stringify(updated);
-    const encryptedBytes = safeStorage.encryptString(jsonState);
+    const encryptedBytes = safeStorage.encryptString(JSON.stringify(updated));
 
     this.db
       .prepare(
@@ -169,245 +82,167 @@ class OnboardingManager {
       )
       .run(this.CONFIG_KEY, encryptedBytes, Math.floor(Date.now() / 1000));
 
-    logger.info('OnboardingManager', 'Updated onboarding state', {
-      completed: updated.completed,
-      currentStep: updated.currentStep,
-    });
-
     return updated;
   }
 
-  /**
-   * Check if onboarding is complete
-   */
   static isComplete(): boolean {
     return this.getState().completed;
   }
 
-  /**
-   * Get current step
-   */
   static getCurrentStep(): 1 | 2 | 3 {
     return this.getState().currentStep;
   }
 
-  /**
-   * Reset onboarding state (for testing/re-onboarding)
-   * WARNING: This will delete all onboarding configuration
-   */
   static resetState(): void {
-    this.db
-      .prepare('DELETE FROM user_config WHERE config_key = ?')
-      .run(this.CONFIG_KEY);
-
+    this.db.prepare('DELETE FROM user_config WHERE config_key = ?').run(this.CONFIG_KEY);
     logger.warn('OnboardingManager', 'Reset onboarding state');
   }
 
-  /**
-   * Get default onboarding state
-   */
+  static detectOutlookDirectory(): { detectedPath: string | null; reason: string } {
+    const candidates = [
+      path.join(app.getPath('documents'), 'Outlook Files'),
+      path.join(app.getPath('appData'), 'Microsoft', 'Outlook'),
+      path.join(app.getPath('home'), 'AppData', 'Local', 'Microsoft', 'Outlook'),
+    ];
+
+    for (const candidate of candidates) {
+      try {
+        if (fs.existsSync(candidate) && fs.statSync(candidate).isDirectory()) {
+          const files = fs.readdirSync(candidate);
+          const hasPst = files.some((file) => file.toLowerCase().endsWith('.pst'));
+          if (hasPst) {
+            return { detectedPath: candidate, reason: 'Detected PST files in a default Outlook directory.' };
+          }
+        }
+      } catch {
+        // Ignore inaccessible candidates and continue.
+      }
+    }
+
+    return {
+      detectedPath: null,
+      reason: 'No default Outlook PST directory was detected.',
+    };
+  }
+
+  static recordValidation(directoryPath: string, readablePstCount: number): OnboardingState {
+    return this.updateState({
+      currentStep: readablePstCount > 0 ? 2 : 1,
+      outlookDirectory: directoryPath,
+      readablePstCount,
+    });
+  }
+
+  static async testConnection(config: {
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+  }): Promise<{
+    success: boolean;
+    responseTimeMs: number | null;
+    message: string;
+  }> {
+    const { ConnectionTester } = await import('../llm/ConnectionTester.js');
+
+    const result = await ConnectionTester.testConnection({
+      mode: 'remote',
+      endpoint: config.baseUrl,
+      apiKey: config.apiKey,
+    });
+
+    this.updateState({
+      currentStep: 3,
+      llm: {
+        baseUrl: config.baseUrl,
+        apiKey: config.apiKey,
+        model: config.model,
+        connectionStatus: result.success ? 'success' : 'failed',
+        responseTimeMs: result.success ? result.responseTime ?? null : null,
+      },
+    });
+
+    return {
+      success: result.success,
+      responseTimeMs: result.success ? result.responseTime ?? null : null,
+      message: result.success ? 'AI connection succeeded.' : result.error ?? 'AI connection failed.',
+    };
+  }
+
+  static completeSetup(config: {
+    directoryPath: string;
+    baseUrl: string;
+    apiKey: string;
+    model: string;
+    readablePstCount: number;
+  }): OnboardingState {
+    return this.updateState({
+      completed: true,
+      currentStep: 3,
+      outlookDirectory: config.directoryPath,
+      detectedOutlookDirectory: config.directoryPath,
+      readablePstCount: config.readablePstCount,
+      llm: {
+        baseUrl: config.baseUrl,
+        apiKey: config.apiKey,
+        model: config.model,
+        connectionStatus: 'success',
+        responseTimeMs: this.getState().llm.responseTimeMs,
+      },
+    });
+  }
+
   private static getDefaultState(): OnboardingState {
     return {
       completed: false,
       currentStep: 1,
-      emailClient: {
-        type: 'thunderbird',
-        path: '',
-        detectedPath: null,
-        validated: false,
-      },
-      schedule: {
-        generationTime: {
-          hour: 18,
-          minute: 0,
-        },
-        skipWeekends: true,
-      },
+      outlookDirectory: '',
+      detectedOutlookDirectory: null,
+      readablePstCount: 0,
       llm: {
-        mode: 'remote',
-        localEndpoint: 'http://localhost:11434',
-        remoteEndpoint: 'https://api.openai.com/v1',
+        baseUrl: 'https://api.openai.com/v1',
         apiKey: '',
+        model: 'gpt-4.1-mini',
         connectionStatus: 'untested',
+        responseTimeMs: null,
       },
       lastUpdated: Date.now(),
     };
   }
 
-  /**
-   * Validate email client path
-   * Checks if path exists and contains email files
-   */
-  static validateEmailClientPath(userPath: string): boolean {
-    try {
-      // Check if path exists
-      if (!fs.existsSync(userPath)) {
-        return false;
-      }
-
-      // Check if directory
-      const stat = fs.statSync(userPath);
-      if (!stat.isDirectory()) {
-        return false;
-      }
-
-      // Check for email files based on client type
-      const hasEmailFiles = fs.readdirSync(userPath).some((file: string) => {
-        const ext = path.extname(file).toLowerCase();
-        return ['.msf', '.mbx', '.mbox', '.eml'].includes(ext);
-      });
-
-      return hasEmailFiles;
-    } catch (error) {
-      logger.error('OnboardingManager', 'Path validation failed', {
-        path: userPath,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return false;
-    }
-  }
-
-  /**
-   * Update LLM connection test result
-   */
-  static updateLLMConnectionStatus(
-    status: 'success' | 'failed',
-    responseTime?: number
-  ): OnboardingState {
-    return this.updateState({
-      llm: {
-        ...this.getState().llm,
-        connectionStatus: status,
-        responseTime,
-      },
-    });
-  }
-
-  /**
-   * Complete onboarding
-   * Called after step 3 LLM connection succeeds
-   */
-  static completeOnboarding(): OnboardingState {
-    return this.updateState({
-      completed: true,
-      currentStep: 3,
-    });
-  }
-
-  /**
-   * Get onboarding status for IPC (T020)
-   */
-  static async getStatus() {
-    const state = this.getState();
+  private static mergeWithDefaults(state: Partial<OnboardingState>): OnboardingState {
+    const defaults = this.getDefaultState();
     return {
-      completed: state.completed,
-      currentStep: `step-${state.currentStep}`, // Map 1/2/3 to step-1/step-2/step-3
-      totalSteps: 3,
+      ...defaults,
+      ...state,
+      llm: {
+        ...defaults.llm,
+        ...(state.llm ?? {}),
+      },
+      lastUpdated: state.lastUpdated ?? defaults.lastUpdated,
     };
   }
 
-  /**
-   * Set onboarding step (T020)
-   */
-  static async setStep(stepName: string): Promise<boolean> {
-    const stepMap: Record<string, 1 | 2 | 3> = {
-      'step-1': 1,
-      'step-2': 2,
-      'step-3': 3,
-    };
-
-    const stepNum = stepMap[stepName];
-    if (!stepNum) {
-      throw new Error(`Invalid step name: ${stepName}`);
+  private static validateStateTransition(current: OnboardingState, updated: OnboardingState): void {
+    if (updated.currentStep < current.currentStep) {
+      throw new Error(`Cannot move back from step ${current.currentStep} to ${updated.currentStep}`);
     }
 
-    this.updateState({ currentStep: stepNum });
-    return true;
-  }
+    if (updated.currentStep >= 2 && !updated.outlookDirectory.trim()) {
+      throw new Error('Outlook directory is required before PST validation.');
+    }
 
-  /**
-   * Detect email client (T020)
-   */
-  static async detectEmailClient() {
-    const { EmailClientDetector } = await import('./EmailClientDetector.js');
+    if (updated.currentStep >= 3 && updated.readablePstCount < 1) {
+      throw new Error('At least one readable PST is required before AI configuration.');
+    }
 
-    // Use platformDefaults for auto-detection
-    const defaults = EmailClientDetector.platformDefaults();
-    const clients = [];
-
-    for (const [type, clientPath] of Object.entries(defaults)) {
-      if (clientPath) {
-        clients.push({
-          type,
-          path: clientPath,
-          confidence: 'high'
-        });
+    if (updated.completed) {
+      if (updated.readablePstCount < 1) {
+        throw new Error('At least one readable PST is required before completion.');
+      }
+      if (updated.llm.connectionStatus !== 'success') {
+        throw new Error('AI connection must succeed before completion.');
       }
     }
-
-    return {
-      clients,
-      platform: process.platform
-    };
-  }
-
-  /**
-   * Validate email path (T020)
-   */
-  static async validateEmailPath(userPath: string, _clientType: string) {
-    const { EmailClientDetector } = await import('./EmailClientDetector.js');
-    return await EmailClientDetector.validatePathAsync(userPath);
-  }
-
-  /**
-   * Test LLM connection (T020)
-   */
-  static async testLLMConnection(config: {
-    mode: string;
-    endpoint: string;
-    apiKey: string;
-  }) {
-    const { ConnectionTester } = await import('../llm/ConnectionTester.js');
-
-    const result = await ConnectionTester.testConnection({
-      mode: config.mode as 'local' | 'remote',
-      endpoint: config.endpoint,
-      apiKey: config.apiKey,
-    });
-
-    // Update connection status in state
-    if (result.success) {
-      this.updateLLMConnectionStatus('success', result.responseTime);
-    } else {
-      this.updateLLMConnectionStatus('failed');
-    }
-
-    return result;
-  }
-
-  static async completeSetup(config: {
-    directoryPath: string;
-    baseUrl: string;
-    apiKey: string;
-    model: string;
-  }): Promise<OnboardingState> {
-    return this.updateState({
-      completed: true,
-      currentStep: 3,
-      emailClient: {
-        type: 'outlook',
-        path: config.directoryPath,
-        detectedPath: config.directoryPath,
-        validated: true,
-      },
-      llm: {
-        ...this.getState().llm,
-        mode: 'remote',
-        remoteEndpoint: config.baseUrl,
-        apiKey: config.apiKey,
-        connectionStatus: 'success',
-      },
-    });
   }
 }
 

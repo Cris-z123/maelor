@@ -28,6 +28,7 @@
 - [x] T006 Narrow renderer compile scope to MVP pages/components only
 - [ ] T007 Narrow shared compile surface to MVP contracts/types only
 - [ ] T008 Remove non-MVP IPC channels from the active client/server surface
+- [x] T008a Narrow `electron/preload.js` and renderer-side MVP API wrappers to the active onboarding/runs/settings contract only
 - [x] T009 Remove non-MVP stores and inactive UI modules from the active compile surface
 - [x] T010 Restore `pnpm run typecheck`
 - [x] T011 Restore `pnpm run lint`
@@ -53,6 +54,7 @@
 - [x] T015 [P] [US1] Implement Outlook directory detection in `src/main/onboarding/`
 - [x] T016 [P] [US1] Implement PST discovery/readability classification in `src/main/outlook/`
 - [x] T017 [US1] Implement onboarding IPC handlers from `contracts/ipc.md`
+- [x] T017a [US1] Ensure Outlook auto-detection is advisory only and does not persist active configuration before validation or onboarding completion
 - [x] T018 [US1] Implement onboarding stores and components for directory, validation list, and AI connection card
 - [x] T019 [US1] Route the app to onboarding until configuration completes
 
@@ -75,6 +77,7 @@
 ### Implementation for User Story 2
 
 - [x] T023 [P] [US2] Implement run repositories and data access in `src/main/runs/`
+- [x] T023a [US2] Persist latest-run review data in SQLite MVP run tables instead of config-backed JSON snapshots
 - [ ] T024 [US2] Implement `runs.start` using PST discovery + parsing + item extraction + evidence persistence
 - [x] T025 [US2] Implement `runs.getLatest` and `runs.getById`
 - [x] T026 [US2] Implement the app shell and latest-run route in `src/renderer/app/`

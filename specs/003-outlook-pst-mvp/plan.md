@@ -5,7 +5,7 @@
 
 ## Summary
 
-Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace the multi-feature drift with a Spec-Kit-driven implementation path, freeze `001` and `002`, and cut the codebase down to one compileable product surface: onboarding, latest-run review, and history/settings.
+Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace the multi-feature drift with a Spec-Kit-driven implementation path, freeze `001` and `002`, and cut the codebase down to one compileable product surface: onboarding, latest-run review, and history/settings. The active implementation path also locks three technical constraints: Outlook auto-detection must be advisory until validation/completion, active run-review data must live in SQLite run tables, and preload/renderer contracts must expose only MVP onboarding, runs, and settings APIs.
 
 ## Technical Context
 
@@ -100,22 +100,23 @@ tests/
 - Remove duplicate `ReportView` surfaces from the active renderer path.
 - Remove non-MVP renderer components from the active compile surface.
 - Narrow IPC, store, and UI entry points to onboarding, runs, and settings.
+- Narrow preload and renderer-facing APIs to the MVP onboarding/runs/settings contract only.
 - Restore:
   - `pnpm run typecheck`
   - `pnpm run lint`
 
 ### Phase 2: Outlook Directory Chain
 
-- Implement Outlook directory detection and validation.
+- Implement side-effect-free Outlook directory detection and validation.
 - Implement PST discovery and readability classification.
 - Implement onboarding state machine with 3 steps.
-- Persist Outlook directory and AI configuration only.
+- Persist Outlook directory and AI configuration only after validation or explicit onboarding completion.
 
 ### Phase 3: Run Chain
 
 - Implement `runs.start`.
 - Scan discovered PST files and parse emails.
-- Persist runs, processed emails, items, and item evidence.
+- Persist runs, processed emails, items, and item evidence in SQLite MVP run tables.
 - Implement `runs.getLatest` and `runs.getById`.
 
 ### Phase 4: Review UI
@@ -136,12 +137,12 @@ tests/
 ### Main Process
 
 - `outlook/`
-  - directory detection
+  - advisory directory detection
   - directory validation
   - PST discovery
 - `runs/`
   - run lifecycle
-  - run persistence
+  - SQLite-backed run persistence
   - latest/historical retrieval
 - `settings/`
   - persisted MVP settings only
@@ -176,6 +177,7 @@ tests/
   - `processed_emails`
   - `action_items`
   - `item_evidence`
+- Active run review retrieval must read from the run tables above, not from config-backed JSON snapshots.
 - Existing legacy tables may remain temporarily, but the active MVP code must not depend on feedback, notifications, or mode-switching tables.
 - If a schema reset is cheaper than incremental compatibility, allow it during the MVP reset because the project is still pre-release.
 

@@ -227,8 +227,8 @@ class Application {
     });
 
     ipcMain.handle(IPC_CHANNELS.ONBOARDING_DETECT_EMAIL_CLIENT, async (_event, type) => {
-      logger.debug('IPC', 'Onboarding detect-email-client request received', { type });
-      return await handleDetectEmailClientV2(_event, type);
+      logger.debug('IPC', 'Onboarding detect-outlook-directory request received', { type });
+      return await handleDetectEmailClientV2(_event);
     });
 
     ipcMain.handle(IPC_CHANNELS.ONBOARDING_VALIDATE_EMAIL_PATH, async (_event, path, clientType) => {
@@ -263,6 +263,7 @@ class Application {
         baseUrl: request.baseUrl,
         apiKey: request.apiKey,
         model: request.model,
+        readablePstCount: validation.readablePstCount,
       });
 
       return { success: true };
@@ -373,6 +374,9 @@ class Application {
           : {}),
         ...(typeof request?.updates?.aiModel === 'string'
           ? { [MVP_CONFIG_KEYS.aiModel]: request.updates.aiModel }
+          : {}),
+        ...(typeof request?.updates?.apiKey === 'string'
+          ? { 'llm.apiKey': request.updates.apiKey }
           : {}),
       });
       return { success: true };

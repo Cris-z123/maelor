@@ -14,12 +14,13 @@
   },
   "include": [
     "src/main/**/*",
-    "src/shared/types/app.ts",
+    "src/shared/**/*",
     "src/types/**/*"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "src/renderer"
+    "src/renderer",
+    "tests"
   ]
 }

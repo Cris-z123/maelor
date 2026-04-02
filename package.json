@@ -2,7 +2,7 @@
   "name": "mailcopilot",
   "version": "1.0.0",
   "type": "module",
-  "description": "Email Item Traceability & Verification System",
+  "description": "Windows-only Outlook PST direct-connect MVP",
   "main": "electron/main.js",
   "author": "Cris-z123",
   "license": "MIT",
@@ -20,15 +20,15 @@
     "start": "pnpm exec electron-rebuild -f -w better-sqlite3 && electron .",
     "postinstall": "pnpm exec electron-rebuild -f -w better-sqlite3",
     "rebuild": "pnpm exec electron-rebuild -f -w better-sqlite3",
-    "test": "vitest",
+    "test": "vitest --config vitest.config.ts",
     "test:unit": "vitest --config vitest.unit.config.ts",
     "test:integration": "vitest --config vitest.integration.config.ts",
     "test:security": "vitest --config vitest.security.config.ts",
-    "test:coverage": "vitest --coverage",
+    "test:coverage": "vitest --config vitest.config.ts --coverage",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit",
-    "format": "prettier --write \"**/*.{ts,tsx,json,md}\""
+    "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit && tsc -p tsconfig.shared.json --noEmit",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,css,md,yml,yaml}\""
   },
   "dependencies": {
     "@kenjiuno/msgreader": "^1.28.0",

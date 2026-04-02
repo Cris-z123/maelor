@@ -5,19 +5,13 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version to release (e.g., v1.0.0)'
-        required: true
-        type: string
+
+permissions:
+  contents: write
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-    
-    strategy:
-      matrix:
-        os: [macos-latest, windows-latest]
+    runs-on: windows-latest
     
     steps:
       - name: Checkout code
@@ -33,6 +27,7 @@ jobs:
         with:
           node-version: 20
           cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
       
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -46,45 +41,8 @@ jobs:
       - name: Build application
         run: pnpm run build
       
-      # macOS code signing (optional)
-      - name: Import Code Signing Certificate (macOS)
-        if: runner.os == 'macOS'
-        env:
-          CERTIFICATE_P12: ${{ secrets.MACOS_CERTIFICATE }}
-          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
-        run: |
-          if [ -n "$CERTIFICATE_P12" ]; then
-            echo $CERTIFICATE_P12 | base64 --decode > certificate.p12
-            security create-keychain -p actions build.keychain
-            security default-keychain -s build.keychain
-            security unlock-keychain -p actions build.keychain
-            security import certificate.p12 -k build.keychain -P $CERTIFICATE_PASSWORD -T /usr/bin/codesign
-            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k actions build.keychain
-            rm certificate.p12
-            echo "Certificate imported successfully"
-          else
-            echo "No certificate configured, skipping code signing"
-          fi
-        continue-on-error: true
-      
-      # macOS notarization (optional)
-      - name: Notarize app (macOS)
-        if: runner.os == 'macOS'
-        env:
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-          if [ -n "$APPLE_ID" ]; then
-            echo "Notarization configured"
-          else
-            echo "No Apple ID configured, skipping notarization"
-          fi
-        continue-on-error: true
-      
       # Windows code signing (optional)
       - name: Sign app (Windows)
-        if: runner.os == 'Windows'
         env:
           CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         shell: pwsh
@@ -99,17 +57,14 @@ jobs:
       - name: Build and publish to GitHub
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         run: pnpm exec electron-builder --publish always
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ runner.os }}-release
-          path: dist
+          name: windows-release
+          path: release
           retention-days: 7
 
   create-release:
@@ -151,11 +106,8 @@ jobs:
             ### Windows
             Download the `.exe` installer and run it.
             
-            ### macOS
-            Download the `.dmg`, open it, and drag the app to Applications.
             
             ## 🔄 Auto Update
-            If you're already using mailCopilot, the app will automatically notify you of this update.
           draft: false
           prerelease: false
         env:

@@ -24,71 +24,152 @@ if (!global.window || typeof global.window.document === 'undefined') {
   global.Node = happyWindow.Node as unknown as typeof global.Node;
 }
 
-// Mock window.electronAPI for renderer process tests
-(global.window as any).electronAPI = {
-  llm: {
-    generate: vi.fn().mockResolvedValue({
+const electronApi = {
+  onboarding: {
+    getStatus: vi.fn().mockResolvedValue({
+      completed: false,
+      currentStep: 1,
+      readablePstCount: 0,
+      outlookDirectory: null,
+    }),
+    detectOutlookDir: vi.fn().mockResolvedValue({
+      detectedPath: null,
+      reason: 'No default Outlook PST directory was detected.',
+    }),
+    validateOutlookDir: vi.fn().mockResolvedValue({
+      valid: false,
+      readablePstCount: 0,
+      unreadablePstCount: 0,
+      files: [],
+      message: 'Select an Outlook data directory.',
+    }),
+    testLLMConnection: vi.fn().mockResolvedValue({
+      success: false,
+      responseTimeMs: null,
+      message: 'Electron API unavailable in tests.',
+    }),
+    complete: vi.fn().mockResolvedValue({
       success: true,
-      items: [],
-      processed_emails: [],
-      skipped_emails: 0,
-      reprocessed_emails: 0,
     }),
   },
-  db: {
-    queryHistory: vi.fn().mockResolvedValue([]),
-    export: vi.fn().mockResolvedValue({
-      success: true,
-      filePath: '/tmp/export.md',
-      format: 'markdown',
-      itemCount: 0,
+  runs: {
+    start: vi.fn().mockResolvedValue({
+      success: false,
+      runId: null,
+      message: 'Run execution is not mocked for this test.',
     }),
+    getLatest: vi.fn().mockResolvedValue(null),
+    getById: vi.fn().mockResolvedValue(null),
+    listRecent: vi.fn().mockResolvedValue([]),
   },
-  config: {
-    get: vi.fn().mockResolvedValue({}),
-    set: vi.fn().mockResolvedValue({
-      success: true,
-      updated: [],
+  settings: {
+    getAll: vi.fn().mockResolvedValue({
+      outlookDirectory: '',
+      aiBaseUrl: 'https://api.openai.com/v1',
+      aiModel: 'gpt-4.1-mini',
     }),
-  },
-  app: {
-    checkUpdate: vi.fn().mockResolvedValue({
-      hasUpdate: false,
-    }),
-  },
-  email: {
-    fetchMeta: vi.fn().mockResolvedValue({
+    update: vi.fn().mockResolvedValue({
       success: true,
-      metadata: {},
+    }),
+    getDataSummary: vi.fn().mockResolvedValue({
+      outlookDirectory: '',
+      aiBaseUrl: 'https://api.openai.com/v1',
+      aiModel: 'gpt-4.1-mini',
+      databasePath: '',
+      databaseSizeBytes: 0,
+    }),
+    clearRuns: vi.fn().mockResolvedValue({
+      success: true,
+      deletedRunCount: 0,
+    }),
+    rebuildIndex: vi.fn().mockResolvedValue({
+      success: true,
+      message: 'Index rebuild completed.',
     }),
   },
 };
 
+const testWindow = global.window as unknown as typeof global.window & {
+  electronAPI?: typeof electronApi;
+};
+
+testWindow.electronAPI = electronApi;
+
+Object.defineProperty(global.navigator, 'clipboard', {
+  configurable: true,
+  value: {
+    writeText: vi.fn().mockResolvedValue(undefined),
+  },
+});
+
 // Create IPC renderer mock
 const mockIpcRenderer = {
   invoke: vi.fn().mockImplementation((channel: string, ..._args: unknown[]) => {
-    // Default mock responses for common IPC channels
     switch (channel) {
-      case 'mode:get':
-        return Promise.resolve({ mode: 'remote', isProcessing: false });
-      case 'config:get':
-        return Promise.resolve({ mode: 'remote' });
-      case 'retention:get-config':
+      case 'onboarding:get-status':
         return Promise.resolve({
-          email_retention_days: 90,
-          feedback_retention_days: 90,
+          completed: false,
+          currentStep: 1,
+          readablePstCount: 0,
+          outlookDirectory: null,
         });
-      case 'llm:generate':
+      case 'onboarding:detect-email-client':
+        return Promise.resolve({
+          detectedPath: null,
+          reason: 'No default Outlook PST directory was detected.',
+        });
+      case 'onboarding:validate-email-path':
+        return Promise.resolve({
+          valid: false,
+          readablePstCount: 0,
+          unreadablePstCount: 0,
+          files: [],
+          message: 'Select an Outlook data directory.',
+        });
+      case 'onboarding:test-llm-connection':
+        return Promise.resolve({
+          success: false,
+          responseTimeMs: null,
+          message: 'Electron API unavailable in tests.',
+        });
+      case 'onboarding:complete-setup':
+        return Promise.resolve({ success: true });
+      case 'runs:start':
+        return Promise.resolve({
+          success: false,
+          runId: null,
+          message: 'Run execution is not mocked for this test.',
+        });
+      case 'runs:get-latest':
+      case 'runs:get-by-id':
+        return Promise.resolve(null);
+      case 'runs:list-recent':
+        return Promise.resolve([]);
+      case 'settings:get-all':
+        return Promise.resolve({
+          outlookDirectory: '',
+          aiBaseUrl: 'https://api.openai.com/v1',
+          aiModel: 'gpt-4.1-mini',
+        });
+      case 'settings:update':
+        return Promise.resolve({ success: true });
+      case 'settings:get-data-summary':
+        return Promise.resolve({
+          outlookDirectory: '',
+          aiBaseUrl: 'https://api.openai.com/v1',
+          aiModel: 'gpt-4.1-mini',
+          databasePath: '',
+          databaseSizeBytes: 0,
+        });
+      case 'settings:clear-runs':
         return Promise.resolve({
           success: true,
-          items: [],
-          batch_info: {
-            total_emails: 0,
-            processed_emails: 0,
-            skipped_emails: 0,
-            same_batch_duplicates: 0,
-            cross_batch_duplicates: 0,
-          },
+          deletedRunCount: 0,
+        });
+      case 'settings:rebuild-index':
+        return Promise.resolve({
+          success: true,
+          message: 'Index rebuild completed.',
         });
       default:
         return Promise.resolve({});
@@ -106,6 +187,15 @@ vi.mock('electron', () => ({
     getPath: (name: string) => {
       if (name === 'userData') {
         return '/tmp/test-mailcopilot';
+      }
+      if (name === 'documents') {
+        return '/tmp/test-documents';
+      }
+      if (name === 'appData') {
+        return '/tmp/test-appdata';
+      }
+      if (name === 'home') {
+        return '/tmp/test-home';
       }
       return '/tmp/test';
     },

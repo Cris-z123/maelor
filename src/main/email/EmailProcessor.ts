@@ -415,7 +415,7 @@ export class EmailProcessor {
           });
           parseErrors.push({
             email: filePath,
-            error: `Unsupported format: ${format} (only .eml supported in MVP)`,
+      error: `Unsupported format: ${format} (only .eml supported in the current scope)`,
           });
           continue;
         }
@@ -490,7 +490,7 @@ export class EmailProcessor {
       case 'htm':
         return 'html';
       default:
-        // Default to eml for MVP
+    // Default to eml for the current scope
         return 'eml';
     }
   }

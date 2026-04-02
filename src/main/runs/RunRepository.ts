@@ -1,13 +1,13 @@
 ﻿import { randomUUID } from 'crypto';
 
-import type { MvpActionItemView, MvpEvidenceView, MvpRunDetail, MvpRunSummary, MvpValidationFile } from '@shared/types/mvp.js';
+import type { ActionItemView, EvidenceView, RunDetail, RunSummary, ValidationFile } from '@shared/types/app.js';
 
 import { ConfigManager } from '../config/ConfigManager.js';
 import DatabaseManager from '../database/Database.js';
 
-const OUTLOOK_DIRECTORY_KEY = 'mvp.outlook.directory';
-const AI_BASE_URL_KEY = 'mvp.ai.baseUrl';
-const AI_MODEL_KEY = 'mvp.ai.model';
+const OUTLOOK_DIRECTORY_KEY = 'outlook.directory';
+const AI_BASE_URL_KEY = 'ai.baseUrl';
+const AI_MODEL_KEY = 'ai.model';
 
 export class RunRepository {
   private static schemaReady = false;
@@ -108,7 +108,7 @@ export class RunRepository {
     this.schemaReady = true;
   }
 
-  static async saveRun(run: MvpRunDetail): Promise<void> {
+  static async saveRun(run: RunDetail): Promise<void> {
     this.ensureSchema();
 
     DatabaseManager.transaction((db) => {
@@ -249,7 +249,7 @@ export class RunRepository {
     return current.count;
   }
 
-  static async getLatest(): Promise<MvpRunDetail | null> {
+  static async getLatest(): Promise<RunDetail | null> {
     this.ensureSchema();
 
     const db = DatabaseManager.getDatabase();
@@ -264,7 +264,7 @@ export class RunRepository {
     return this.getById(latest.run_id);
   }
 
-  static async getById(runId: string): Promise<MvpRunDetail | null> {
+  static async getById(runId: string): Promise<RunDetail | null> {
     this.ensureSchema();
 
     const db = DatabaseManager.getDatabase();
@@ -287,7 +287,7 @@ export class RunRepository {
           run_id: string;
           started_at: number;
           finished_at: number | null;
-          status: MvpRunDetail['status'];
+          status: RunDetail['status'];
           pst_count: number;
           processed_email_count: number;
           item_count: number;
@@ -317,7 +317,7 @@ export class RunRepository {
       file_name: string;
       file_size_bytes: number;
       modified_at: number;
-      readability: MvpValidationFile['readability'];
+      readability: ValidationFile['readability'];
       readability_reason: string | null;
     }>;
 
@@ -341,10 +341,10 @@ export class RunRepository {
       item_id: string;
       title: string;
       content: string;
-      item_type: MvpActionItemView['itemType'];
+      item_type: ActionItemView['itemType'];
       confidence_score: number;
-      confidence_level: MvpActionItemView['confidenceLevel'];
-      source_status: MvpActionItemView['sourceStatus'];
+      confidence_level: ActionItemView['confidenceLevel'];
+      source_status: ActionItemView['sourceStatus'];
       rationale: string;
       sender_display: string;
       sent_at: number | null;
@@ -375,7 +375,7 @@ export class RunRepository {
       source_identifier: string;
     }>;
 
-    const evidenceByItem = new Map<string, MvpEvidenceView[]>();
+    const evidenceByItem = new Map<string, EvidenceView[]>();
     for (const evidence of evidenceRows) {
       const current = evidenceByItem.get(evidence.item_id) ?? [];
       current.push({
@@ -426,7 +426,7 @@ export class RunRepository {
     };
   }
 
-  static async listRecent(limit = 20): Promise<MvpRunSummary[]> {
+  static async listRecent(limit = 20): Promise<RunSummary[]> {
     this.ensureSchema();
 
     const db = DatabaseManager.getDatabase();
@@ -447,7 +447,7 @@ export class RunRepository {
       run_id: string;
       started_at: number;
       finished_at: number | null;
-      status: MvpRunSummary['status'];
+      status: RunSummary['status'];
       pst_count: number;
       processed_email_count: number;
       item_count: number;
@@ -466,7 +466,7 @@ export class RunRepository {
     }));
   }
 
-  static async createEmptyRun(pstFiles: MvpValidationFile[], outlookDirectory: string): Promise<MvpRunDetail> {
+  static async createEmptyRun(pstFiles: ValidationFile[], outlookDirectory: string): Promise<RunDetail> {
     const startedAt = Date.now();
     const readablePstCount = pstFiles.filter((file) => file.readability === 'readable').length;
 
@@ -509,7 +509,7 @@ export class RunRepository {
   }
 }
 
-export const MVP_CONFIG_KEYS = {
+export const SETTINGS_CONFIG_KEYS = {
   outlookDirectory: OUTLOOK_DIRECTORY_KEY,
   aiBaseUrl: AI_BASE_URL_KEY,
   aiModel: AI_MODEL_KEY,

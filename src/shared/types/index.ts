@@ -7,13 +7,13 @@
 
 import type { Item, TodoItemWithSources, DailyReportSummary, ItemSourceRef } from '../schemas/validation.js';
 import type {
-  MvpConnectionResult,
-  MvpOnboardingStatus,
-  MvpRunDetail,
-  MvpRunSummary,
-  MvpSettingsView,
-  MvpValidationResult,
-} from './mvp.js';
+  ConnectionResult,
+  OnboardingStatus,
+  RunDetail,
+  RunSummary,
+  SettingsView,
+  ValidationResult,
+} from './app.js';
 
 // Re-export frequently used types from schemas
 export type { Item, TodoItemWithSources, DailyReportSummary, ItemSourceRef };
@@ -147,18 +147,18 @@ export interface ElectronAPI {
     }>;
   };
   onboarding: {
-    getStatus: () => Promise<MvpOnboardingStatus>;
+    getStatus: () => Promise<OnboardingStatus>;
     setStep: (step: 1 | 2 | 3) => Promise<{ success: boolean; error?: string }>;
     detectOutlookDir: () => Promise<{
       detectedPath: string | null;
       reason: string;
     }>;
-    validateOutlookDir: (request: { directoryPath: string }) => Promise<MvpValidationResult>;
+    validateOutlookDir: (request: { directoryPath: string }) => Promise<ValidationResult>;
     testLLMConnection: (config: {
       baseUrl: string;
       apiKey: string;
       model: string;
-    }) => Promise<MvpConnectionResult>;
+    }) => Promise<ConnectionResult>;
     complete: (request: {
       directoryPath: string;
       baseUrl: string;
@@ -168,9 +168,9 @@ export interface ElectronAPI {
   };
   runs: {
     start: () => Promise<{ success: boolean; runId: string | null; message: string }>;
-    getLatest: () => Promise<MvpRunDetail | null>;
-    getById: (request: { runId: string }) => Promise<MvpRunDetail | null>;
-    listRecent: (request?: { limit?: number }) => Promise<MvpRunSummary[]>;
+    getLatest: () => Promise<RunDetail | null>;
+    getById: (request: { runId: string }) => Promise<RunDetail | null>;
+    listRecent: (request?: { limit?: number }) => Promise<RunSummary[]>;
   };
   generation: {
     start: () => Promise<{ success: boolean; emailCount?: number; error?: string }>;
@@ -223,14 +223,14 @@ export interface ElectronAPI {
     copySearchTerm: (request: { itemId: string }) => Promise<{ success: boolean; searchTerm: string }>;
   };
   settings: {
-    getAll: () => Promise<MvpSettingsView>;
+    getAll: () => Promise<SettingsView>;
     update: (request: {
       outlookDirectory?: string;
       aiBaseUrl?: string;
       apiKey?: string;
       aiModel?: string;
     }) => Promise<{ success: boolean; error?: string }>;
-    getDataSummary: () => Promise<MvpSettingsView>;
+    getDataSummary: () => Promise<SettingsView>;
     clearRuns: () => Promise<{ success: boolean; deletedRunCount: number }>;
     rebuildIndex: () => Promise<{ success: boolean; message: string }>;
     cleanupData: (request: { dateRange: string }) => Promise<{
@@ -264,13 +264,13 @@ declare global {
 export default {};
 
 export type {
-  MvpActionItemView,
-  MvpConnectionResult,
-  MvpEvidenceView,
-  MvpOnboardingStatus,
-  MvpRunDetail,
-  MvpRunSummary,
-  MvpSettingsView,
-  MvpValidationFile,
-  MvpValidationResult,
-} from './mvp.js';
+  ActionItemView,
+  ConnectionResult,
+  EvidenceView,
+  OnboardingStatus,
+  RunDetail,
+  RunSummary,
+  SettingsView,
+  ValidationFile,
+  ValidationResult,
+} from './app.js';

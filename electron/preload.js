@@ -17,7 +17,6 @@ const electronAPI = {
   // Onboarding Operations
   onboarding: {
     getStatus: () => ipcRenderer.invoke('onboarding:get-status'),
-    setStep: (step) => ipcRenderer.invoke('onboarding:set-step', step),
     detectOutlookDir: () => ipcRenderer.invoke('onboarding:detect-email-client'),
     validateOutlookDir: ({ directoryPath }) => ipcRenderer.invoke('onboarding:validate-email-path', directoryPath, 'outlook'),
     testLLMConnection: (config) => ipcRenderer.invoke('onboarding:test-llm-connection', config),

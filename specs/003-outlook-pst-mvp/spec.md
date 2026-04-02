@@ -94,6 +94,11 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **FR-017**: The system MUST provide only three settings groups: Outlook directory, AI configuration, and data management.
 - **FR-018**: The system MUST NOT expose feedback, notifications, auto-update management, inline editing, search history, or calendar history in the MVP UI.
 - **FR-019**: The preload and renderer-facing IPC surface MUST be narrowed to the MVP onboarding, runs, and settings contracts.
+- **FR-019a**: Active code MUST express the product surface through domain names, not `mvp`-prefixed runtime/module/type names; `MVP` is a planning scope label, not a product namespace.
+- **FR-019b**: Non-MVP runtime code paths, compatibility layers, and parallel legacy surfaces MUST be deleted or fully quarantined from the active product, rather than retained behind `mvp`-style naming.
+- **FR-019c**: Narrowing the compile surface alone is NOT sufficient. The repository's active source, preload bridge, shared runtime contracts, and TypeScript compile manifests MUST stop declaring or referencing feedback, notifications, mode switching, auto-update management, report-generation workspaces, multi-client onboarding, calendar history, inline editing, or legacy cleanup operations.
+- **FR-019d**: Non-MVP source modules and tests under active repository roots (`src/`, `electron/`, `tests/`) MUST be deleted rather than left dormant, unless they are moved into an explicit historical quarantine location that is excluded from active builds and active test commands.
+- **FR-019e**: `src/shared/types/`, `electron/preload.js`, and the active `tsconfig` include lists MUST describe only the onboarding, runs, and settings product surface plus the minimal shared utilities required by that surface.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -188,6 +193,7 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
   - database size
   - clear run history
   - rebuild index
+- No dormant cards, hidden settings groups, or retained component files for feedback, notifications, mode switching, update policy, or other out-of-scope controls.
 
 ### Visual Constraints
 
@@ -216,3 +222,4 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **SC-002**: The app can discover at least one PST from a valid Outlook directory and present validation results without crashing.
 - **SC-003**: Every displayed item in the latest run includes at least one evidence record in the detail panel.
 - **SC-004**: The app shows the latest run and the last 20 historical runs through the narrowed MVP shell without exposing out-of-scope surfaces.
+- **SC-005**: A repository audit of active roots (`src/`, `electron/`, `tests/`, `tsconfig*.json`) shows no remaining active references to feedback, notifications, mode switching, auto-update management, legacy report-generation workspaces, or removed `mvp` compatibility layers.

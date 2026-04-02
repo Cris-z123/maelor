@@ -5,7 +5,7 @@
 
 ## Summary
 
-Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace the multi-feature drift with a Spec-Kit-driven implementation path, freeze `001` and `002`, and cut the codebase down to one compileable product surface: onboarding, latest-run review, and history/settings. The active implementation path also locks three technical constraints: Outlook auto-detection must be advisory until validation/completion, active run-review data must live in SQLite run tables, and preload/renderer contracts must expose only MVP onboarding, runs, and settings APIs.
+Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace the multi-feature drift with a Spec-Kit-driven implementation path, freeze `001` and `002`, and cut the codebase down to one compileable product surface: onboarding, latest-run review, and history/settings. The active implementation path also locks five technical constraints: Outlook auto-detection must be advisory until validation/completion, active run-review data must live in SQLite run tables, preload/renderer contracts must expose only onboarding, runs, and settings APIs, active runtime code must use domain naming instead of `mvp`-prefixed product namespaces, and non-MVP repository modules/tests must be physically deleted or explicitly quarantined instead of merely surviving behind narrowed entrypoints.
 
 ## Technical Context
 
@@ -16,7 +16,7 @@ Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace 
 **Target Platform**: Windows desktop, classic Outlook data directories  
 **Project Type**: Electron desktop application  
 **Performance Goals**: latest-run shell loads without renderer crashes; PST discovery completes with bounded UI feedback; recent runs limited to 20 rows  
-**Constraints**: single active spec, PST-only, no unsupported client surfaces in code or UI, typecheck/lint required before expansion  
+**Constraints**: single active spec, PST-only, no unsupported client surfaces in code or UI, no `mvp`-prefixed active runtime naming, no dormant non-MVP modules in active repository roots, typecheck/lint required before expansion
 **Scale/Scope**: one Outlook directory, one AI provider configuration, recent 20 runs, latest selected run review
 
 ## Constitution Check
@@ -31,6 +31,8 @@ Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace 
 - **Single Instance & Concurrency Control**: Retained in main process.
 - **Observability & Performance**: Logging retained; compile surface reduced.
 - **MVP Scope Lock**: Pass only if code and docs remove non-MVP surfaces from active flow.
+- **Naming & Boundary Discipline**: Pass only if active code uses domain names and deletes unsupported runtime surfaces instead of keeping parallel `mvp`-named implementations.
+- **True Purge Requirement**: Pass only if active source/test roots and compile manifests stop carrying dormant feedback, notification, mode-switching, auto-update, legacy report, and other non-MVP product modules.
 
 ## Project Structure
 
@@ -84,7 +86,18 @@ tests/
 └── security/
 ```
 
-**Structure Decision**: Preserve the Electron split (`main` / `renderer` / `shared`) but narrow active implementation to Outlook onboarding, run management, and settings. Legacy modules stay only until removed or excluded from compilation.
+**Structure Decision**: Preserve the Electron split (`main` / `renderer` / `shared`) but narrow active implementation to Outlook onboarding, run management, and settings. Legacy modules are transitional only and should be deleted or quarantined from active builds; active code should converge on domain names instead of `mvp` compatibility naming.
+
+## True Purge Gap
+
+The repository still contains pre-MVP product surfaces that were only excluded from the main runtime path, not actually removed. The remaining purge must delete or quarantine:
+
+- legacy shared runtime contracts that still declare non-MVP APIs
+- stale `tsconfig` include entries that reference removed compatibility files
+- main-process mode switching, notification, feedback/data-retention cleanup, and update-policy code paths that are no longer part of the product
+- renderer report/feedback/settings surfaces and tests that describe removed workspaces instead of the narrowed latest-run/history/settings UI
+
+This gap means Phase 1 is not complete until repository-level deletion matches the narrowed product boundary.
 
 ## Implementation Strategy
 
@@ -100,7 +113,9 @@ tests/
 - Remove duplicate `ReportView` surfaces from the active renderer path.
 - Remove non-MVP renderer components from the active compile surface.
 - Narrow IPC, store, and UI entry points to onboarding, runs, and settings.
-- Narrow preload and renderer-facing APIs to the MVP onboarding/runs/settings contract only.
+- Narrow preload and renderer-facing APIs to the onboarding/runs/settings contract only.
+- Remove `mvp`-prefixed active runtime modules/types/config keys in favor of final domain naming.
+- Delete dormant non-MVP source modules, tests, and compile-manifest references instead of leaving them inside active repository roots.
 - Restore:
   - `pnpm run typecheck`
   - `pnpm run lint`
@@ -145,7 +160,7 @@ tests/
   - SQLite-backed run persistence
   - latest/historical retrieval
 - `settings/`
-  - persisted MVP settings only
+  - persisted active product settings only
 - `ipc/`
   - onboarding, runs, settings channels only
 
@@ -166,6 +181,8 @@ tests/
   - DTOs for onboarding, runs, settings
 - `schemas/`
   - Zod validation for IPC payloads and responses
+- No active shared/runtime namespace should be named `mvp`; the product surface should read as the only remaining product.
+- No shared runtime declaration should keep legacy `llm`, `db`, `reports`, `generation`, `notifications`, update, or feedback operations once those surfaces are removed from the product.
 
 ## Storage & Migration Approach
 
@@ -178,6 +195,7 @@ tests/
   - `action_items`
   - `item_evidence`
 - Active run review retrieval must read from the run tables above, not from config-backed JSON snapshots.
+- Config keys, DTO names, and active API modules should use durable domain names rather than temporary `mvp.*` or `Mvp*` labels.
 - Existing legacy tables may remain temporarily, but the active MVP code must not depend on feedback, notifications, or mode-switching tables.
 - If a schema reset is cheaper than incremental compatibility, allow it during the MVP reset because the project is still pre-release.
 
@@ -211,6 +229,11 @@ tests/
   - item/evidence binding
   - latest-run review rendering
   - recent-runs table rendering
+- Required purge audit:
+  - inspect `electron/preload.js`
+  - inspect `src/shared/types/`
+  - inspect active `tsconfig` include lists
+  - confirm no non-MVP modules remain under active `src/` and `tests/` roots unless explicitly quarantined
 - Remove or quarantine tests for:
   - feedback
   - notifications
@@ -223,4 +246,4 @@ tests/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| Temporary coexistence of legacy files | Needed to regain a compileable repo incrementally | Immediate full deletion risks breaking build and losing context in one step |
+| Temporary coexistence of legacy files during transition | Needed only while moving to a compileable narrowed surface | Permanent parallel `mvp` naming or long-lived dual surfaces would hide scope debt instead of removing it |

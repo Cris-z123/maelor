@@ -2,7 +2,7 @@ appId: com.mailcopilot.app
 productName: mailCopilot
 directories:
   buildResources: build
-  output: dist
+  output: release
 
 files:
   - electron/**/*
@@ -24,17 +24,6 @@ win:
       arch:
         - x64
   icon: build/icon.ico
-
-mac:
-  target:
-    - target: dmg
-    - target: zip
-  icon: build/icon.icns
-  category: public.app-category.productivity
-  hardenedRuntime: true
-  gatekeeperAssess: false
-  entitlements: build/entitlements.mac.plist
-  entitlementsInherit: build/entitlements.mac.plist
 
 nsis:
   oneClick: false

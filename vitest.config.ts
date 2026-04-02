@@ -16,6 +16,7 @@ export default defineConfig({
         'node_modules/',
         'dist/',
         'build/',
+        'release/',
         'tests/',
         '**/*.test.ts',
         '**/*.test.tsx',
@@ -34,13 +35,11 @@ export default defineConfig({
         functions: 80,
         branches: 70,
         statements: 80,
-        perFile: false, // Overall threshold, not per-file (work-in-progress friendly)
+        perFile: false,
       },
-      // Security modules require 100% coverage (Constitution Principle V)
-      // Manually verify: main/security/encryption.ts, main/rules/sandbox.ts, main/security/validation.ts, main/security/desensitization.ts
     },
     include: ['tests/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules/', 'dist/', 'build/'],
+    exclude: ['node_modules/', 'dist/', 'build/', 'release/'],
   },
   resolve: {
     alias: {

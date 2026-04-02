@@ -1,13 +1,13 @@
-﻿import type {
-  MvpConnectionResult,
-  MvpOnboardingStatus,
-  MvpRunDetail,
-  MvpRunSummary,
-  MvpSettingsView,
-  MvpValidationResult,
-} from '@shared/types/mvp';
+import type {
+  ConnectionResult,
+  OnboardingStatus,
+  RunDetail,
+  RunSummary,
+  SettingsView,
+  ValidationResult,
+} from '@shared/types/app';
 
-const fallbackSettings: MvpSettingsView = {
+const fallbackSettings: SettingsView = {
   outlookDirectory: '',
   aiBaseUrl: '',
   aiModel: '',
@@ -21,8 +21,8 @@ function getApi() {
   return window.electronAPI;
 }
 
-export const mvpApi = {
-  async getOnboardingStatus(): Promise<MvpOnboardingStatus> {
+export const appApi = {
+  async getOnboardingStatus(): Promise<OnboardingStatus> {
     const api = getApi();
     if (!api) {
       return {
@@ -44,7 +44,7 @@ export const mvpApi = {
     return result.detectedPath;
   },
 
-  async validateOutlookDirectory(directoryPath: string): Promise<MvpValidationResult> {
+  async validateOutlookDirectory(directoryPath: string): Promise<ValidationResult> {
     const api = getApi();
     if (!api) {
       return {
@@ -59,7 +59,7 @@ export const mvpApi = {
     return api.onboarding.validateOutlookDir({ directoryPath });
   },
 
-  async testConnection(baseUrl: string, apiKey: string, model: string): Promise<MvpConnectionResult> {
+  async testConnection(baseUrl: string, apiKey: string, model: string): Promise<ConnectionResult> {
     const api = getApi();
     if (!api) {
       return {
@@ -96,31 +96,31 @@ export const mvpApi = {
     return api.runs.start();
   },
 
-  async getLatestRun(): Promise<MvpRunDetail | null> {
+  async getLatestRun(): Promise<RunDetail | null> {
     const api = getApi();
     if (!api) return null;
     return api.runs.getLatest();
   },
 
-  async getRunById(runId: string): Promise<MvpRunDetail | null> {
+  async getRunById(runId: string): Promise<RunDetail | null> {
     const api = getApi();
     if (!api) return null;
     return api.runs.getById({ runId });
   },
 
-  async listRecentRuns(): Promise<MvpRunSummary[]> {
+  async listRecentRuns(): Promise<RunSummary[]> {
     const api = getApi();
     if (!api) return [];
     return api.runs.listRecent({ limit: 20 });
   },
 
-  async getSettingsSummary(): Promise<MvpSettingsView> {
+  async getSettingsSummary(): Promise<SettingsView> {
     const api = getApi();
     if (!api) return fallbackSettings;
     return api.settings.getDataSummary();
   },
 
-  async updateSettings(updates: Partial<MvpSettingsView> & { apiKey?: string }): Promise<boolean> {
+  async updateSettings(updates: Partial<SettingsView> & { apiKey?: string }): Promise<boolean> {
     const api = getApi();
     if (!api) return false;
 
@@ -141,4 +141,4 @@ export const mvpApi = {
   },
 };
 
-export default mvpApi;
+export default appApi;

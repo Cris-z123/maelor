@@ -19,8 +19,8 @@ const { mockApi } = vi.hoisted(() => ({
   },
 }));
 
-vi.mock('@renderer/app/mvpApi', () => ({
-  mvpApi: mockApi,
+vi.mock('@renderer/app/appApi', () => ({
+  appApi: mockApi,
 }));
 
 describe('OnboardingFlow', () => {

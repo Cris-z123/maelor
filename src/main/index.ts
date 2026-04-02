@@ -10,7 +10,7 @@ import { logger } from './config/logger.js';
 import DatabaseManager from './database/Database.js';
 import { SchemaManager } from './database/schema.js';
 import { errorHandler } from './error-handler.js';
-import { registerMvpIpcHandlers } from './ipc/registerMvpHandlers.js';
+import { registerAppIpcHandlers } from './ipc/registerAppHandlers.js';
 import OnboardingManager from './onboarding/OnboardingManager.js';
 import { createOnboardingWindow } from './windows/onboardingWindow.js';
 
@@ -143,8 +143,8 @@ class Application {
   }
 
   private async setupIPCHandlers(): Promise<void> {
-    await registerMvpIpcHandlers();
-    logger.info('IPC', 'MVP IPC handlers registered');
+    await registerAppIpcHandlers();
+    logger.info('IPC', 'Active onboarding, runs, and settings handlers registered');
   }
 
   private onWindowAllClosed(): void {

@@ -1,4 +1,4 @@
-export interface MvpValidationFile {
+export interface ValidationFile {
   path: string;
   fileName: string;
   sizeBytes: number;
@@ -7,28 +7,28 @@ export interface MvpValidationFile {
   reason: string | null;
 }
 
-export interface MvpOnboardingStatus {
+export interface OnboardingStatus {
   completed: boolean;
   currentStep: 1 | 2 | 3;
   readablePstCount: number;
   outlookDirectory: string | null;
 }
 
-export interface MvpValidationResult {
+export interface ValidationResult {
   valid: boolean;
   readablePstCount: number;
   unreadablePstCount: number;
-  files: MvpValidationFile[];
+  files: ValidationFile[];
   message: string;
 }
 
-export interface MvpConnectionResult {
+export interface ConnectionResult {
   success: boolean;
   responseTimeMs: number | null;
   message: string;
 }
 
-export interface MvpEvidenceView {
+export interface EvidenceView {
   evidenceId: string;
   senderDisplay: string;
   subjectSnippet: string;
@@ -38,7 +38,7 @@ export interface MvpEvidenceView {
   sourceIdentifier: string;
 }
 
-export interface MvpActionItemView {
+export interface ActionItemView {
   itemId: string;
   title: string;
   content: string;
@@ -50,10 +50,10 @@ export interface MvpActionItemView {
   senderDisplay: string;
   sentAt: number | null;
   subjectSnippet: string;
-  evidence: MvpEvidenceView[];
+  evidence: EvidenceView[];
 }
 
-export interface MvpRunSummary {
+export interface RunSummary {
   runId: string;
   startedAt: number;
   finishedAt: number | null;
@@ -64,14 +64,14 @@ export interface MvpRunSummary {
   lowConfidenceCount: number;
 }
 
-export interface MvpRunDetail extends MvpRunSummary {
+export interface RunDetail extends RunSummary {
   outlookDirectory: string;
-  pstFiles: MvpValidationFile[];
-  items: MvpActionItemView[];
+  pstFiles: ValidationFile[];
+  items: ActionItemView[];
   message: string;
 }
 
-export interface MvpSettingsView {
+export interface SettingsView {
   outlookDirectory: string;
   aiBaseUrl: string;
   aiModel: string;

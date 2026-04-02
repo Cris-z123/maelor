@@ -5,7 +5,7 @@ import { logger } from '../config/logger.js';
 import DatabaseManager from '../database/Database.js';
 import OnboardingManager from '../onboarding/OnboardingManager.js';
 import PstDiscovery from '../outlook/PstDiscovery.js';
-import RunRepository, { MVP_CONFIG_KEYS } from '../runs/RunRepository.js';
+import RunRepository, { SETTINGS_CONFIG_KEYS } from '../runs/RunRepository.js';
 import { IPC_CHANNELS } from './channels.js';
 import {
   handleDetectEmailClientV2,
@@ -14,7 +14,7 @@ import {
   handleValidateEmailPathV2,
 } from './handlers/onboardingHandler.js';
 
-export interface MvpIpcDependencies {
+export interface AppIpcDependencies {
   getOnboardingStatus: () => Promise<{
     completed: boolean;
     currentStep: 1 | 2 | 3;
@@ -82,7 +82,7 @@ export interface MvpIpcDependencies {
   rebuildIndex: () => Promise<{ success: boolean; message: string }>;
 }
 
-export const MVP_ACTIVE_IPC_CHANNELS = [
+export const ACTIVE_IPC_CHANNELS = [
   IPC_CHANNELS.ONBOARDING_GET_STATUS,
   IPC_CHANNELS.ONBOARDING_DETECT_EMAIL_CLIENT,
   IPC_CHANNELS.ONBOARDING_VALIDATE_EMAIL_PATH,
@@ -99,7 +99,7 @@ export const MVP_ACTIVE_IPC_CHANNELS = [
   IPC_CHANNELS.SETTINGS_REBUILD_INDEX,
 ] as const;
 
-function getDefaultDependencies(): MvpIpcDependencies {
+function getDefaultDependencies(): AppIpcDependencies {
   return {
     getOnboardingStatus: async () => handleGetStatusV2({} as Electron.IpcMainInvokeEvent),
     detectOutlookDirectory: async () => handleDetectEmailClientV2({} as Electron.IpcMainInvokeEvent),
@@ -113,9 +113,9 @@ function getDefaultDependencies(): MvpIpcDependencies {
       }
 
       await ConfigManager.set({
-        [MVP_CONFIG_KEYS.outlookDirectory]: request.directoryPath,
-        [MVP_CONFIG_KEYS.aiBaseUrl]: request.baseUrl,
-        [MVP_CONFIG_KEYS.aiModel]: request.model,
+        [SETTINGS_CONFIG_KEYS.outlookDirectory]: request.directoryPath,
+        [SETTINGS_CONFIG_KEYS.aiBaseUrl]: request.baseUrl,
+        [SETTINGS_CONFIG_KEYS.aiModel]: request.model,
         'llm.remoteEndpoint': request.baseUrl,
         'llm.apiKey': request.apiKey,
         'llm.model': request.model,
@@ -169,13 +169,13 @@ function getDefaultDependencies(): MvpIpcDependencies {
     updateSettings: async (request) => {
       await ConfigManager.set({
         ...(typeof request?.updates?.outlookDirectory === 'string'
-          ? { [MVP_CONFIG_KEYS.outlookDirectory]: request.updates.outlookDirectory }
+          ? { [SETTINGS_CONFIG_KEYS.outlookDirectory]: request.updates.outlookDirectory }
           : {}),
         ...(typeof request?.updates?.aiBaseUrl === 'string'
-          ? { [MVP_CONFIG_KEYS.aiBaseUrl]: request.updates.aiBaseUrl }
+          ? { [SETTINGS_CONFIG_KEYS.aiBaseUrl]: request.updates.aiBaseUrl }
           : {}),
         ...(typeof request?.updates?.aiModel === 'string'
-          ? { [MVP_CONFIG_KEYS.aiModel]: request.updates.aiModel }
+          ? { [SETTINGS_CONFIG_KEYS.aiModel]: request.updates.aiModel }
           : {}),
         ...(typeof request?.updates?.apiKey === 'string'
           ? { 'llm.apiKey': request.updates.apiKey }
@@ -205,12 +205,12 @@ function getDefaultDependencies(): MvpIpcDependencies {
   };
 }
 
-export async function registerMvpIpcHandlers(
-  overrides: Partial<MvpIpcDependencies> = {}
+export async function registerAppIpcHandlers(
+  overrides: Partial<AppIpcDependencies> = {}
 ): Promise<void> {
   const deps = { ...getDefaultDependencies(), ...overrides };
 
-  for (const channel of MVP_ACTIVE_IPC_CHANNELS) {
+  for (const channel of ACTIVE_IPC_CHANNELS) {
     ipcMain.removeHandler(channel);
   }
 
@@ -221,11 +221,11 @@ export async function registerMvpIpcHandlers(
   );
   ipcMain.handle(
     IPC_CHANNELS.ONBOARDING_TEST_LLM_CONNECTION,
-    async (_event, config: Parameters<MvpIpcDependencies['testConnection']>[0]) => deps.testConnection(config)
+    async (_event, config: Parameters<AppIpcDependencies['testConnection']>[0]) => deps.testConnection(config)
   );
   ipcMain.handle(
     IPC_CHANNELS.ONBOARDING_COMPLETE_SETUP,
-    async (_event, request: Parameters<MvpIpcDependencies['completeOnboarding']>[0]) => deps.completeOnboarding(request)
+    async (_event, request: Parameters<AppIpcDependencies['completeOnboarding']>[0]) => deps.completeOnboarding(request)
   );
   ipcMain.handle(IPC_CHANNELS.RUNS_START, async () => deps.startRun());
   ipcMain.handle(IPC_CHANNELS.RUNS_GET_LATEST, async () => deps.getLatestRun());
@@ -240,11 +240,11 @@ export async function registerMvpIpcHandlers(
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_ALL, async () => deps.getSettings());
   ipcMain.handle(
     IPC_CHANNELS.SETTINGS_UPDATE,
-    async (_event, request: Parameters<MvpIpcDependencies['updateSettings']>[0]) => deps.updateSettings(request)
+    async (_event, request: Parameters<AppIpcDependencies['updateSettings']>[0]) => deps.updateSettings(request)
   );
   ipcMain.handle(IPC_CHANNELS.SETTINGS_GET_DATA_SUMMARY, async () => deps.getDataSummary());
   ipcMain.handle(IPC_CHANNELS.SETTINGS_CLEAR_RUNS, async () => deps.clearRuns());
   ipcMain.handle(IPC_CHANNELS.SETTINGS_REBUILD_INDEX, async () => deps.rebuildIndex());
 
-  logger.info('IPC', 'Registered MVP IPC handlers only');
+  logger.info('IPC', 'Registered active onboarding, runs, and settings handlers');
 }

@@ -1,9 +1,9 @@
 ﻿import { useEffect, useState } from 'react';
 
-import type { MvpActionItemView, MvpRunDetail, MvpRunSummary, MvpSettingsView } from '@shared/types/mvp';
+import type { ActionItemView, RunDetail, RunSummary, SettingsView } from '@shared/types/app';
 
 import OnboardingFlow from './OnboardingFlow';
-import { mvpApi } from './mvpApi';
+import { appApi } from './appApi';
 
 type TabKey = 'latest' | 'history' | 'settings';
 
@@ -13,7 +13,7 @@ const tabs: Array<{ key: TabKey; label: string }> = [
   { key: 'settings', label: '设置' },
 ];
 
-const emptySettings: MvpSettingsView = {
+const emptySettings: SettingsView = {
   outlookDirectory: '',
   aiBaseUrl: '',
   aiModel: '',
@@ -30,13 +30,13 @@ function formatConfidence(score: number): string {
   return `${Math.round(score * 100)}%`;
 }
 
-function getConfidenceTone(level: MvpActionItemView['confidenceLevel']): string {
+function getConfidenceTone(level: ActionItemView['confidenceLevel']): string {
   if (level === 'high') return 'bg-emerald-50 text-emerald-700';
   if (level === 'medium') return 'bg-amber-50 text-amber-700';
   return 'bg-yellow-100 text-yellow-800';
 }
 
-function getSourceTone(status: MvpActionItemView['sourceStatus']): string {
+function getSourceTone(status: ActionItemView['sourceStatus']): string {
   return status === 'verified' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700';
 }
 
@@ -45,11 +45,11 @@ export default function App() {
   const [configured, setConfigured] = useState<boolean | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [latestRun, setLatestRun] = useState<MvpRunDetail | null>(null);
-  const [recentRuns, setRecentRuns] = useState<MvpRunSummary[]>([]);
-  const [selectedRun, setSelectedRun] = useState<MvpRunDetail | null>(null);
+  const [latestRun, setLatestRun] = useState<RunDetail | null>(null);
+  const [recentRuns, setRecentRuns] = useState<RunSummary[]>([]);
+  const [selectedRun, setSelectedRun] = useState<RunDetail | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [settings, setSettings] = useState<MvpSettingsView>(emptySettings);
+  const [settings, setSettings] = useState<SettingsView>(emptySettings);
   const [settingsApiKey, setSettingsApiKey] = useState('');
 
   useEffect(() => {
@@ -65,7 +65,7 @@ export default function App() {
     setLoading(true);
 
     try {
-      const status = await mvpApi.getOnboardingStatus();
+      const status = await appApi.getOnboardingStatus();
       setConfigured(status.completed);
 
       if (!status.completed) {
@@ -76,9 +76,9 @@ export default function App() {
       }
 
       const [latest, recent, settingsSummary] = await Promise.all([
-        mvpApi.getLatestRun(),
-        mvpApi.listRecentRuns(),
-        mvpApi.getSettingsSummary(),
+        appApi.getLatestRun(),
+        appApi.listRecentRuns(),
+        appApi.getSettingsSummary(),
       ]);
 
       setLatestRun(latest);
@@ -94,7 +94,7 @@ export default function App() {
     setStatusMessage(null);
 
     try {
-      const result = await mvpApi.startRun();
+      const result = await appApi.startRun();
       setStatusMessage(result.message);
       await refreshAppState();
     } finally {
@@ -106,7 +106,7 @@ export default function App() {
     setLoading(true);
 
     try {
-      const detail = await mvpApi.getRunById(runId);
+      const detail = await appApi.getRunById(runId);
       setSelectedRun(detail);
       setActiveTab('latest');
     } finally {
@@ -119,7 +119,7 @@ export default function App() {
     setStatusMessage(null);
 
     try {
-      const success = await mvpApi.updateSettings({
+      const success = await appApi.updateSettings({
         outlookDirectory: settings.outlookDirectory,
         aiBaseUrl: settings.aiBaseUrl,
         aiModel: settings.aiModel,
@@ -143,7 +143,7 @@ export default function App() {
     setStatusMessage(null);
 
     try {
-      const result = await mvpApi.clearRuns();
+      const result = await appApi.clearRuns();
       setStatusMessage(result.success ? `已清理 ${result.deletedRunCount} 次运行记录。` : '运行记录清理失败。');
       await refreshAppState();
     } finally {
@@ -156,7 +156,7 @@ export default function App() {
     setStatusMessage(null);
 
     try {
-      const result = await mvpApi.rebuildIndex();
+      const result = await appApi.rebuildIndex();
       setStatusMessage(result.message);
       await refreshAppState();
     } finally {
@@ -185,9 +185,9 @@ export default function App() {
       <div className="grid min-h-screen grid-cols-[220px_minmax(0,1fr)]">
         <aside className="border-r border-slate-200 bg-white px-5 py-6">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">mailCopilot MVP</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">mailCopilot</p>
             <h1 className="mt-3 text-2xl font-semibold">Outlook 审阅器</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Windows 经典 Outlook · PST only</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Windows 经典 Outlook · PST 数据目录</p>
           </div>
 
           <nav className="mt-10 space-y-2">
@@ -556,7 +556,7 @@ export default function App() {
                 <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
                   <h3 className="text-lg font-semibold text-slate-900">保存更改</h3>
                   <p className="mt-3 text-sm leading-6 text-slate-600">
-                    MVP 只保留 Outlook 目录、AI 连接参数和基础数据管理，不再暴露通知、模式切换和实验开关。
+                    当前产品只保留 Outlook 目录、AI 连接参数和基础数据管理，不再暴露通知、模式切换和实验开关。
                   </p>
                   <button
                     className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"

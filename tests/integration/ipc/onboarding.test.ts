@@ -9,9 +9,9 @@ vi.mock('electron', () => ({
 }));
 
 import { IPC_CHANNELS } from '@/ipc/channels';
-import { MVP_ACTIVE_IPC_CHANNELS, registerMvpIpcHandlers } from '@/ipc/registerMvpHandlers';
+import { ACTIVE_IPC_CHANNELS, registerAppIpcHandlers } from '@/ipc/registerAppHandlers';
 
-describe('MVP onboarding IPC contracts', () => {
+describe('Active onboarding IPC contracts', () => {
   const handlers = new Map<string, (...args: unknown[]) => unknown>();
 
   const deps = {
@@ -73,12 +73,12 @@ describe('MVP onboarding IPC contracts', () => {
     });
     deps.completeOnboarding.mockResolvedValue({ success: true });
 
-    await registerMvpIpcHandlers(deps);
+    await registerAppIpcHandlers(deps);
   });
 
-  it('registers only the MVP runtime channels', () => {
-    expect(Array.from(handlers.keys())).toEqual(MVP_ACTIVE_IPC_CHANNELS);
-    expect(ipcMain.removeHandler).toHaveBeenCalledTimes(MVP_ACTIVE_IPC_CHANNELS.length);
+  it('registers only the active runtime channels', () => {
+    expect(Array.from(handlers.keys())).toEqual(ACTIVE_IPC_CHANNELS);
+    expect(ipcMain.removeHandler).toHaveBeenCalledTimes(ACTIVE_IPC_CHANNELS.length);
   });
 
   it('returns the onboarding status contract', async () => {

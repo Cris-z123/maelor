@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
-import type { MvpValidationFile, MvpValidationResult } from '@shared/types/mvp.js';
+import type { ValidationFile, ValidationResult } from '@shared/types/app.js';
 
-function toValidationFile(filePath: string, readable: boolean, reason: string | null): MvpValidationFile {
+function toValidationFile(filePath: string, readable: boolean, reason: string | null): ValidationFile {
   const stats = fs.statSync(filePath);
 
   return {
@@ -16,8 +16,8 @@ function toValidationFile(filePath: string, readable: boolean, reason: string | 
 }
 
 export class PstDiscovery {
-  static findPstFiles(rootDirectory: string, maxDepth = 4): MvpValidationFile[] {
-    const discovered: MvpValidationFile[] = [];
+  static findPstFiles(rootDirectory: string, maxDepth = 4): ValidationFile[] {
+    const discovered: ValidationFile[] = [];
 
     const visit = (currentDirectory: string, depth: number): void => {
       if (depth > maxDepth) {
@@ -70,7 +70,7 @@ export class PstDiscovery {
     return discovered;
   }
 
-  static validateDirectory(rootDirectory: string): MvpValidationResult {
+  static validateDirectory(rootDirectory: string): ValidationResult {
     if (!rootDirectory) {
       return {
         valid: false,

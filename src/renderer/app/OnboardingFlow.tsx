@@ -1,8 +1,8 @@
 ﻿import { useEffect, useState } from 'react';
 
-import type { MvpConnectionResult, MvpValidationResult } from '@shared/types/mvp';
+import type { ConnectionResult, ValidationResult } from '@shared/types/app';
 
-import { mvpApi } from './mvpApi';
+import { appApi } from './appApi';
 
 interface OnboardingFlowProps {
   embedded?: boolean;
@@ -23,8 +23,8 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
   const [baseUrl, setBaseUrl] = useState('');
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('gpt-4.1-mini');
-  const [validation, setValidation] = useState<MvpValidationResult | null>(null);
-  const [connection, setConnection] = useState<MvpConnectionResult | null>(null);
+  const [validation, setValidation] = useState<ValidationResult | null>(null);
+  const [connection, setConnection] = useState<ConnectionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [completed, setCompleted] = useState(false);
@@ -34,8 +34,8 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
 
     async function load(): Promise<void> {
       const [status, settings] = await Promise.all([
-        mvpApi.getOnboardingStatus(),
-        mvpApi.getSettingsSummary(),
+        appApi.getOnboardingStatus(),
+        appApi.getSettingsSummary(),
       ]);
 
       if (!active) return;
@@ -59,7 +59,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
     setMessage(null);
 
     try {
-      const detected = await mvpApi.detectOutlookDirectory();
+      const detected = await appApi.detectOutlookDirectory();
       if (detected) {
         setDirectoryPath(detected);
         setMessage(`已检测到 Outlook 数据目录：${detected}`);
@@ -81,7 +81,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
     setMessage(null);
 
     try {
-      const result = await mvpApi.validateOutlookDirectory(directoryPath.trim());
+      const result = await appApi.validateOutlookDirectory(directoryPath.trim());
       setValidation(result);
       setStep(2);
       setMessage(result.message);
@@ -100,7 +100,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
     setMessage(null);
 
     try {
-      const result = await mvpApi.testConnection(baseUrl.trim(), apiKey.trim(), model.trim());
+      const result = await appApi.testConnection(baseUrl.trim(), apiKey.trim(), model.trim());
       setConnection(result);
       setStep(3);
       setMessage(result.message);
@@ -124,7 +124,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
     setMessage(null);
 
     try {
-      const result = await mvpApi.completeSetup({
+      const result = await appApi.completeSetup({
         directoryPath: directoryPath.trim(),
         baseUrl: baseUrl.trim(),
         apiKey: apiKey.trim(),
@@ -157,7 +157,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
       <div className={embedded ? 'h-full' : 'mx-auto flex min-h-screen max-w-5xl items-center px-8 py-12'}>
         <div className="w-full rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-8 py-6">
-            <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">mailCopilot MVP</p>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">mailCopilot</p>
             <h1 className="mt-3 text-3xl font-semibold text-slate-900">Outlook PST 直连初始化</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
               仅支持 Windows 经典 Outlook 的 PST 数据目录。流程固定为目录配置、PST 验证、AI 连接验证。
@@ -293,7 +293,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
 
               <section className="rounded-2xl border border-slate-200 p-5">
                 <h2 className="text-lg font-semibold text-slate-900">3. AI 配置</h2>
-                <p className="mt-1 text-sm text-slate-600">MVP 只支持一个远程 OpenAI-compatible provider。</p>
+                <p className="mt-1 text-sm text-slate-600">当前版本只支持一个远程 OpenAI-compatible provider。</p>
 
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <label className="block text-sm text-slate-700">

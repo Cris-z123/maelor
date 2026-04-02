@@ -79,7 +79,7 @@ export const IPC_CHANNELS = {
   MODE_SWITCH: 'mode:switch',
   MODE_CANCEL: 'mode:cancel',
 
-  // MVP run flow
+  // Active run flow
   RUNS_START: 'runs:start',
   RUNS_GET_LATEST: 'runs:get-latest',
   RUNS_GET_BY_ID: 'runs:get-by-id',

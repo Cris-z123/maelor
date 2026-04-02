@@ -227,14 +227,8 @@ export class ConfigManager {
    */
   static getDefaults(): ConfigRecord {
     return {
-      'llm.mode': 'remote', // Default to remote mode per FR-031
-      'llm.localEndpoint': 'http://localhost:11434',
-      'storage.retentionDays': 90,
-      'storage.feedbackRetentionDays': 30,
-      'update.autoCheck': true,
-      'update.lastCheck': null,
-      'ui.theme': 'system',
-      'ui.language': 'zh-CN',
+      'ai.baseUrl': 'https://api.openai.com/v1',
+      'ai.model': 'gpt-4.1-mini',
     };
   }
 

@@ -28,11 +28,11 @@
 - [x] T006 Narrow renderer compile scope to MVP pages/components only
 - [x] T007 Narrow shared compile surface to MVP contracts/types only
 - [x] T008 Remove non-MVP IPC channels from the active client/server surface
-- [ ] T008b Remove `mvp`-prefixed active runtime/module/type/config naming and replace it with final domain naming; delete compatibility naming layers instead of keeping parallel product namespaces
-- [ ] T008c Purge non-MVP shared runtime contracts, preload/compile-manifest references, and main-process modules so active repository roots no longer carry dormant feedback, notifications, mode switching, auto-update, or legacy cleanup surfaces
-- [ ] T008d Purge non-MVP renderer components and obsolete tests so `src/renderer/` and `tests/` only retain the narrowed onboarding/latest-run/history/settings product
+- [x] T008b Remove `mvp`-prefixed active runtime/module/type/config naming and replace it with final domain naming; delete compatibility naming layers instead of keeping parallel product namespaces
+- [x] T008c Purge non-MVP shared runtime contracts, preload/compile-manifest references, and main-process modules so active repository roots no longer carry dormant feedback, notifications, mode switching, auto-update, or legacy cleanup surfaces
+- [x] T008d Purge non-MVP renderer components and obsolete tests so `src/renderer/` and `tests/` only retain the narrowed onboarding/latest-run/history/settings product
 - [x] T008a Narrow `electron/preload.js` and renderer-side MVP API wrappers to the active onboarding/runs/settings contract only
-- [ ] T009 Remove non-MVP stores and inactive UI modules from the repository, not only from the active compile surface
+- [x] T009 Remove non-MVP stores and inactive UI modules from the repository, not only from the active compile surface
 - [x] T010 Restore `pnpm run typecheck`
 - [x] T011 Restore `pnpm run lint`
 

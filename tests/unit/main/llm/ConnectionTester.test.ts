@@ -23,13 +23,13 @@ describe('ConnectionTester', () => {
     const { ConnectionTester } = await import('@/llm/ConnectionTester');
 
     const result = await ConnectionTester.testConnection({
-      mode: 'remote',
-      endpoint: 'https://api.openai.com/v1',
+      baseUrl: 'https://api.openai.com/v1',
       apiKey: 'sk-test-key-with-at-least-20-chars',
+      model: 'gpt-4.1-mini',
     });
 
     expect(result.success).toBe(true);
-    expect(result.responseTime).toBeGreaterThanOrEqual(0);
+    expect(result.responseTimeMs).toBeGreaterThanOrEqual(0);
     expect(result.model).toBe('gpt-4');
   });
 
@@ -42,9 +42,9 @@ describe('ConnectionTester', () => {
     const { ConnectionTester } = await import('@/llm/ConnectionTester');
 
     const result = await ConnectionTester.testConnection({
-      mode: 'remote',
-      endpoint: 'https://api.openai.com/v1',
+      baseUrl: 'https://api.openai.com/v1',
       apiKey: 'sk-test-key-with-at-least-20-chars',
+      model: 'gpt-4.1-mini',
     });
 
     expect(result.success).toBe(false);
@@ -57,9 +57,9 @@ describe('ConnectionTester', () => {
     const { ConnectionTester } = await import('@/llm/ConnectionTester');
 
     const result = await ConnectionTester.testConnection({
-      mode: 'remote',
-      endpoint: 'https://api.openai.com/v1',
+      baseUrl: 'https://api.openai.com/v1',
       apiKey: 'sk-test-key-with-at-least-20-chars',
+      model: 'gpt-4.1-mini',
     });
 
     expect(result.success).toBe(false);
@@ -78,9 +78,9 @@ describe('ConnectionTester', () => {
     const { ConnectionTester } = await import('@/llm/ConnectionTester');
 
     const result = await ConnectionTester.testConnection({
-      mode: 'remote',
-      endpoint: 'https://api.openai.com/v1',
+      baseUrl: 'https://api.openai.com/v1',
       apiKey: 'sk-invalid-key',
+      model: 'gpt-4.1-mini',
     });
 
     expect(result.success).toBe(false);

@@ -12,7 +12,7 @@ export interface OnboardingState {
   outlookDirectory: string;
   detectedOutlookDirectory: string | null;
   readablePstCount: number;
-  llm: {
+  ai: {
     baseUrl: string;
     apiKey: string;
     model: string;
@@ -61,9 +61,9 @@ class OnboardingManager {
     const updated = this.mergeWithDefaults({
       ...current,
       ...update,
-      llm: {
-        ...current.llm,
-        ...(update.llm ?? {}),
+      ai: {
+        ...current.ai,
+        ...(update.ai ?? {}),
       },
       lastUpdated: Date.now(),
     });
@@ -144,26 +144,22 @@ class OnboardingManager {
   }> {
     const { ConnectionTester } = await import('../llm/ConnectionTester.js');
 
-    const result = await ConnectionTester.testConnection({
-      mode: 'remote',
-      endpoint: config.baseUrl,
-      apiKey: config.apiKey,
-    });
+    const result = await ConnectionTester.testConnection(config);
 
     this.updateState({
       currentStep: 3,
-      llm: {
+      ai: {
         baseUrl: config.baseUrl,
         apiKey: config.apiKey,
         model: config.model,
         connectionStatus: result.success ? 'success' : 'failed',
-        responseTimeMs: result.success ? result.responseTime ?? null : null,
+        responseTimeMs: result.success ? result.responseTimeMs ?? null : null,
       },
     });
 
     return {
       success: result.success,
-      responseTimeMs: result.success ? result.responseTime ?? null : null,
+      responseTimeMs: result.success ? result.responseTimeMs ?? null : null,
       message: result.success ? 'AI connection succeeded.' : result.error ?? 'AI connection failed.',
     };
   }
@@ -181,12 +177,12 @@ class OnboardingManager {
       outlookDirectory: config.directoryPath,
       detectedOutlookDirectory: config.directoryPath,
       readablePstCount: config.readablePstCount,
-      llm: {
+      ai: {
         baseUrl: config.baseUrl,
         apiKey: config.apiKey,
         model: config.model,
         connectionStatus: 'success',
-        responseTimeMs: this.getState().llm.responseTimeMs,
+        responseTimeMs: this.getState().ai.responseTimeMs,
       },
     });
   }
@@ -198,7 +194,7 @@ class OnboardingManager {
       outlookDirectory: '',
       detectedOutlookDirectory: null,
       readablePstCount: 0,
-      llm: {
+      ai: {
         baseUrl: 'https://api.openai.com/v1',
         apiKey: '',
         model: 'gpt-4.1-mini',
@@ -214,9 +210,9 @@ class OnboardingManager {
     return {
       ...defaults,
       ...state,
-      llm: {
-        ...defaults.llm,
-        ...(state.llm ?? {}),
+      ai: {
+        ...defaults.ai,
+        ...(state.ai ?? {}),
       },
       lastUpdated: state.lastUpdated ?? defaults.lastUpdated,
     };
@@ -239,7 +235,7 @@ class OnboardingManager {
       if (updated.readablePstCount < 1) {
         throw new Error('At least one readable PST is required before completion.');
       }
-      if (updated.llm.connectionStatus !== 'success') {
+      if (updated.ai.connectionStatus !== 'success') {
         throw new Error('AI connection must succeed before completion.');
       }
     }

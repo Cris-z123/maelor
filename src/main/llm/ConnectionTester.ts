@@ -1,12 +1,12 @@
 interface ConnectionConfig {
-  mode: 'local' | 'remote';
-  endpoint: string;
-  apiKey?: string;
+  baseUrl: string;
+  apiKey: string;
+  model: string;
 }
 
 interface TestResult {
   success: boolean;
-  responseTime?: number;
+  responseTimeMs?: number;
   model?: string;
   error?: string;
 }
@@ -21,19 +21,14 @@ class ConnectionTester {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-
-      if (config.mode === 'remote' && config.apiKey) {
-        headers['Authorization'] = `Bearer ${config.apiKey}`;
-      }
-
-      const response = await fetch(config.endpoint, {
+      const response = await fetch(`${config.baseUrl.replace(/\/$/, '')}/chat/completions`, {
         method: 'POST',
-        headers,
+        headers: {
+          Authorization: `Bearer ${config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: config.model,
           messages: [{ role: 'user', content: 'test' }],
           max_tokens: 1,
         }),
@@ -57,28 +52,28 @@ class ConnectionTester {
         // Ignore JSON parse errors
       }
 
-      const responseTime = Date.now() - startTime;
+      const responseTimeMs = Date.now() - startTime;
 
       return {
         success: true,
-        responseTime,
+        responseTimeMs,
         model,
       };
     } catch (error) {
-      const responseTime = Date.now() - startTime;
+      const responseTimeMs = Date.now() - startTime;
 
       if (error instanceof Error && error.name === 'AbortError') {
         return {
           success: false,
           error: `Connection timeout (${this.TIMEOUT_MS / 1000}s)`,
-          responseTime,
+          responseTimeMs,
         };
       }
 
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
-        responseTime,
+        responseTimeMs,
       };
     }
   }

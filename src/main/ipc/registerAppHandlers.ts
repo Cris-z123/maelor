@@ -8,10 +8,10 @@ import PstDiscovery from '../outlook/PstDiscovery.js';
 import RunRepository, { SETTINGS_CONFIG_KEYS } from '../runs/RunRepository.js';
 import { IPC_CHANNELS } from './channels.js';
 import {
-  handleDetectEmailClientV2,
-  handleGetStatusV2,
-  handleTestLLMConnectionV2,
-  handleValidateEmailPathV2,
+  handleDetectEmailClient,
+  handleGetStatus,
+  handleTestConnection,
+  handleValidateEmailPath,
 } from './handlers/onboardingHandler.js';
 
 export interface AppIpcDependencies {
@@ -101,11 +101,11 @@ export const ACTIVE_IPC_CHANNELS = [
 
 function getDefaultDependencies(): AppIpcDependencies {
   return {
-    getOnboardingStatus: async () => handleGetStatusV2({} as Electron.IpcMainInvokeEvent),
-    detectOutlookDirectory: async () => handleDetectEmailClientV2({} as Electron.IpcMainInvokeEvent),
+    getOnboardingStatus: async () => handleGetStatus({} as Electron.IpcMainInvokeEvent),
+    detectOutlookDirectory: async () => handleDetectEmailClient({} as Electron.IpcMainInvokeEvent),
     validateOutlookDirectory: async (directoryPath) =>
-      handleValidateEmailPathV2({} as Electron.IpcMainInvokeEvent, directoryPath, 'outlook'),
-    testConnection: async (config) => handleTestLLMConnectionV2({} as Electron.IpcMainInvokeEvent, config),
+      handleValidateEmailPath({} as Electron.IpcMainInvokeEvent, directoryPath),
+    testConnection: async (config) => handleTestConnection({} as Electron.IpcMainInvokeEvent, config),
     completeOnboarding: async (request) => {
       const validation = PstDiscovery.validateDirectory(request.directoryPath);
       if (!validation.valid) {
@@ -116,9 +116,7 @@ function getDefaultDependencies(): AppIpcDependencies {
         [SETTINGS_CONFIG_KEYS.outlookDirectory]: request.directoryPath,
         [SETTINGS_CONFIG_KEYS.aiBaseUrl]: request.baseUrl,
         [SETTINGS_CONFIG_KEYS.aiModel]: request.model,
-        'llm.remoteEndpoint': request.baseUrl,
-        'llm.apiKey': request.apiKey,
-        'llm.model': request.model,
+        'ai.apiKey': request.apiKey,
       });
 
       OnboardingManager.completeSetup({
@@ -178,7 +176,7 @@ function getDefaultDependencies(): AppIpcDependencies {
           ? { [SETTINGS_CONFIG_KEYS.aiModel]: request.updates.aiModel }
           : {}),
         ...(typeof request?.updates?.apiKey === 'string'
-          ? { 'llm.apiKey': request.updates.apiKey }
+          ? { 'ai.apiKey': request.updates.apiKey }
           : {}),
       });
 

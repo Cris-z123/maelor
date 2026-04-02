@@ -17,9 +17,9 @@
     "src/renderer/app/App.tsx",
     "src/renderer/app/OnboardingApp.tsx",
     "src/renderer/app/OnboardingFlow.tsx",
-    "src/renderer/app/mvpApi.ts",
+    "src/renderer/app/appApi.ts",
     "src/renderer/styles/**/*",
-    "src/shared/types/mvp.ts"
+    "src/shared/types/app.ts"
   ],
   "exclude": [
     "node_modules",

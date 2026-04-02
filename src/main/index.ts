@@ -76,11 +76,6 @@ class Application {
         logger.info('Window', 'Main window created (onboarding complete)');
       }
 
-      const config = await ConfigManager.get(['llm.mode']);
-      if (config['llm.mode'] === 'remote') {
-        logger.info('Update', 'Auto-update check skipped (not implemented yet)');
-      }
-
       ApplicationManager.setReady();
     } catch (error) {
       logger.error('Application', 'Failed to initialize application', error);

@@ -14,8 +14,8 @@
   },
   "include": [
     "src/main/**/*",
-    "src/shared/types/mvp.ts",
-    "src/types/**/*",
+    "src/shared/types/app.ts",
+    "src/types/**/*"
   ],
   "exclude": [
     "node_modules",

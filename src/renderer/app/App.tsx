@@ -1,7 +1,8 @@
 ﻿import { useEffect, useState } from 'react';
 
-import type { ActionItemView, RunDetail, RunSummary, SettingsView } from '@shared/types/app';
+import type { RunDetail, RunSummary, SettingsView } from '@shared/types/app';
 
+import LatestRunReview from '@renderer/components/runs/LatestRunReview';
 import OnboardingFlow from './OnboardingFlow';
 import { appApi } from './appApi';
 
@@ -24,20 +25,6 @@ const emptySettings: SettingsView = {
 function formatDate(timestamp: number | null): string {
   if (!timestamp) return '-';
   return new Date(timestamp).toLocaleString('zh-CN', { hour12: false });
-}
-
-function formatConfidence(score: number): string {
-  return `${Math.round(score * 100)}%`;
-}
-
-function getConfidenceTone(level: ActionItemView['confidenceLevel']): string {
-  if (level === 'high') return 'bg-emerald-50 text-emerald-700';
-  if (level === 'medium') return 'bg-amber-50 text-amber-700';
-  return 'bg-yellow-100 text-yellow-800';
-}
-
-function getSourceTone(status: ActionItemView['sourceStatus']): string {
-  return status === 'verified' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-700';
 }
 
 export default function App() {
@@ -178,7 +165,6 @@ export default function App() {
   }
 
   const run = selectedRun ?? latestRun;
-  const selectedItem = run?.items.find((item) => item.itemId === selectedItemId) ?? run?.items[0] ?? null;
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -255,176 +241,17 @@ export default function App() {
             )}
 
             {activeTab === 'latest' && (
-              <>
-                {!run ? (
-                  <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-8 py-14 text-center shadow-sm">
-                    <h3 className="text-xl font-semibold text-slate-900">还没有运行结果</h3>
-                    <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                      当前配置已完成，但还没有扫描结果。执行一次“立即扫描”后，最新结果页会展示运行摘要、事项列表和来源证据。
-                    </p>
-                    <button
-                      className="mt-6 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
-                      onClick={() => {
-                        void handleStartRun();
-                      }}
-                      type="button"
-                    >
-                      开始首次扫描
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    <section className="grid gap-4 lg:grid-cols-4">
-                      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">扫描时间</div>
-                        <div className="mt-2 text-sm font-semibold text-slate-900">{formatDate(run.startedAt)}</div>
-                      </div>
-                      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">PST 文件数</div>
-                        <div className="mt-2 text-2xl font-semibold text-slate-900">{run.pstCount}</div>
-                      </div>
-                      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">处理邮件数</div>
-                        <div className="mt-2 text-2xl font-semibold text-slate-900">{run.processedEmailCount}</div>
-                      </div>
-                      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <div className="text-xs uppercase tracking-wide text-slate-500">事项数 / 需复核</div>
-                        <div className="mt-2 text-2xl font-semibold text-slate-900">
-                          {run.itemCount} / {run.lowConfidenceCount}
-                        </div>
-                      </div>
-                    </section>
-
-                    <section className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(360px,0.85fr)]">
-                      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                        <div className="border-b border-slate-200 px-5 py-4">
-                          <h3 className="text-lg font-semibold text-slate-900">事项列表</h3>
-                        </div>
-
-                        <div className="max-h-[calc(100vh-320px)] space-y-3 overflow-y-auto p-4">
-                          {run.items.length === 0 && (
-                            <div className="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">
-                              当前运行没有生成事项。PST 发现链路已跑通，提取链路下一阶段继续补齐。
-                            </div>
-                          )}
-
-                          {run.items.map((item) => {
-                            const isSelected = selectedItem?.itemId === item.itemId;
-                            return (
-                              <button
-                                key={item.itemId}
-                                className={`w-full rounded-2xl border px-4 py-4 text-left transition ${
-                                  item.confidenceLevel === 'low' ? 'bg-yellow-50' : 'bg-white'
-                                } ${
-                                  isSelected ? 'border-blue-600 shadow-sm' : 'border-slate-200 hover:border-slate-300'
-                                }`}
-                                onClick={() => setSelectedItemId(item.itemId)}
-                                type="button"
-                              >
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h4 className="text-base font-semibold text-slate-900">{item.title}</h4>
-                                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                                    {item.itemType === 'todo' ? '待办' : '已完成'}
-                                  </span>
-                                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getConfidenceTone(item.confidenceLevel)}`}>
-                                    {item.confidenceLevel === 'high'
-                                      ? '高'
-                                      : item.confidenceLevel === 'medium'
-                                        ? '中'
-                                        : '低'}
-                                    置信度 · {formatConfidence(item.confidenceScore)}
-                                  </span>
-                                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getSourceTone(item.sourceStatus)}`}>
-                                    {item.sourceStatus === 'verified' ? '已验证' : '待确认'}
-                                  </span>
-                                </div>
-                                <p className="mt-3 text-sm leading-6 text-slate-600">{item.content}</p>
-                                <p className="mt-3 text-xs text-slate-500">
-                                  {item.senderDisplay} · {formatDate(item.sentAt)} · {item.subjectSnippet}
-                                </p>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-                        <div className="border-b border-slate-200 px-5 py-4">
-                          <h3 className="text-lg font-semibold text-slate-900">事项详情</h3>
-                        </div>
-
-                        {!selectedItem ? (
-                          <div className="px-5 py-8 text-sm text-slate-500">选择一条事项后，这里会显示完整依据和来源证据。</div>
-                        ) : (
-                          <div className="space-y-6 px-5 py-5">
-                            <section>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h4 className="text-xl font-semibold text-slate-900">{selectedItem.title}</h4>
-                                <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${getConfidenceTone(selectedItem.confidenceLevel)}`}>
-                                  {selectedItem.confidenceLevel === 'high'
-                                    ? '高'
-                                    : selectedItem.confidenceLevel === 'medium'
-                                      ? '中'
-                                      : '低'}
-                                  置信度
-                                </span>
-                              </div>
-                              <p className="mt-3 text-sm leading-7 text-slate-700">{selectedItem.content}</p>
-                            </section>
-
-                            <section>
-                              <h5 className="text-sm font-semibold uppercase tracking-wide text-slate-500">判断依据</h5>
-                              <p className="mt-2 text-sm leading-7 text-slate-700">{selectedItem.rationale || '暂无 AI 判断依据。'}</p>
-                            </section>
-
-                            <section>
-                              <div className="flex items-center justify-between gap-3">
-                                <h5 className="text-sm font-semibold uppercase tracking-wide text-slate-500">来源证据</h5>
-                                {selectedItem.evidence[0] && (
-                                  <button
-                                    className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                                    onClick={() => {
-                                      void copySearchTerm(selectedItem.evidence[0].searchTerm);
-                                    }}
-                                    type="button"
-                                  >
-                                    复制搜索词
-                                  </button>
-                                )}
-                              </div>
-
-                              <div className="mt-3 space-y-3">
-                                {selectedItem.evidence.map((evidence) => (
-                                  <div key={evidence.evidenceId} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                                    <div className="text-sm font-medium text-slate-900">
-                                      {evidence.senderDisplay} · {formatDate(evidence.sentAt)}
-                                    </div>
-                                    <div className="mt-1 text-sm text-slate-600">{evidence.subjectSnippet}</div>
-                                    <dl className="mt-3 space-y-2 text-xs text-slate-500">
-                                      <div>
-                                        <dt className="font-semibold text-slate-700">搜索词</dt>
-                                        <dd className="mt-1 font-mono">{evidence.searchTerm}</dd>
-                                      </div>
-                                      <div>
-                                        <dt className="font-semibold text-slate-700">文件路径</dt>
-                                        <dd className="mt-1 break-all font-mono">{evidence.filePath}</dd>
-                                      </div>
-                                      <div>
-                                        <dt className="font-semibold text-slate-700">标识</dt>
-                                        <dd className="mt-1 font-mono">{evidence.sourceIdentifier}</dd>
-                                      </div>
-                                    </dl>
-                                  </div>
-                                ))}
-                              </div>
-                            </section>
-                          </div>
-                        )}
-                      </div>
-                    </section>
-                  </div>
-                )}
-              </>
+              <LatestRunReview
+                onCopySearchTerm={(searchTerm) => {
+                  void copySearchTerm(searchTerm);
+                }}
+                onSelectItem={setSelectedItemId}
+                onStartRun={() => {
+                  void handleStartRun();
+                }}
+                run={run}
+                selectedItemId={selectedItemId}
+              />
             )}
 
             {activeTab === 'history' && (

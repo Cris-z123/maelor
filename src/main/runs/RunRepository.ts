@@ -4,6 +4,7 @@ import type { ActionItemView, EvidenceView, RunDetail, RunSummary, ValidationFil
 
 import { ConfigManager } from '../config/ConfigManager.js';
 import DatabaseManager from '../database/Database.js';
+import type { PersistedRunDetail } from './runTypes.js';
 
 const OUTLOOK_DIRECTORY_KEY = 'outlook.directory';
 const AI_BASE_URL_KEY = 'ai.baseUrl';
@@ -101,6 +102,7 @@ export class RunRepository {
 
       CREATE INDEX IF NOT EXISTS idx_extraction_runs_started_at ON extraction_runs(started_at DESC);
       CREATE INDEX IF NOT EXISTS idx_discovered_pst_files_run_id ON discovered_pst_files(run_id);
+      CREATE INDEX IF NOT EXISTS idx_processed_emails_run_id ON processed_emails(run_id);
       CREATE INDEX IF NOT EXISTS idx_action_items_run_id ON action_items(run_id);
       CREATE INDEX IF NOT EXISTS idx_item_evidence_item_id ON item_evidence(item_id);
     `);
@@ -108,7 +110,7 @@ export class RunRepository {
     this.schemaReady = true;
   }
 
-  static async saveRun(run: RunDetail): Promise<void> {
+  static async saveRun(run: PersistedRunDetail): Promise<void> {
     this.ensureSchema();
 
     DatabaseManager.transaction((db) => {
@@ -139,7 +141,7 @@ export class RunRepository {
         run.lowConfidenceCount,
         run.outlookDirectory,
         run.message,
-        null,
+        run.errorMessage ?? null,
       );
 
       const insertPst = db.prepare(`
@@ -155,9 +157,13 @@ export class RunRepository {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
+      const pstIds = new Map<string, string>();
+
       for (const file of run.pstFiles) {
+        const pstId = randomUUID();
+        pstIds.set(file.path, pstId);
         insertPst.run(
-          randomUUID(),
+          pstId,
           run.runId,
           file.path,
           file.fileName,
@@ -165,6 +171,36 @@ export class RunRepository {
           file.modifiedAt,
           file.readability,
           file.reason,
+        );
+      }
+
+      const insertEmail = db.prepare(`
+        INSERT INTO processed_emails (
+          email_id,
+          run_id,
+          pst_id,
+          message_identifier,
+          fingerprint,
+          sender_display,
+          sender_address,
+          subject,
+          sent_at,
+          file_path_hint
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const email of run.processedEmails) {
+        insertEmail.run(
+          email.emailId,
+          run.runId,
+          pstIds.get(email.pstPath) ?? null,
+          email.messageIdentifier,
+          email.fingerprint,
+          email.senderDisplay,
+          email.senderAddress,
+          email.subject,
+          email.sentAt,
+          email.filePathHint,
         );
       }
 
@@ -219,7 +255,7 @@ export class RunRepository {
           insertEvidence.run(
             evidence.evidenceId,
             item.itemId,
-            null,
+            evidence.emailId,
             evidence.senderDisplay,
             evidence.subjectSnippet,
             evidence.sentAt,

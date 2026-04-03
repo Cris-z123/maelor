@@ -73,18 +73,18 @@
 
 ### Tests for User Story 2
 
-- [ ] T020 [P] [US2] Add unit tests for run persistence and evidence binding in `tests/unit/main/`
-- [ ] T021 [P] [US2] Add integration tests for `runs.start`, `runs.getLatest`, and `runs.getById`
-- [ ] T022 [P] [US2] Add renderer tests for the latest-run list/detail review layout
+- [x] T020 [P] [US2] Add unit tests for run persistence and evidence binding in `tests/unit/main/`
+- [x] T021 [P] [US2] Add integration tests for `runs.start`, `runs.getLatest`, and `runs.getById`
+- [x] T022 [P] [US2] Add renderer tests for the latest-run list/detail review layout
 
 ### Implementation for User Story 2
 
 - [x] T023 [P] [US2] Implement run repositories and data access in `src/main/runs/`
 - [x] T023a [US2] Persist latest-run review data in SQLite MVP run tables instead of config-backed JSON snapshots
-- [ ] T024 [US2] Implement `runs.start` using PST discovery + parsing + item extraction + evidence persistence
+- [x] T024 [US2] Implement `runs.start` using PST discovery + parsing + item extraction + evidence persistence
 - [x] T025 [US2] Implement `runs.getLatest` and `runs.getById`
 - [x] T026 [US2] Implement the app shell and latest-run route in `src/renderer/app/`
-- [ ] T027 [US2] Implement run summary card, item list, item card, detail panel, and evidence list in `src/renderer/components/runs/`
+- [x] T027 [US2] Implement run summary card, item list, item card, detail panel, and evidence list in `src/renderer/components/runs/`
 - [x] T028 [US2] Implement copy-search-term behavior and low-confidence visual treatment
 
 **Checkpoint**: The core run/review loop is complete and independently testable.

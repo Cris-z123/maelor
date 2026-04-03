@@ -5,6 +5,7 @@ import { logger } from '../config/logger.js';
 import DatabaseManager from '../database/Database.js';
 import OnboardingManager from '../onboarding/OnboardingManager.js';
 import PstDiscovery from '../outlook/PstDiscovery.js';
+import RunExecutionService from '../runs/RunExecutionService.js';
 import RunRepository, { SETTINGS_CONFIG_KEYS } from '../runs/RunRepository.js';
 import { IPC_CHANNELS } from './channels.js';
 import {
@@ -100,6 +101,8 @@ export const ACTIVE_IPC_CHANNELS = [
 ] as const;
 
 function getDefaultDependencies(): AppIpcDependencies {
+  const runExecutionService = new RunExecutionService();
+
   return {
     getOnboardingStatus: async () => handleGetStatus({} as Electron.IpcMainInvokeEvent),
     detectOutlookDirectory: async () => handleDetectEmailClient({} as Electron.IpcMainInvokeEvent),
@@ -130,28 +133,7 @@ function getDefaultDependencies(): AppIpcDependencies {
       return { success: true };
     },
     startRun: async () => {
-      const settingsSeed = await RunRepository.getSettingsSeed();
-      const validation = PstDiscovery.validateDirectory(settingsSeed.outlookDirectory);
-
-      if (!validation.valid) {
-        return {
-          success: false,
-          runId: null,
-          message: validation.message,
-        };
-      }
-
-      const run = await RunRepository.createEmptyRun(
-        validation.files.filter((file) => file.readability === 'readable'),
-        settingsSeed.outlookDirectory
-      );
-      await RunRepository.saveRun(run);
-
-      return {
-        success: true,
-        runId: run.runId,
-        message: run.message,
-      };
+      return runExecutionService.start();
     },
     getLatestRun: async () => RunRepository.getLatest(),
     getRunById: async (runId) => RunRepository.getById(runId),

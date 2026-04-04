@@ -3,6 +3,7 @@
 > 智能邮件处理助手 - Email Item Traceability & Verification System
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/your-org/mailcopilot)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Cris-z123/11757b000330f5d8d4e482164f08052d/raw/mailcopilot-coverage.json)](https://gist.github.com/Cris-z123/11757b000330f5d8d4e482164f08052d)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Electron](https://img.shields.io/badge/Electron-29.4.6-9FEAF5?logo=electron)](https://electronjs.org/)
 [![Vitest](https://img.shields.io/badge/Vitest-3.2.4-6E9F18?logo=vitest)](https://vitest.dev/)
@@ -63,20 +64,6 @@ pnpm run start
 - **Zustand** 4.5 - 状态管理
 - **Tailwind CSS** v3.4 - 样式框架
 - **shadcn/ui** - UI 组件库
-
-## 📊 测试覆盖率
-
-| Metric     | Coverage |
-| ---------- | -------- |
-| Statements | 83.65%   |
-| Branches   | 84.40%   |
-| Functions  | 81.63%   |
-| Lines      | 83.65%   |
-
-- **Test Files**: 26 passed
-- **Test Cases**: 127 passed
-
-> 安全关键模块（加密、校验、脱敏、沙箱）要求 100% 分支覆盖率
 
 ## 🔧 开发指南
 

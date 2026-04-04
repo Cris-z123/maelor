@@ -99,8 +99,8 @@
 
 ### Tests for User Story 3
 
-- [ ] T029 [P] [US3] Add integration tests for `runs.listRecent` and settings IPC
-- [ ] T030 [P] [US3] Add renderer tests for history table and settings sections
+- [x] T029 [P] [US3] Add integration tests for `runs.listRecent` and settings IPC
+- [x] T030 [P] [US3] Add renderer tests for history table and settings sections
 
 ### Implementation for User Story 3
 

@@ -222,7 +222,7 @@ class GlobalErrorHandler {
     // Track error rate (but less critical than uncaught exceptions)
     this.trackError();
 
-    // Show notification for serious errors
+    // Show a blocking dialog for serious errors
     if (errorInfo.severity === ErrorSeverity.CRITICAL) {
       this.showErrorDialog(errorInfo);
     }
@@ -395,7 +395,7 @@ class GlobalErrorHandler {
    * Manually report an error with context
    *
    * Allows any part of the application to report errors
-   * with proper logging and user notification.
+   * with proper logging and user-facing error handling.
    *
    * @param error - Error object
    * @param category - Error category

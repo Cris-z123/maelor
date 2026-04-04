@@ -1,43 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { appMock, notificationInstances } = vi.hoisted(() => {
+const { appMock } = vi.hoisted(() => {
   const app = {
     requestSingleInstanceLock: vi.fn(),
     on: vi.fn(),
     releaseSingleInstanceLock: vi.fn(),
     quit: vi.fn(),
   };
-  const instances: Array<{
-    options: Record<string, unknown>;
-    on: ReturnType<typeof vi.fn>;
-    show: ReturnType<typeof vi.fn>;
-    triggerClick: () => void;
-  }> = [];
 
   return {
     appMock: app,
-    notificationInstances: instances,
   };
 });
 
 vi.mock('electron', () => ({
   app: appMock,
   BrowserWindow: vi.fn(),
-  Notification: vi.fn().mockImplementation((options: Record<string, unknown>) => {
-    let clickHandler: (() => void) | undefined;
-    const instance = {
-      options,
-      on: vi.fn((event: string, handler: () => void) => {
-        if (event === 'click') {
-          clickHandler = handler;
-        }
-      }),
-      show: vi.fn(),
-      triggerClick: () => clickHandler?.(),
-    };
-    notificationInstances.push(instance);
-    return instance;
-  }),
 }));
 
 import { logger } from '@/config/logger';
@@ -58,7 +36,6 @@ function resetAppState(): void {
 describe('app lifecycle managers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    notificationInstances.length = 0;
     resetAppState();
   });
 
@@ -71,7 +48,7 @@ describe('app lifecycle managers', () => {
     expect(appMock.on).not.toHaveBeenCalledWith('second-instance', expect.any(Function));
   });
 
-  it('focuses the existing window and shows a notification for a second instance', () => {
+  it('focuses the existing window for a second instance', () => {
     const windowMock: WindowLike = {
       isMinimized: vi.fn().mockReturnValue(true),
       restore: vi.fn(),
@@ -90,14 +67,6 @@ describe('app lifecycle managers', () => {
 
     expect(windowMock.restore).toHaveBeenCalledOnce();
     expect(windowMock.focus).toHaveBeenCalledTimes(1);
-    expect(notificationInstances).toHaveLength(1);
-    expect(notificationInstances[0]?.options).toEqual(
-      expect.objectContaining({
-        title: 'mailCopilot',
-      })
-    );
-    notificationInstances[0]?.triggerClick();
-    expect(windowMock.focus).toHaveBeenCalledTimes(2);
   });
 
   it('logs when a second instance appears without a registered window and releases the lock on quit', () => {

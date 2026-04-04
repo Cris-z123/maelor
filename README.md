@@ -64,6 +64,20 @@ pnpm run start
 - **Tailwind CSS** v3.4 - 样式框架
 - **shadcn/ui** - UI 组件库
 
+## 📊 测试覆盖率
+
+| Metric     | Coverage |
+| ---------- | -------- |
+| Statements | 83.65%   |
+| Branches   | 84.40%   |
+| Functions  | 81.63%   |
+| Lines      | 83.65%   |
+
+- **Test Files**: 26 passed
+- **Test Cases**: 127 passed
+
+> 安全关键模块（加密、校验、脱敏、沙箱）要求 100% 分支覆盖率
+
 ## 🔧 开发指南
 
 ### 开发命令
@@ -160,10 +174,3 @@ chore: update dependencies
 
 ## 📮 联系方式
 - 问题反馈: [GitHub Issues](https://github.com/your-org/mailcopilot/issues)
-
----
-
-**mailCopilot** - 隐私优先的智能邮件处理助手
-
-**Constitution Version**: 1.1.0
-**Last Updated**: 2026-02-08

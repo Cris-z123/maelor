@@ -24,6 +24,17 @@ if (!global.window || typeof global.window.document === 'undefined') {
   global.Node = happyWindow.Node as unknown as typeof global.Node;
 }
 
+// Sync happy-dom navigator to global so react-dom sees userAgent, etc.
+Object.defineProperty(global, 'navigator', {
+  configurable: true,
+  value: global.window.navigator,
+});
+
+// happy-dom does not provide dialog functions — mock them for React components
+global.window.confirm = vi.fn().mockReturnValue(true);
+global.window.alert = vi.fn();
+global.window.prompt = vi.fn().mockReturnValue('');
+
 const electronApi = {
   onboarding: {
     getStatus: vi.fn().mockResolvedValue({

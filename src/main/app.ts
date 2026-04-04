@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Notification } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import { logger } from './config/logger.js';
 
 /**
@@ -7,7 +7,6 @@ import { logger } from './config/logger.js';
  * Enforces single-instance execution per Constitution Principle VI:
  * - Only one instance of the application can run at a time
  * - Second instance attempts focus the existing window
- * - User is notified with "应用已在运行中" message
  *
  * This prevents SQLite database corruption from concurrent access
  * and provides a better user experience.
@@ -22,16 +21,13 @@ export class SingleInstanceManager {
    * @returns true if lock was acquired (first instance), false if another instance is running
    */
   static acquireLock(): boolean {
-    // Request single instance lock
     this.hasLock = app.requestSingleInstanceLock();
 
     if (!this.hasLock) {
-      // Another instance is already running
       logger.warn('SingleInstance', 'Second instance detected - quitting');
       return false;
     }
 
-    // Register handler for second-instance events
     app.on('second-instance', (_event, commandLine, workingDirectory) => {
       this.onSecondInstance(_event, commandLine, workingDirectory);
     });
@@ -64,44 +60,15 @@ export class SingleInstanceManager {
     });
 
     if (this.mainWindow) {
-      // Restore window if minimized
       if (this.mainWindow.isMinimized()) {
         this.mainWindow.restore();
         logger.debug('SingleInstance', 'Window restored from minimized state');
       }
 
-      // Focus the window
       this.mainWindow.focus();
       logger.debug('SingleInstance', 'Window focused');
-
-      // Show notification to user
-      this.showNotification();
     } else {
       logger.warn('SingleInstance', 'Second instance detected but no main window available');
-    }
-  }
-
-  /**
-   * Show notification to user about existing instance
-   */
-  private static showNotification(): void {
-    try {
-      const notification = new Notification({
-        title: 'mailCopilot',
-        body: '应用已在运行中', // Application is already running
-        silent: false,
-      });
-
-      notification.on('click', () => {
-        if (this.mainWindow) {
-          this.mainWindow.focus();
-        }
-      });
-
-      notification.show();
-      logger.debug('SingleInstance', 'User notification displayed');
-    } catch (error) {
-      logger.error('SingleInstance', 'Failed to show notification', error);
     }
   }
 
@@ -141,19 +108,15 @@ export class ApplicationManager {
    * @returns true if initialization succeeded, false if second instance
    */
   static initialize(): boolean {
-    // Acquire single-instance lock first
     if (!SingleInstanceManager.acquireLock()) {
-      // Another instance is running - quit immediately
       app.quit();
       return false;
     }
 
-    // Register quit handler
     app.on('before-quit', () => {
       this.onBeforeQuit();
     });
 
-    // Register will-quit handler
     app.on('will-quit', (event) => {
       this.onWillQuit(event);
     });
@@ -188,10 +151,6 @@ export class ApplicationManager {
    * Handle will-quit event
    */
   private static onWillQuit(_event: Electron.Event): void {
-    // Prevent default quit behavior to clean up
-    // event.preventDefault(); // Don't prevent - let quit happen
-
-    // Release single-instance lock
     SingleInstanceManager.releaseLock();
   }
 

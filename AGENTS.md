@@ -11,7 +11,7 @@ Auto-generated from all feature plans. Last updated: 2026-03-31
 - Tailwind CSS v3.4 + shadcn/ui for utility-first styling
 - better-sqlite3 11.10.0 with WAL mode and existing field-level encryption support
 - TypeScript 5.4 + Node.js 20.x
-- React 18 renderer with Vite 5
+- React 18 renderer with Vite 7
 
 ## MVP Scope Lock
 - Windows only

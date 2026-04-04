@@ -118,6 +118,7 @@
 - [ ] T035 [P] Remove or quarantine legacy tests for feedback, notifications, mode switching, multi-client onboarding, calendar history, and inline editing
 - [ ] T036 [P] Update generated agent/developer context files to point to the active `003` MVP
 - [ ] T037 Run final validation: `pnpm run typecheck`, `pnpm run lint`, relevant MVP unit/integration tests, and a repository purge audit over active roots
+- [x] T038 [P] Upgrade Vite 5→7 and @vitejs/plugin-react 4→5; verify typecheck, lint, test:unit, and build:renderer
 
 ## Implementation Strategy
 

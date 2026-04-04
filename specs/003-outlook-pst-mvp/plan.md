@@ -10,7 +10,7 @@ Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.4, Node.js 20.x  
-**Primary Dependencies**: Electron 29.4.6, React 18, Zustand 4.5, Zod 3.22, Tailwind CSS 3.4, shadcn/ui, better-sqlite3 11.10, openai 4.x, pst-extractor  
+**Primary Dependencies**: Electron 29.4.6, React 18, Vite 7, Zustand 4.5, Zod 3.22, Tailwind CSS 3.4, shadcn/ui, better-sqlite3 11.10, openai 4.x, pst-extractor  
 **Storage**: SQLite via better-sqlite3, local filesystem for Outlook PST discovery  
 **Testing**: Vitest (unit/integration/security), ESLint, TypeScript compiler  
 **Target Platform**: Windows desktop, classic Outlook data directories  

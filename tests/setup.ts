@@ -96,7 +96,7 @@ const testWindow = global.window as unknown as typeof global.window & {
 testWindow.electronAPI = electronApi;
 
 if (!global.navigator) {
-  (global as Record<string, unknown>).navigator = {};
+  (global as Record<string, unknown>).navigator = { userAgent: '' };
 }
 
 Object.defineProperty(global.navigator, 'clipboard', {

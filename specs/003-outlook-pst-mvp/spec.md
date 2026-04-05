@@ -99,6 +99,11 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **FR-019c**: Narrowing the compile surface alone is NOT sufficient. The repository's active source, preload bridge, shared runtime contracts, and TypeScript compile manifests MUST stop declaring or referencing feedback, notifications, mode switching, auto-update management, report-generation workspaces, multi-client onboarding, calendar history, inline editing, or legacy cleanup operations.
 - **FR-019d**: Non-MVP source modules and tests under active repository roots (`src/`, `electron/`, `tests/`) MUST be deleted rather than left dormant, unless they are moved into an explicit historical quarantine location that is excluded from active builds and active test commands.
 - **FR-019e**: `src/shared/types/`, `electron/preload.js`, and the active `tsconfig` include lists MUST describe only the onboarding, runs, and settings product surface plus the minimal shared utilities required by that surface.
+- **FR-020**: The repository MUST manage release versions through the application version in `package.json`, and tagged releases MUST use the matching `v<version>` Git tag.
+- **FR-021**: The repository MUST generate `CHANGELOG.md` entries automatically from Conventional Commit history for each prepared release.
+- **FR-022**: The release pipeline MUST fail when the Git tag version and `package.json` version do not match exactly.
+- **FR-023**: Tagged releases MUST build versioned desktop packages for Windows and macOS and publish those artifacts to the corresponding GitHub Release.
+- **FR-024**: Release artifacts uploaded to GitHub MUST include the application version in the asset filename so users can identify the correct installer or archive directly from the Release page.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -223,3 +228,5 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **SC-003**: Every displayed item in the latest run includes at least one evidence record in the detail panel.
 - **SC-004**: The app shows the latest run and the last 20 historical runs through the narrowed MVP shell without exposing out-of-scope surfaces.
 - **SC-005**: A repository audit of active roots (`src/`, `electron/`, `tests/`, `tsconfig*.json`) shows no remaining active references to feedback, notifications, mode switching, auto-update management, legacy report-generation workspaces, or removed `mvp` compatibility layers.
+- **SC-006**: A maintainer can prepare a release version and changelog entry without editing `CHANGELOG.md` manually.
+- **SC-007**: Pushing tag `vX.Y.Z` produces both Windows and macOS assets named with `X.Y.Z` and attaches them to the GitHub Release for that tag.

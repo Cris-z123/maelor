@@ -120,6 +120,16 @@
 - [x] T037 Run final validation: `pnpm run typecheck`, `pnpm run lint`, relevant MVP unit/integration tests, and a repository purge audit over active roots
 - [x] T038 [P] Upgrade Vite 5→7 and @vitejs/plugin-react 4→5; verify typecheck, lint, test:unit, and build:renderer
 
+---
+
+## Phase 6: Release Engineering
+
+- [x] T039 Define the active release-engineering requirements in `spec.md`, `plan.md`, and operator docs for versioning, changelog generation, and GitHub Release assets
+- [x] T040 Implement repository release scripts for version preparation, changelog generation, and tag/version validation
+- [x] T041 Extend `electron-builder.yml` to emit versioned Windows and macOS artifacts suitable for GitHub Release downloads
+- [x] T042 Replace the GitHub release workflow with a tag-driven multi-platform asset build and upload pipeline
+- [x] T043 Validate the release-engineering flow with local config checks and targeted build/lint verification
+
 ## Implementation Strategy
 
 1. Finish Phase 0 and Phase 1 before writing any new feature code.

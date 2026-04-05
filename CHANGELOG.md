@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.1](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v2.0.0...mailcopilot-v2.0.1) (2026-04-05)
+
+
+### Bug Fixes
+
+* **ci:** target repository for release asset upload ([d94d30a](https://github.com/Cris-z123/mailCopilot/commit/d94d30ac45a14dcf5f1c0fef72700db7688608cf))
+* **ci:** target repository for release asset upload ([8bd900a](https://github.com/Cris-z123/mailCopilot/commit/8bd900a05fe0ff455338819a98f4bb1e30055325))
+
 ## [2.0.0](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v1.0.0...mailcopilot-v2.0.0) (2026-04-05)
 
 

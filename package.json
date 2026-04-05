@@ -28,7 +28,9 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.renderer.json --noEmit && tsc -p tsconfig.shared.json --noEmit",
-    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,css,md,yml,yaml}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,cjs,json,css,md,yml,yaml}\"",
+    "dist:win": "pnpm exec electron-builder --win nsis --publish never",
+    "dist:mac": "pnpm exec electron-builder --mac dmg zip --publish never"
   },
   "dependencies": {
     "@kenjiuno/msgreader": "^1.28.0",

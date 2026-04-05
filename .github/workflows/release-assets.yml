@@ -1,0 +1,147 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+      body: ${{ steps.release.outputs.body }}
+
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          target-branch: ${{ github.ref_name }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  build:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            package_command: pnpm run dist:win
+          - os: macos-latest
+            platform: macos
+            package_command: pnpm run dist:mac
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.tag_name }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Rebuild better-sqlite3
+        run: pnpm run rebuild
+
+      - name: Type check
+        run: pnpm run typecheck
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Package release artifacts
+        run: ${{ matrix.package_command }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload packaged artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: |
+            release/*.exe
+            release/*.dmg
+            release/*.zip
+            release/*.yml
+            release/*.yaml
+            release/*.blockmap
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs:
+      - release-please
+      - build
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: release-*
+          merge-multiple: true
+
+      - name: Write release notes
+        shell: bash
+        env:
+          RELEASE_BODY: ${{ needs.release-please.outputs.body }}
+        run: |
+          printf '%s\n' "$RELEASE_BODY" > release-notes.md
+          cat >> release-notes.md <<'EOF'
+
+## macOS installation
+
+The macOS build is currently unsigned and not notarized.
+
+If macOS blocks the app on first launch:
+
+1. Try opening `mailCopilot` once from Finder.
+2. Open `System Settings > Privacy & Security`.
+3. Find the blocked app notice and click `Open Anyway`.
+4. Confirm the dialog to continue launching the app.
+EOF
+
+      - name: Update release notes and upload assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
+        run: |
+          gh release edit "$TAG_NAME" --notes-file release-notes.md
+          shopt -s nullglob
+          files=(release-assets/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No release assets were downloaded."
+            exit 1
+          fi
+          gh release upload "$TAG_NAME" "${files[@]}" --clobber

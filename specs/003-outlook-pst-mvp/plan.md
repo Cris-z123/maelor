@@ -13,10 +13,10 @@ Reset mailCopilot around a single Windows/classic-Outlook/PST-only MVP. Replace 
 **Primary Dependencies**: Electron 29.4.6, React 18, Vite 7, Zustand 4.5, Zod 3.22, Tailwind CSS 3.4, shadcn/ui, better-sqlite3 11.10, openai 4.x, pst-extractor  
 **Storage**: SQLite via better-sqlite3, local filesystem for Outlook PST discovery  
 **Testing**: Vitest (unit/integration/security), ESLint, TypeScript compiler  
-**Target Platform**: Windows desktop, classic Outlook data directories  
+**Target Platform**: Windows desktop runtime for classic Outlook data directories; Windows and macOS desktop packaging for GitHub Release distribution  
 **Project Type**: Electron desktop application  
 **Performance Goals**: latest-run shell loads without renderer crashes; PST discovery completes with bounded UI feedback; recent runs limited to 20 rows  
-**Constraints**: single active spec, PST-only, no unsupported client surfaces in code or UI, no `mvp`-prefixed active runtime naming, no dormant non-MVP modules in active repository roots, typecheck/lint required before expansion
+**Constraints**: single active spec, PST-only runtime scope, no unsupported client surfaces in code or UI, no `mvp`-prefixed active runtime naming, no dormant non-MVP modules in active repository roots, typecheck/lint required before expansion, and release tags must match the packaged application version
 **Scale/Scope**: one Outlook directory, one AI provider configuration, recent 20 runs, latest selected run review
 
 ## Constitution Check
@@ -147,6 +147,12 @@ This gap means Phase 1 is not complete until repository-level deletion matches t
 - Reuse the review layout for historical runs.
 - Build settings sections for Outlook directory, AI config, and data management.
 
+### Phase 6: Release Engineering
+
+- Add repository-managed release preparation so maintainers can bump the app version and generate changelog content from commit history without hand-editing release notes.
+- Extend electron-builder packaging to emit versioned Windows and macOS artifacts suitable for GitHub Release downloads.
+- Replace the single-platform publish workflow with a tag-driven matrix build that verifies tag/version alignment and uploads the generated assets to the matching GitHub Release.
+
 ## Module Boundaries
 
 ### Main Process
@@ -234,6 +240,10 @@ This gap means Phase 1 is not complete until repository-level deletion matches t
   - inspect `src/shared/types/`
   - inspect active `tsconfig` include lists
   - confirm no non-MVP modules remain under active `src/` and `tests/` roots unless explicitly quarantined
+- Required release audit:
+  - verify `package.json` version matches release tag format `v<version>`
+  - verify `CHANGELOG.md` contains a section for the prepared version
+  - verify the release workflow emits versioned Windows and macOS artifact names
 - Remove or quarantine tests for:
   - feedback
   - notifications

@@ -118,18 +118,17 @@ jobs:
         run: |
           printf '%s\n' "$RELEASE_BODY" > release-notes.md
           cat >> release-notes.md <<'EOF'
+          ## macOS installation
 
-## macOS installation
+          The macOS build is currently unsigned and not notarized.
 
-The macOS build is currently unsigned and not notarized.
+          If macOS blocks the app on first launch:
 
-If macOS blocks the app on first launch:
-
-1. Try opening `mailCopilot` once from Finder.
-2. Open `System Settings > Privacy & Security`.
-3. Find the blocked app notice and click `Open Anyway`.
-4. Confirm the dialog to continue launching the app.
-EOF
+          1. Try opening `mailCopilot` once from Finder.
+          2. Open `System Settings > Privacy & Security`.
+          3. Find the blocked app notice and click `Open Anyway`.
+          4. Confirm the dialog to continue launching the app.
+          EOF
 
       - name: Update release notes and upload assets
         shell: bash

@@ -90,8 +90,8 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.zip
-            release/*.yml
-            release/*.yaml
+            release/latest*.yml
+            release/latest*.yaml
             release/*.blockmap
           if-no-files-found: error
           retention-days: 7

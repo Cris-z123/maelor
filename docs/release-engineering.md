@@ -1,4 +1,4 @@
-# Release Engineering
+﻿# Release Engineering
 
 ## Release Flow
 
@@ -67,6 +67,8 @@ Unsupported commit subjects still appear in the changelog under `Other`.
 ## Notes
 
 - Runtime scope remains the Outlook PST MVP. macOS packaging expands release distribution, not the app feature boundary.
+- Windows builds are currently self-signed internal test installers, not production-trusted releases.
+- Internal test devices must import and trust the self-signed test certificate before installation.
 - The old manual prepare-release and legacy release workflows have been removed.
 - The macOS build is currently unsigned and not notarized. Users may need to use `Open Anyway` in `System Settings > Privacy & Security` on first launch.
 - Do not manually pre-generate or hand-maintain `CHANGELOG.md`; let `release-please` create and update it in the Release PR.

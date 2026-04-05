@@ -103,7 +103,14 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **FR-021**: The repository MUST generate `CHANGELOG.md` entries automatically from Conventional Commit history for each prepared release.
 - **FR-022**: The release pipeline MUST fail when the Git tag version and `package.json` version do not match exactly.
 - **FR-023**: Tagged releases MUST build versioned desktop packages for Windows and macOS and publish those artifacts to the corresponding GitHub Release.
+- **FR-023a**: Windows GitHub Release artifacts MUST be treated as the only supported internal-test distribution channel in the current phase, MUST be code-signed before upload, and MUST fail the release workflow when Windows signing credentials are unavailable.
+- **FR-023b**: macOS GitHub Release artifacts MAY be published as experimental builds, but they MUST be clearly labeled as unsigned and unsupported for normal production rollout.
 - **FR-024**: Release artifacts uploaded to GitHub MUST include the application version in the asset filename so users can identify the correct installer or archive directly from the Release page.
+- **FR-025**: Startup initialization failures MUST converge through a fatal-startup path that logs the error, closes the SQLite connection, releases the single-instance lock, shows a readable user-facing dialog, and exits the process with a non-zero code.
+- **FR-026**: User-facing main-process error dialogs MUST use valid UTF-8 localized copy and MUST provide actionable recovery guidance for startup, configuration, migration, and renderer crash failures.
+- **FR-027**: SQLite schema initialization MUST either migrate sequentially to the current version or block startup with a recovery message; continuing to run against a known schema mismatch is not allowed.
+- **FR-028**: Schema migrations MUST create a backup of the existing database before applying version upgrades and MUST preserve both the original database and the backup when a migration fails.
+- **FR-029**: Public download, install, upgrade, and uninstall documentation MUST describe only the currently supported lifecycle: Windows self-signed internal-test installer distribution, macOS experimental packaging, no supported auto-update flow, and uninstall cleanup that removes user data only for true uninstall operations.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -230,3 +237,5 @@ As a repeat user, I want to review recent scan runs and maintain the Outlook dir
 - **SC-005**: A repository audit of active roots (`src/`, `electron/`, `tests/`, `tsconfig*.json`) shows no remaining active references to feedback, notifications, mode switching, auto-update management, legacy report-generation workspaces, or removed `mvp` compatibility layers.
 - **SC-006**: A maintainer can prepare a release version and changelog entry without editing `CHANGELOG.md` manually.
 - **SC-007**: Pushing tag `vX.Y.Z` produces both Windows and macOS assets named with `X.Y.Z` and attaches them to the GitHub Release for that tag.
+- **SC-008**: A startup initialization failure exits without leaving a background `mailCopilot.exe` process running.
+- **SC-009**: Upgrading a database from the previous supported schema version completes through an ordered migration path or blocks startup with a recovery dialog and preserved backup.

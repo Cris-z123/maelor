@@ -1,15 +1,3 @@
-CREATE TABLE IF NOT EXISTS app_metadata (
-    key TEXT PRIMARY KEY CHECK(key IN ('schema_version', 'install_time', 'device_fingerprint', 'onboarding_disclosure')),
-    value TEXT NOT NULL,
-    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-) STRICT;
-
-CREATE TABLE IF NOT EXISTS user_config (
-    config_key TEXT PRIMARY KEY,
-    config_value BLOB NOT NULL,
-    updated_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
-) STRICT;
-
 CREATE TABLE IF NOT EXISTS outlook_source_config (
     source_id TEXT PRIMARY KEY,
     directory_path TEXT NOT NULL,
@@ -95,6 +83,6 @@ CREATE INDEX IF NOT EXISTS idx_processed_emails_run_id ON processed_emails(run_i
 CREATE INDEX IF NOT EXISTS idx_action_items_run_id ON action_items(run_id);
 CREATE INDEX IF NOT EXISTS idx_item_evidence_item_id ON item_evidence(item_id);
 
-INSERT OR IGNORE INTO app_metadata (key, value) VALUES ('schema_version', '4.0');
-INSERT OR IGNORE INTO app_metadata (key, value) VALUES ('install_time', strftime('%s', 'now'));
-INSERT OR IGNORE INTO app_metadata (key, value) VALUES ('device_fingerprint', 'unknown');
+UPDATE app_metadata
+SET value = '4.0', updated_at = strftime('%s', 'now')
+WHERE key = 'schema_version';

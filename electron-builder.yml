@@ -41,6 +41,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
+  include: build/installer.nsh
   perMachine: false  # 默认安装到用户目录，不需要管理员权限
   allowElevation: true  # 允许用户选择以管理员身份安装
 

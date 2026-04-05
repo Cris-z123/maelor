@@ -130,6 +130,16 @@
 - [x] T042 Replace the GitHub release workflow with a tag-driven multi-platform asset build and upload pipeline
 - [x] T043 Validate the release-engineering flow with local config checks and targeted build/lint verification
 
+---
+
+## Phase 7: Lifecycle Stability Hardening
+
+- [x] T044 Define lifecycle-hardening requirements in `spec.md`, `plan.md`, and operator-facing docs for self-signed Windows internal-test distribution, experimental macOS packaging, startup-failure convergence, and schema migrations
+- [x] T045 Update release workflow and public docs so Windows signed installers are the only supported internal-test distribution path and macOS builds are clearly experimental
+- [x] T046 Implement fatal startup failure convergence in the main process so failed launches release locks, close SQLite, show readable dialogs, and exit without a background process
+- [x] T047 Implement ordered SQLite schema migrations with backups, migration blocking, and startup-safe error reporting
+- [x] T048 Add regression coverage for release gating, lifecycle docs, startup failure exit, schema migration paths, and UTF-8 user-facing crash dialogs
+
 ## Implementation Strategy
 
 1. Finish Phase 0 and Phase 1 before writing any new feature code.

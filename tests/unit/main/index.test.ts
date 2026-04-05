@@ -17,6 +17,7 @@ describe('main index entrypoint', () => {
     const app = {
       whenReady: vi.fn(() => Promise.resolve()),
       on: vi.fn(),
+      exit: vi.fn(),
       quit: vi.fn(),
     };
 
@@ -30,6 +31,7 @@ describe('main index entrypoint', () => {
         setReady: vi.fn(),
       },
       SingleInstanceManager: {
+        releaseLock: vi.fn(),
         setMainWindow: vi.fn(),
       },
     }));
@@ -43,6 +45,7 @@ describe('main index entrypoint', () => {
       logger: {
         info: vi.fn(),
         error: vi.fn(),
+        showFatalStartupDialog: vi.fn(),
       },
     }));
     vi.doMock('@/database/Database', () => ({
@@ -88,6 +91,7 @@ describe('main index entrypoint', () => {
       on: vi.fn((event: string, handler: () => void) => {
         appHandlers.set(event, handler);
       }),
+      exit: vi.fn(),
       quit: vi.fn(),
     };
     const onboardingWindow = {
@@ -121,6 +125,7 @@ describe('main index entrypoint', () => {
     const initialize = vi.fn(() => true);
     const setReady = vi.fn();
     const setMainWindow = vi.fn();
+    const releaseLock = vi.fn();
     const configInitialize = vi.fn().mockResolvedValue(undefined);
     const configInitializeDefaults = vi.fn().mockResolvedValue(undefined);
     const logger = {
@@ -134,6 +139,7 @@ describe('main index entrypoint', () => {
       initialize: vi.fn(),
       setMainWindow: vi.fn(),
       handleRendererProcessGone: vi.fn(),
+      showFatalStartupDialog: vi.fn(),
     };
     const registerAppIpcHandlers = vi.fn().mockResolvedValue(undefined);
     const isComplete = vi
@@ -154,6 +160,7 @@ describe('main index entrypoint', () => {
         setReady,
       },
       SingleInstanceManager: {
+        releaseLock,
         setMainWindow,
       },
     }));
@@ -219,5 +226,90 @@ describe('main index entrypoint', () => {
 
     appHandlers.get('activate')?.();
     expect(BrowserWindow).toHaveBeenCalledTimes(2);
+  });
+
+  it('converges fatal startup failures by closing resources, showing a dialog, releasing the lock, and exiting', async () => {
+    const appHandlers = new Map<string, () => void>();
+    const app = {
+      whenReady: vi.fn(() => Promise.resolve()),
+      on: vi.fn((event: string, handler: () => void) => {
+        appHandlers.set(event, handler);
+      }),
+      exit: vi.fn(),
+      quit: vi.fn(),
+    };
+    const initialize = vi.fn(() => true);
+    const setReady = vi.fn();
+    const releaseLock = vi.fn();
+    const startupError = new Error('migration failed');
+    const logger = {
+      info: vi.fn(),
+      error: vi.fn(),
+    };
+    const databaseInitialize = vi.fn();
+    const databaseClose = vi.fn();
+    const schemaInitialize = vi.fn().mockRejectedValue(startupError);
+    const errorHandler = {
+      initialize: vi.fn(),
+      setMainWindow: vi.fn(),
+      handleRendererProcessGone: vi.fn(),
+      showFatalStartupDialog: vi.fn(),
+    };
+    const registerAppIpcHandlers = vi.fn().mockResolvedValue(undefined);
+
+    vi.doMock('electron', () => ({
+      app,
+      BrowserWindow: vi.fn(),
+    }));
+    vi.doMock('@/app', () => ({
+      ApplicationManager: {
+        initialize,
+        setReady,
+      },
+      SingleInstanceManager: {
+        releaseLock,
+        setMainWindow: vi.fn(),
+      },
+    }));
+    vi.doMock('@/config/ConfigManager', () => ({
+      ConfigManager: {
+        initialize: vi.fn().mockResolvedValue(undefined),
+        initializeDefaults: vi.fn().mockResolvedValue(undefined),
+      },
+    }));
+    vi.doMock('@/config/logger', () => ({ logger }));
+    vi.doMock('@/database/Database', () => ({
+      default: {
+        initialize: databaseInitialize,
+        close: databaseClose,
+      },
+    }));
+    vi.doMock('@/database/schema', () => ({
+      SchemaManager: {
+        initialize: schemaInitialize,
+      },
+    }));
+    vi.doMock('@/error-handler', () => ({ errorHandler }));
+    vi.doMock('@/ipc/registerAppHandlers', () => ({ registerAppIpcHandlers }));
+    vi.doMock('@/onboarding/OnboardingManager', () => ({
+      default: {
+        isComplete: vi.fn(() => false),
+      },
+    }));
+    vi.doMock('@/windows/onboardingWindow', () => ({
+      createOnboardingWindow: vi.fn(),
+    }));
+
+    await import('@/index');
+    await flushPromises();
+
+    expect(databaseInitialize).toHaveBeenCalledOnce();
+    expect(registerAppIpcHandlers).not.toHaveBeenCalled();
+    expect(logger.error).toHaveBeenCalledWith('Application', 'Fatal startup failure', startupError);
+    expect(databaseClose).toHaveBeenCalledOnce();
+    expect(errorHandler.showFatalStartupDialog).toHaveBeenCalledWith(startupError);
+    expect(releaseLock).toHaveBeenCalledOnce();
+    expect(setReady).not.toHaveBeenCalled();
+    expect(app.exit).toHaveBeenCalledWith(1);
   });
 });

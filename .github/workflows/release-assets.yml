@@ -76,7 +76,28 @@ jobs:
       - name: Build application
         run: pnpm run build
 
-      - name: Package release artifacts
+      - name: Validate Windows signing configuration
+        if: ${{ matrix.platform == 'windows' }}
+        shell: bash
+        env:
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+        run: |
+          if [ -z "${WIN_CSC_LINK:-}" ] || [ -z "${WIN_CSC_KEY_PASSWORD:-}" ]; then
+            echo "Windows signing secrets are required for self-signed Windows test releases."
+            exit 1
+          fi
+
+      - name: Package Windows release artifacts
+        if: ${{ matrix.platform == 'windows' }}
+        run: ${{ matrix.package_command }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+
+      - name: Package macOS experimental artifacts
+        if: ${{ matrix.platform == 'macos' }}
         run: ${{ matrix.package_command }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -90,8 +111,8 @@ jobs:
             release/*.exe
             release/*.dmg
             release/*.zip
-            release/*.yml
-            release/*.yaml
+            release/latest*.yml
+            release/latest*.yaml
             release/*.blockmap
           if-no-files-found: error
           retention-days: 7
@@ -118,6 +139,12 @@ jobs:
         run: |
           printf '%s\n' "$RELEASE_BODY" > release-notes.md
           cat >> release-notes.md <<'EOF'
+          ## Distribution status
+
+          - Windows installers are self-signed internal test builds and are not production-trusted releases.
+          - Test devices must import and trust the signing certificate before installing the Windows build.
+          - macOS artifacts are experimental builds and are not part of the supported production lifecycle.
+
           ## macOS installation
 
           The macOS build is currently unsigned and not notarized.

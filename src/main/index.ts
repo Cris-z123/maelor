@@ -28,6 +28,7 @@ class Application {
   private mainWindow: BrowserWindow | null = null;
   private onboardingWindow: BrowserWindow | null = null;
   private isQuitting = false;
+  private startupFailed = false;
 
   constructor() {
     if (process.env.NODE_ENV === 'development') {
@@ -45,7 +46,7 @@ class Application {
   }
 
   private setupEventHandlers(): void {
-    app.whenReady().then(() => this.onReady());
+    app.whenReady().then(() => this.onReady()).catch((error) => this.handleStartupFailure(error));
     app.on('window-all-closed', () => this.onWindowAllClosed());
     app.on('before-quit', () => this.onBeforeQuit());
     app.on('activate', () => this.onActivate());
@@ -58,8 +59,8 @@ class Application {
       DatabaseManager.initialize();
       logger.info('Database', 'Database initialized');
 
-      await SchemaManager.initialize();
-      logger.info('Schema', 'Schema initialized');
+      const schemaResult = await SchemaManager.initialize();
+      logger.info('Schema', 'Schema initialized', schemaResult);
 
       await ConfigManager.initialize();
       await ConfigManager.initializeDefaults();
@@ -157,6 +158,10 @@ class Application {
   }
 
   private onActivate(): void {
+    if (this.startupFailed) {
+      return;
+    }
+
     if (BrowserWindow.getAllWindows().length === 0) {
       if (!OnboardingManager.isComplete()) {
         this.createOnboardingWindow();
@@ -168,6 +173,20 @@ class Application {
 
   public isAppQuitting(): boolean {
     return this.isQuitting;
+  }
+
+  private handleStartupFailure(error: unknown): void {
+    this.startupFailed = true;
+    this.isQuitting = true;
+
+    logger.error('Application', 'Fatal startup failure', error);
+    DatabaseManager.close();
+    logger.info('Database', 'Database connection closed after startup failure');
+
+    errorHandler.showFatalStartupDialog(error);
+    SingleInstanceManager.releaseLock();
+
+    app.exit(1);
   }
 }
 

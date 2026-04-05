@@ -19,7 +19,14 @@ describe('release dependency manifest', () => {
     const manifest = readPackageManifest();
 
     expect(manifest.dependencies?.['pst-extractor']).toBeDefined();
-    expect(manifest.dependencies?.long).toBeDefined();
     expect(manifest.optionalDependencies?.['pst-extractor']).toBeUndefined();
+  });
+
+  it('uses hoisted node-linker so electron-builder bundles transitive deps', () => {
+    const npmrc = readFileSync(
+      path.resolve(process.cwd(), '.npmrc'),
+      'utf8',
+    );
+    expect(npmrc).toContain('node-linker=hoisted');
   });
 });

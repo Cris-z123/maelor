@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v2.0.2...mailcopilot-v2.0.3) (2026-04-05)
+
+
+### Bug Fixes
+
+* **build:** use hoisted node-linker to fix pst-extractor bundling ([7ada6c3](https://github.com/Cris-z123/mailCopilot/commit/7ada6c392bc4e7c5476837900b45656ac516011f))
+* **build:** use hoisted node-linker to fix pst-extractor bundling ([75372ce](https://github.com/Cris-z123/mailCopilot/commit/75372cee421a60c0c41b4a1fb7291b4bfd6e32bb))
+
 ## [2.0.2](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v2.0.1...mailcopilot-v2.0.2) (2026-04-05)
 
 

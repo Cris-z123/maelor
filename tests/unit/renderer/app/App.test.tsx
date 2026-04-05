@@ -132,7 +132,12 @@ const settingsSummary: SettingsView = {
 describe('App', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    appApi.getOnboardingStatus.mockResolvedValue({ completed: true, currentStep: 3, readablePstCount: 1, outlookDirectory: 'C:\\Outlook' });
+    appApi.getOnboardingStatus.mockResolvedValue({
+      completed: true,
+      currentStep: 3,
+      readablePstCount: 1,
+      outlookDirectory: 'C:\\Outlook',
+    });
     appApi.getLatestRun.mockResolvedValue(latestRun);
     appApi.listRecentRuns.mockResolvedValue(historyRuns);
     appApi.getSettingsSummary.mockResolvedValue(settingsSummary);
@@ -160,8 +165,18 @@ describe('App', () => {
 
   it('renders the onboarding flow when setup is incomplete and refreshes after completion', async () => {
     appApi.getOnboardingStatus
-      .mockResolvedValueOnce({ completed: false, currentStep: 1, readablePstCount: 0, outlookDirectory: null })
-      .mockResolvedValueOnce({ completed: true, currentStep: 3, readablePstCount: 1, outlookDirectory: 'C:\\Outlook' });
+      .mockResolvedValueOnce({
+        completed: false,
+        currentStep: 1,
+        readablePstCount: 0,
+        outlookDirectory: null,
+      })
+      .mockResolvedValueOnce({
+        completed: true,
+        currentStep: 3,
+        readablePstCount: 1,
+        outlookDirectory: 'C:\\Outlook',
+      });
 
     render(<App />);
 
@@ -205,8 +220,14 @@ describe('App', () => {
     });
     expect(await screen.findByText('latest-run:run-h1')).toBeInTheDocument();
 
-    appApi.listRecentRuns.mockResolvedValueOnce([]);
+    appApi.listRecentRuns.mockResolvedValue([]);
+    const historyRefreshCalls = appApi.listRecentRuns.mock.calls.length + 1;
+
     fireEvent.click(screen.getByRole('button', { name: '刷新' }));
+    await waitFor(() => {
+      expect(appApi.listRecentRuns).toHaveBeenCalledTimes(historyRefreshCalls);
+    });
+
     fireEvent.click(screen.getByRole('button', { name: '历史运行' }));
     expect(await screen.findByText('还没有历史运行记录。')).toBeInTheDocument();
   });

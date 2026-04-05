@@ -134,13 +134,14 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
           TAG_NAME: ${{ needs.release-please.outputs.tag_name }}
         run: |
-          gh release edit "$TAG_NAME" --notes-file release-notes.md
+          gh release edit "$TAG_NAME" --notes-file release-notes.md --repo "$GH_REPO"
           shopt -s nullglob
           files=(release-assets/*)
           if [ ${#files[@]} -eq 0 ]; then
             echo "No release assets were downloaded."
             exit 1
           fi
-          gh release upload "$TAG_NAME" "${files[@]}" --clobber
+          gh release upload "$TAG_NAME" "${files[@]}" --clobber --repo "$GH_REPO"

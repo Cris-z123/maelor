@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.2](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v2.0.1...mailcopilot-v2.0.2) (2026-04-05)
+
+
+### Bug Fixes
+
+* **ci:** track installer nsis script ([8235049](https://github.com/Cris-z123/mailCopilot/commit/8235049e5d94c194cbb63f67505fbedb2dfab29f))
+* **lifecycle:** harden startup migration and release flow ([2983297](https://github.com/Cris-z123/mailCopilot/commit/29832978cd976a7e07297b9b3866a54340fb4fbd))
+
+
+### Maintenance
+
+* **release:** exclude builder debug metadata ([b0846fa](https://github.com/Cris-z123/mailCopilot/commit/b0846fa6973fed4611cf429b13a6d5e89eb622e3))
+
 ## [2.0.1](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v2.0.0...mailcopilot-v2.0.1) (2026-04-05)
 
 

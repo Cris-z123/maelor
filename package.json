@@ -1,6 +1,6 @@
 {
   "name": "mailcopilot",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
   "description": "Windows-only Outlook PST direct-connect MVP",
   "main": "electron/main.js",

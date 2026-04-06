@@ -1,6 +1,12 @@
 ﻿import { randomUUID } from 'crypto';
 
-import type { ActionItemView, EvidenceView, RunDetail, RunSummary, ValidationFile } from '@shared/types/app.js';
+import type {
+    ActionItemView,
+    EvidenceView,
+    RunDetail,
+    RunSummary,
+    ValidationFile,
+} from '@shared/types/app.js';
 
 import { ConfigManager } from '../config/ConfigManager.js';
 import DatabaseManager from '../database/Database.js';
@@ -11,16 +17,16 @@ const AI_BASE_URL_KEY = 'ai.baseUrl';
 const AI_MODEL_KEY = 'ai.model';
 
 export class RunRepository {
-  private static schemaReady = false;
+    private static schemaReady = false;
 
-  private static ensureSchema(): void {
-    if (this.schemaReady) {
-      return;
-    }
+    private static ensureSchema(): void {
+        if (this.schemaReady) {
+            return;
+        }
 
-    const db = DatabaseManager.getDatabase();
+        const db = DatabaseManager.getDatabase();
 
-    db.exec(`
+        db.exec(`
       CREATE TABLE IF NOT EXISTS outlook_source_config (
         source_id TEXT PRIMARY KEY,
         directory_path TEXT NOT NULL,
@@ -107,16 +113,17 @@ export class RunRepository {
       CREATE INDEX IF NOT EXISTS idx_item_evidence_item_id ON item_evidence(item_id);
     `);
 
-    this.schemaReady = true;
-  }
+        this.schemaReady = true;
+    }
 
-  static async saveRun(run: PersistedRunDetail): Promise<void> {
-    this.ensureSchema();
+    static async saveRun(run: PersistedRunDetail): Promise<void> {
+        this.ensureSchema();
 
-    DatabaseManager.transaction((db) => {
-      db.prepare('DELETE FROM extraction_runs WHERE run_id = ?').run(run.runId);
+        DatabaseManager.transaction((db) => {
+            db.prepare('DELETE FROM extraction_runs WHERE run_id = ?').run(run.runId);
 
-      db.prepare(`
+            db.prepare(
+                `
         INSERT INTO extraction_runs (
           run_id,
           started_at,
@@ -130,21 +137,22 @@ export class RunRepository {
           message,
           error_message
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        run.runId,
-        run.startedAt,
-        run.finishedAt,
-        run.status,
-        run.pstCount,
-        run.processedEmailCount,
-        run.itemCount,
-        run.lowConfidenceCount,
-        run.outlookDirectory,
-        run.message,
-        run.errorMessage ?? null,
-      );
+      `,
+            ).run(
+                run.runId,
+                run.startedAt,
+                run.finishedAt,
+                run.status,
+                run.pstCount,
+                run.processedEmailCount,
+                run.itemCount,
+                run.lowConfidenceCount,
+                run.outlookDirectory,
+                run.message,
+                run.errorMessage ?? null,
+            );
 
-      const insertPst = db.prepare(`
+            const insertPst = db.prepare(`
         INSERT INTO discovered_pst_files (
           pst_id,
           run_id,
@@ -157,24 +165,24 @@ export class RunRepository {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      const pstIds = new Map<string, string>();
+            const pstIds = new Map<string, string>();
 
-      for (const file of run.pstFiles) {
-        const pstId = randomUUID();
-        pstIds.set(file.path, pstId);
-        insertPst.run(
-          pstId,
-          run.runId,
-          file.path,
-          file.fileName,
-          file.sizeBytes,
-          file.modifiedAt,
-          file.readability,
-          file.reason,
-        );
-      }
+            for (const file of run.pstFiles) {
+                const pstId = randomUUID();
+                pstIds.set(file.path, pstId);
+                insertPst.run(
+                    pstId,
+                    run.runId,
+                    file.path,
+                    file.fileName,
+                    file.sizeBytes,
+                    file.modifiedAt,
+                    file.readability,
+                    file.reason,
+                );
+            }
 
-      const insertEmail = db.prepare(`
+            const insertEmail = db.prepare(`
         INSERT INTO processed_emails (
           email_id,
           run_id,
@@ -189,22 +197,22 @@ export class RunRepository {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      for (const email of run.processedEmails) {
-        insertEmail.run(
-          email.emailId,
-          run.runId,
-          pstIds.get(email.pstPath) ?? null,
-          email.messageIdentifier,
-          email.fingerprint,
-          email.senderDisplay,
-          email.senderAddress,
-          email.subject,
-          email.sentAt,
-          email.filePathHint,
-        );
-      }
+            for (const email of run.processedEmails) {
+                insertEmail.run(
+                    email.emailId,
+                    run.runId,
+                    pstIds.get(email.pstPath) ?? null,
+                    email.messageIdentifier,
+                    email.fingerprint,
+                    email.senderDisplay,
+                    email.senderAddress,
+                    email.subject,
+                    email.sentAt,
+                    email.filePathHint,
+                );
+            }
 
-      const insertItem = db.prepare(`
+            const insertItem = db.prepare(`
         INSERT INTO action_items (
           item_id,
           run_id,
@@ -221,7 +229,7 @@ export class RunRepository {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      const insertEvidence = db.prepare(`
+            const insertEvidence = db.prepare(`
         INSERT INTO item_evidence (
           evidence_id,
           item_id,
@@ -235,76 +243,80 @@ export class RunRepository {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
 
-      for (const item of run.items) {
-        insertItem.run(
-          item.itemId,
-          run.runId,
-          item.title,
-          item.content,
-          item.itemType,
-          item.confidenceScore,
-          item.confidenceLevel,
-          item.sourceStatus,
-          item.rationale,
-          item.senderDisplay,
-          item.sentAt,
-          item.subjectSnippet,
-        );
+            for (const item of run.items) {
+                insertItem.run(
+                    item.itemId,
+                    run.runId,
+                    item.title,
+                    item.content,
+                    item.itemType,
+                    item.confidenceScore,
+                    item.confidenceLevel,
+                    item.sourceStatus,
+                    item.rationale,
+                    item.senderDisplay,
+                    item.sentAt,
+                    item.subjectSnippet,
+                );
 
-        for (const evidence of item.evidence) {
-          insertEvidence.run(
-            evidence.evidenceId,
-            item.itemId,
-            evidence.emailId,
-            evidence.senderDisplay,
-            evidence.subjectSnippet,
-            evidence.sentAt,
-            evidence.searchTerm,
-            evidence.filePath,
-            evidence.sourceIdentifier,
-          );
-        }
-      }
-    });
-  }
-
-  static async clearRuns(): Promise<number> {
-    this.ensureSchema();
-
-    const db = DatabaseManager.getDatabase();
-    const current = db.prepare('SELECT COUNT(*) AS count FROM extraction_runs').get() as { count: number };
-
-    DatabaseManager.transaction((tx) => {
-      tx.prepare('DELETE FROM item_evidence').run();
-      tx.prepare('DELETE FROM action_items').run();
-      tx.prepare('DELETE FROM processed_emails').run();
-      tx.prepare('DELETE FROM discovered_pst_files').run();
-      tx.prepare('DELETE FROM extraction_runs').run();
-    });
-
-    return current.count;
-  }
-
-  static async getLatest(): Promise<RunDetail | null> {
-    this.ensureSchema();
-
-    const db = DatabaseManager.getDatabase();
-    const latest = db.prepare('SELECT run_id FROM extraction_runs ORDER BY started_at DESC LIMIT 1').get() as
-      | { run_id: string }
-      | undefined;
-
-    if (!latest) {
-      return null;
+                for (const evidence of item.evidence) {
+                    insertEvidence.run(
+                        evidence.evidenceId,
+                        item.itemId,
+                        evidence.emailId,
+                        evidence.senderDisplay,
+                        evidence.subjectSnippet,
+                        evidence.sentAt,
+                        evidence.searchTerm,
+                        evidence.filePath,
+                        evidence.sourceIdentifier,
+                    );
+                }
+            }
+        });
     }
 
-    return this.getById(latest.run_id);
-  }
+    static async clearRuns(): Promise<number> {
+        this.ensureSchema();
 
-  static async getById(runId: string): Promise<RunDetail | null> {
-    this.ensureSchema();
+        const db = DatabaseManager.getDatabase();
+        const current = db.prepare('SELECT COUNT(*) AS count FROM extraction_runs').get() as {
+            count: number;
+        };
 
-    const db = DatabaseManager.getDatabase();
-    const row = db.prepare(`
+        DatabaseManager.transaction((tx) => {
+            tx.prepare('DELETE FROM item_evidence').run();
+            tx.prepare('DELETE FROM action_items').run();
+            tx.prepare('DELETE FROM processed_emails').run();
+            tx.prepare('DELETE FROM discovered_pst_files').run();
+            tx.prepare('DELETE FROM extraction_runs').run();
+        });
+
+        return current.count;
+    }
+
+    static async getLatest(): Promise<RunDetail | null> {
+        this.ensureSchema();
+
+        const db = DatabaseManager.getDatabase();
+        const latest = db
+            .prepare('SELECT run_id FROM extraction_runs ORDER BY started_at DESC LIMIT 1')
+            .get() as { run_id: string } | undefined;
+
+        if (!latest) {
+            return null;
+        }
+
+        return this.getById(latest.run_id);
+    }
+
+    static async getById(runId: string): Promise<RunDetail | null> {
+        this.ensureSchema();
+
+        const db = DatabaseManager.getDatabase();
+        const row = db
+            .prepare(
+                `
       SELECT
         run_id,
         started_at,
@@ -318,26 +330,30 @@ export class RunRepository {
         message
       FROM extraction_runs
       WHERE run_id = ?
-    `).get(runId) as
-      | {
-          run_id: string;
-          started_at: number;
-          finished_at: number | null;
-          status: RunDetail['status'];
-          pst_count: number;
-          processed_email_count: number;
-          item_count: number;
-          low_confidence_count: number;
-          outlook_directory: string;
-          message: string;
+    `,
+            )
+            .get(runId) as
+            | {
+                  run_id: string;
+                  started_at: number;
+                  finished_at: number | null;
+                  status: RunDetail['status'];
+                  pst_count: number;
+                  processed_email_count: number;
+                  item_count: number;
+                  low_confidence_count: number;
+                  outlook_directory: string;
+                  message: string;
+              }
+            | undefined;
+
+        if (!row) {
+            return null;
         }
-      | undefined;
 
-    if (!row) {
-      return null;
-    }
-
-    const pstFiles = db.prepare(`
+        const pstFiles = db
+            .prepare(
+                `
       SELECT
         absolute_path,
         file_name,
@@ -348,16 +364,20 @@ export class RunRepository {
       FROM discovered_pst_files
       WHERE run_id = ?
       ORDER BY file_name ASC
-    `).all(runId) as Array<{
-      absolute_path: string;
-      file_name: string;
-      file_size_bytes: number;
-      modified_at: number;
-      readability: ValidationFile['readability'];
-      readability_reason: string | null;
-    }>;
+    `,
+            )
+            .all(runId) as Array<{
+            absolute_path: string;
+            file_name: string;
+            file_size_bytes: number;
+            modified_at: number;
+            readability: ValidationFile['readability'];
+            readability_reason: string | null;
+        }>;
 
-    const itemRows = db.prepare(`
+        const itemRows = db
+            .prepare(
+                `
       SELECT
         item_id,
         title,
@@ -373,21 +393,25 @@ export class RunRepository {
       FROM action_items
       WHERE run_id = ?
       ORDER BY sent_at DESC, item_id ASC
-    `).all(runId) as Array<{
-      item_id: string;
-      title: string;
-      content: string;
-      item_type: ActionItemView['itemType'];
-      confidence_score: number;
-      confidence_level: ActionItemView['confidenceLevel'];
-      source_status: ActionItemView['sourceStatus'];
-      rationale: string;
-      sender_display: string;
-      sent_at: number | null;
-      subject_snippet: string;
-    }>;
+    `,
+            )
+            .all(runId) as Array<{
+            item_id: string;
+            title: string;
+            content: string;
+            item_type: ActionItemView['itemType'];
+            confidence_score: number;
+            confidence_level: ActionItemView['confidenceLevel'];
+            source_status: ActionItemView['sourceStatus'];
+            rationale: string;
+            sender_display: string;
+            sent_at: number | null;
+            subject_snippet: string;
+        }>;
 
-    const evidenceRows = db.prepare(`
+        const evidenceRows = db
+            .prepare(
+                `
       SELECT
         evidence_id,
         item_id,
@@ -400,73 +424,77 @@ export class RunRepository {
       FROM item_evidence
       WHERE item_id IN (SELECT item_id FROM action_items WHERE run_id = ?)
       ORDER BY item_id ASC, evidence_id ASC
-    `).all(runId) as Array<{
-      evidence_id: string;
-      item_id: string;
-      sender_display: string;
-      subject_snippet: string;
-      sent_at: number | null;
-      search_term: string;
-      file_path: string;
-      source_identifier: string;
-    }>;
+    `,
+            )
+            .all(runId) as Array<{
+            evidence_id: string;
+            item_id: string;
+            sender_display: string;
+            subject_snippet: string;
+            sent_at: number | null;
+            search_term: string;
+            file_path: string;
+            source_identifier: string;
+        }>;
 
-    const evidenceByItem = new Map<string, EvidenceView[]>();
-    for (const evidence of evidenceRows) {
-      const current = evidenceByItem.get(evidence.item_id) ?? [];
-      current.push({
-        evidenceId: evidence.evidence_id,
-        senderDisplay: evidence.sender_display,
-        subjectSnippet: evidence.subject_snippet,
-        sentAt: evidence.sent_at,
-        searchTerm: evidence.search_term,
-        filePath: evidence.file_path,
-        sourceIdentifier: evidence.source_identifier,
-      });
-      evidenceByItem.set(evidence.item_id, current);
+        const evidenceByItem = new Map<string, EvidenceView[]>();
+        for (const evidence of evidenceRows) {
+            const current = evidenceByItem.get(evidence.item_id) ?? [];
+            current.push({
+                evidenceId: evidence.evidence_id,
+                senderDisplay: evidence.sender_display,
+                subjectSnippet: evidence.subject_snippet,
+                sentAt: evidence.sent_at,
+                searchTerm: evidence.search_term,
+                filePath: evidence.file_path,
+                sourceIdentifier: evidence.source_identifier,
+            });
+            evidenceByItem.set(evidence.item_id, current);
+        }
+
+        return {
+            runId: row.run_id,
+            startedAt: row.started_at,
+            finishedAt: row.finished_at,
+            status: row.status,
+            pstCount: row.pst_count,
+            processedEmailCount: row.processed_email_count,
+            itemCount: row.item_count,
+            lowConfidenceCount: row.low_confidence_count,
+            outlookDirectory: row.outlook_directory,
+            message: row.message,
+            pstFiles: pstFiles.map((file) => ({
+                path: file.absolute_path,
+                fileName: file.file_name,
+                sizeBytes: file.file_size_bytes,
+                modifiedAt: file.modified_at,
+                readability: file.readability,
+                reason: file.readability_reason,
+            })),
+            items: itemRows.map((item) => ({
+                itemId: item.item_id,
+                title: item.title,
+                content: item.content,
+                itemType: item.item_type,
+                confidenceScore: item.confidence_score,
+                confidenceLevel: item.confidence_level,
+                sourceStatus: item.source_status,
+                rationale: item.rationale,
+                senderDisplay: item.sender_display,
+                sentAt: item.sent_at,
+                subjectSnippet: item.subject_snippet,
+                evidence: evidenceByItem.get(item.item_id) ?? [],
+            })),
+        };
     }
 
-    return {
-      runId: row.run_id,
-      startedAt: row.started_at,
-      finishedAt: row.finished_at,
-      status: row.status,
-      pstCount: row.pst_count,
-      processedEmailCount: row.processed_email_count,
-      itemCount: row.item_count,
-      lowConfidenceCount: row.low_confidence_count,
-      outlookDirectory: row.outlook_directory,
-      message: row.message,
-      pstFiles: pstFiles.map((file) => ({
-        path: file.absolute_path,
-        fileName: file.file_name,
-        sizeBytes: file.file_size_bytes,
-        modifiedAt: file.modified_at,
-        readability: file.readability,
-        reason: file.readability_reason,
-      })),
-      items: itemRows.map((item) => ({
-        itemId: item.item_id,
-        title: item.title,
-        content: item.content,
-        itemType: item.item_type,
-        confidenceScore: item.confidence_score,
-        confidenceLevel: item.confidence_level,
-        sourceStatus: item.source_status,
-        rationale: item.rationale,
-        senderDisplay: item.sender_display,
-        sentAt: item.sent_at,
-        subjectSnippet: item.subject_snippet,
-        evidence: evidenceByItem.get(item.item_id) ?? [],
-      })),
-    };
-  }
+    static async listRecent(limit = 20): Promise<RunSummary[]> {
+        this.ensureSchema();
 
-  static async listRecent(limit = 20): Promise<RunSummary[]> {
-    this.ensureSchema();
-
-    const db = DatabaseManager.getDatabase();
-    const rows = db.prepare(`
+        const db = DatabaseManager.getDatabase();
+        const rows = db
+            .prepare(
+                `
       SELECT
         run_id,
         started_at,
@@ -479,76 +507,87 @@ export class RunRepository {
       FROM extraction_runs
       ORDER BY started_at DESC
       LIMIT ?
-    `).all(limit) as Array<{
-      run_id: string;
-      started_at: number;
-      finished_at: number | null;
-      status: RunSummary['status'];
-      pst_count: number;
-      processed_email_count: number;
-      item_count: number;
-      low_confidence_count: number;
-    }>;
+    `,
+            )
+            .all(limit) as Array<{
+            run_id: string;
+            started_at: number;
+            finished_at: number | null;
+            status: RunSummary['status'];
+            pst_count: number;
+            processed_email_count: number;
+            item_count: number;
+            low_confidence_count: number;
+        }>;
 
-    return rows.map((row) => ({
-      runId: row.run_id,
-      startedAt: row.started_at,
-      finishedAt: row.finished_at,
-      status: row.status,
-      pstCount: row.pst_count,
-      processedEmailCount: row.processed_email_count,
-      itemCount: row.item_count,
-      lowConfidenceCount: row.low_confidence_count,
-    }));
-  }
+        return rows.map((row) => ({
+            runId: row.run_id,
+            startedAt: row.started_at,
+            finishedAt: row.finished_at,
+            status: row.status,
+            pstCount: row.pst_count,
+            processedEmailCount: row.processed_email_count,
+            itemCount: row.item_count,
+            lowConfidenceCount: row.low_confidence_count,
+        }));
+    }
 
-  static async createEmptyRun(pstFiles: ValidationFile[], outlookDirectory: string): Promise<RunDetail> {
-    const startedAt = Date.now();
-    const readablePstCount = pstFiles.filter((file) => file.readability === 'readable').length;
+    static async createEmptyRun(
+        pstFiles: ValidationFile[],
+        outlookDirectory: string,
+    ): Promise<RunDetail> {
+        const startedAt = Date.now();
+        const readablePstCount = pstFiles.filter((file) => file.readability === 'readable').length;
 
-    return {
-      runId: randomUUID(),
-      startedAt,
-      finishedAt: null,
-      status: 'pending',
-      pstCount: readablePstCount,
-      processedEmailCount: 0,
-      itemCount: 0,
-      lowConfidenceCount: 0,
-      outlookDirectory,
-      pstFiles,
-      items: [],
-      message:
-        pstFiles.length > 0
-          ? 'PST 发现已完成，邮件解析与事项提取链路尚未接入。'
-          : '未发现 PST 文件。',
-    };
-  }
+        return {
+            runId: randomUUID(),
+            startedAt,
+            finishedAt: null,
+            status: 'pending',
+            pstCount: readablePstCount,
+            processedEmailCount: 0,
+            itemCount: 0,
+            lowConfidenceCount: 0,
+            outlookDirectory,
+            pstFiles,
+            items: [],
+            message:
+                pstFiles.length > 0
+                    ? 'PST 发现已完成，邮件解析与事项提取链路尚未接入。'
+                    : '未发现 PST 文件。',
+        };
+    }
 
-  static async getSettingsSeed(): Promise<{
-    outlookDirectory: string;
-    aiBaseUrl: string;
-    aiModel: string;
-  }> {
-    const config = await ConfigManager.get([
-      OUTLOOK_DIRECTORY_KEY,
-      AI_BASE_URL_KEY,
-      AI_MODEL_KEY,
-    ]);
+    static async getSettingsSeed(): Promise<{
+        outlookDirectory: string;
+        aiBaseUrl: string;
+        aiModel: string;
+    }> {
+        const config = await ConfigManager.get([
+            OUTLOOK_DIRECTORY_KEY,
+            AI_BASE_URL_KEY,
+            AI_MODEL_KEY,
+        ]);
 
-    return {
-      outlookDirectory:
-        typeof config[OUTLOOK_DIRECTORY_KEY] === 'string' ? (config[OUTLOOK_DIRECTORY_KEY] as string) : '',
-      aiBaseUrl: typeof config[AI_BASE_URL_KEY] === 'string' ? (config[AI_BASE_URL_KEY] as string) : '',
-      aiModel: typeof config[AI_MODEL_KEY] === 'string' ? (config[AI_MODEL_KEY] as string) : '',
-    };
-  }
+        return {
+            outlookDirectory:
+                typeof config[OUTLOOK_DIRECTORY_KEY] === 'string'
+                    ? (config[OUTLOOK_DIRECTORY_KEY] as string)
+                    : '',
+            aiBaseUrl:
+                typeof config[AI_BASE_URL_KEY] === 'string'
+                    ? (config[AI_BASE_URL_KEY] as string)
+                    : '',
+            aiModel:
+                typeof config[AI_MODEL_KEY] === 'string' ? (config[AI_MODEL_KEY] as string) : '',
+        };
+    }
 }
 
 export const SETTINGS_CONFIG_KEYS = {
-  outlookDirectory: OUTLOOK_DIRECTORY_KEY,
-  aiBaseUrl: AI_BASE_URL_KEY,
-  aiModel: AI_MODEL_KEY,
+    outlookDirectory: OUTLOOK_DIRECTORY_KEY,
+    aiBaseUrl: AI_BASE_URL_KEY,
+    aiModel: AI_MODEL_KEY,
 } as const;
 
 export default RunRepository;

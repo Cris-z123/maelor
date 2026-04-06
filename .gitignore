@@ -46,7 +46,6 @@ Thumbs.db
 *.tmp
 
 # IDE
-.vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace

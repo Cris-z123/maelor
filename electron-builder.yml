@@ -1,52 +1,52 @@
 appId: com.mailcopilot.app
 productName: mailCopilot
 directories:
-  buildResources: build
-  output: release
+    buildResources: build
+    output: release
 
 files:
-  - electron/**/*
-  - dist/main/**/*
-  - dist/renderer/**/*
-  - dist/shared/**/*
-  - package.json
+    - electron/**/*
+    - dist/main/**/*
+    - dist/renderer/**/*
+    - dist/shared/**/*
+    - package.json
 
 extraMetadata:
-  main: electron/main.js
+    main: electron/main.js
 
 asar: true
 npmRebuild: false
 asarUnpack:
-  - node_modules/better-sqlite3/**
+    - node_modules/better-sqlite3/**
 
 win:
-  target:
-    - target: nsis
-      arch:
-        - x64
-  artifactName: ${productName}-${version}-windows-${arch}.${ext}
+    target:
+        - target: nsis
+          arch:
+              - x64
+    artifactName: ${productName}-${version}-windows-${arch}.${ext}
 
 mac:
-  target:
-    - target: dmg
-    - target: zip
-  artifactName: ${productName}-${version}-macos-${arch}.${ext}
-  category: public.app-category.productivity
-  hardenedRuntime: false
-  gatekeeperAssess: false
-  entitlementsInherit: electron/entitlements.mac.plist
+    target:
+        - target: dmg
+        - target: zip
+    artifactName: ${productName}-${version}-macos-${arch}.${ext}
+    category: public.app-category.productivity
+    hardenedRuntime: false
+    gatekeeperAssess: false
+    entitlementsInherit: electron/entitlements.mac.plist
 
 nsis:
-  oneClick: false
-  allowToChangeInstallationDirectory: true
-  createDesktopShortcut: true
-  createStartMenuShortcut: true
-  include: build/installer.nsh
-  perMachine: false  # 默认安装到用户目录，不需要管理员权限
-  allowElevation: true  # 允许用户选择以管理员身份安装
+    oneClick: false
+    allowToChangeInstallationDirectory: true
+    createDesktopShortcut: true
+    createStartMenuShortcut: true
+    include: build/installer.nsh
+    perMachine: false # 默认安装到用户目录，不需要管理员权限
+    allowElevation: true # 允许用户选择以管理员身份安装
 
 publish:
-  provider: github
-  owner: Cris-z123
-  repo: mailCopilot
-  releaseType: release
+    provider: github
+    owner: Cris-z123
+    repo: mailCopilot
+    releaseType: release

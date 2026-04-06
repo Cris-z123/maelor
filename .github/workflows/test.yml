@@ -1,63 +1,63 @@
 name: Test
 
 on:
-  push:
-    branches: [main, '003-outlook-pst-mvp']
-  pull_request:
-    branches: [main]
+    push:
+        branches: [main, '003-outlook-pst-mvp']
+    pull_request:
+        branches: [main]
 
 jobs:
-  test:
-    runs-on: windows-latest
+    test:
+        runs-on: windows-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10
+            - name: Setup pnpm
+              uses: pnpm/action-setup@v4
+              with:
+                  version: 10
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'pnpm'
-          cache-dependency-path: pnpm-lock.yaml
+            - name: Setup Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 20
+                  cache: 'pnpm'
+                  cache-dependency-path: pnpm-lock.yaml
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+            - name: Install dependencies
+              run: pnpm install --frozen-lockfile
 
-      - name: Rebuild better-sqlite3
-        run: pnpm exec electron-rebuild -f -w better-sqlite3
+            - name: Rebuild better-sqlite3
+              run: pnpm exec electron-rebuild -f -w better-sqlite3
 
-      - name: Type check
-        run: pnpm run typecheck
+            - name: Type check
+              run: pnpm run typecheck
 
-      - name: Lint
-        run: pnpm run lint
+            - name: Lint
+              run: pnpm run lint
 
-      - name: Unit tests with coverage
-        run: pnpm run test:coverage
+            - name: Unit tests with coverage
+              run: pnpm run test:coverage
 
-      - name: Extract coverage percentage
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/003-outlook-pst-mvp'
-        id: coverage
-        shell: bash
-        run: |
-          COVERAGE=$(node -e "const s = require('./coverage/coverage-summary.json'); console.log(s.total.lines.pct)")
-          echo "lines=$COVERAGE" >> "$GITHUB_OUTPUT"
+            - name: Extract coverage percentage
+              if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/003-outlook-pst-mvp'
+              id: coverage
+              shell: bash
+              run: |
+                  COVERAGE=$(node -e "const s = require('./coverage/coverage-summary.json'); console.log(s.total.lines.pct)")
+                  echo "lines=$COVERAGE" >> "$GITHUB_OUTPUT"
 
-      - name: Update coverage badge
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/003-outlook-pst-mvp'
-        uses: schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: ${{ secrets.GIST_ID }}
-          filename: mailcopilot-coverage.json
-          label: Coverage
-          message: ${{ steps.coverage.outputs.lines }}%
-          valColorRange: ${{ steps.coverage.outputs.lines }}
-          minColorRange: 50
-          maxColorRange: 90
+            - name: Update coverage badge
+              if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/003-outlook-pst-mvp'
+              uses: schneegans/dynamic-badges-action@v1.7.0
+              with:
+                  auth: ${{ secrets.GIST_SECRET }}
+                  gistID: ${{ secrets.GIST_ID }}
+                  filename: mailcopilot-coverage.json
+                  label: Coverage
+                  message: ${{ steps.coverage.outputs.lines }}%
+                  valColorRange: ${{ steps.coverage.outputs.lines }}
+                  minColorRange: 50
+                  maxColorRange: 90

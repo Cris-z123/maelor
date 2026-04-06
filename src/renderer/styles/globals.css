@@ -5,69 +5,79 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 210 20% 98%;
-    --foreground: 222 26% 14%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 26% 14%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 26% 14%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 18% 96%;
-    --secondary-foreground: 222 26% 14%;
-    --muted: 210 16% 95%;
-    --muted-foreground: 215 16% 46%;
-    --accent: 210 18% 96%;
-    --accent-foreground: 222 26% 14%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 214 20% 88%;
-    --input: 214 20% 88%;
-    --ring: 217 91% 60%;
-    --radius: 1rem;
-  }
+    :root {
+        --background: 210 20% 98%;
+        --foreground: 222 26% 14%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 26% 14%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 26% 14%;
+        --primary: 217 91% 60%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 18% 96%;
+        --secondary-foreground: 222 26% 14%;
+        --muted: 210 16% 95%;
+        --muted-foreground: 215 16% 46%;
+        --accent: 210 18% 96%;
+        --accent-foreground: 222 26% 14%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 214 20% 88%;
+        --input: 214 20% 88%;
+        --ring: 217 91% 60%;
+        --radius: 1rem;
+    }
 
-  * {
-    @apply border-border;
-    box-sizing: border-box;
-  }
+    * {
+        @apply border-border;
+        box-sizing: border-box;
+    }
 
-  html {
-    @apply bg-slate-100;
-  }
+    html {
+        @apply bg-slate-100;
+    }
 
-  body {
-    @apply m-0 bg-slate-100 text-slate-900;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
+    body {
+        @apply m-0 bg-slate-100 text-slate-900;
+        font-family:
+            'Inter',
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    letter-spacing: -0.02em;
-  }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        font-family:
+            'Inter',
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            sans-serif;
+        letter-spacing: -0.02em;
+    }
 
-  code,
-  pre,
-  .font-mono {
-    font-family: 'JetBrains Mono', Consolas, monospace;
-  }
+    code,
+    pre,
+    .font-mono {
+        font-family: 'JetBrains Mono', Consolas, monospace;
+    }
 
-  button,
-  input,
-  textarea,
-  select {
-    font: inherit;
-  }
+    button,
+    input,
+    textarea,
+    select {
+        font: inherit;
+    }
 
-  #root {
-    min-height: 100vh;
-  }
+    #root {
+        min-height: 100vh;
+    }
 }

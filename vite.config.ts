@@ -3,26 +3,26 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [react()],
-  base: './', // Required for Electron loadFile() so assets resolve relative to index.html
-  root: 'src/renderer',
-  build: {
-    outDir: '../../dist/renderer',
-    emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        index: path.resolve(__dirname, 'src/renderer/index.html'),
-        onboarding: path.resolve(__dirname, 'src/renderer/onboarding.html'),
-      },
+    plugins: [react()],
+    base: './', // Required for Electron loadFile() so assets resolve relative to index.html
+    root: 'src/renderer',
+    build: {
+        outDir: '../../dist/renderer',
+        emptyOutDir: true,
+        rollupOptions: {
+            input: {
+                index: path.resolve(__dirname, 'src/renderer/index.html'),
+                onboarding: path.resolve(__dirname, 'src/renderer/onboarding.html'),
+            },
+        },
     },
-  },
-  resolve: {
-    alias: {
-      '@renderer': path.resolve(__dirname, './src/renderer'),
-      '@shared': path.resolve(__dirname, './src/shared'),
+    resolve: {
+        alias: {
+            '@renderer': path.resolve(__dirname, './src/renderer'),
+            '@shared': path.resolve(__dirname, './src/shared'),
+        },
     },
-  },
-  server: {
-    port: 3000,
-  },
+    server: {
+        port: 3000,
+    },
 });

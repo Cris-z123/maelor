@@ -1,21 +1,14 @@
 {
-  "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "lib": ["ES2022"],
-    "outDir": "./dist/shared",
-    "rootDir": "./src/shared",
-    "types": ["node"]
-  },
-  "include": [
-    "src/shared/**/*"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "src/main",
-    "src/renderer"
-  ]
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "lib": ["ES2022"],
+        "outDir": "./dist/shared",
+        "rootDir": "./src/shared",
+        "types": ["node"]
+    },
+    "include": ["src/shared/**/*"],
+    "exclude": ["node_modules", "dist", "src/main", "src/renderer"]
 }

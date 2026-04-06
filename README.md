@@ -34,7 +34,8 @@ mailCopilot 是一款面向隐私敏感场景的**本地邮件智能处理客户
 ### 本地模式要求（可选）
 
 如果使用本地模式，需要先安装 Ollama
-```
+
+````
 
 ### 安装步骤
 
@@ -53,7 +54,7 @@ pnpm run build
 
 # 5. 运行生产版本
 pnpm run start
-```
+````
 
 ## 📦 分发与安装
 
@@ -67,6 +68,7 @@ pnpm run start
 ## 🏗️ 技术栈
 
 ### 核心框架
+
 - **Electron** 29.4.6 - 跨平台桌面应用框架
 - **React** 18 - 用户界面
 - **TypeScript** 5.4 - 类型安全
@@ -169,4 +171,5 @@ chore: update dependencies
 - [Vite](https://vitejs.dev/) - 下一代前端构建工具
 
 ## 📮 联系方式
+
 - 问题反馈: [GitHub Issues](https://github.com/your-org/mailcopilot/issues)

@@ -25,169 +25,171 @@ import { createOnboardingWindow } from './windows/onboardingWindow.js';
  */
 
 class Application {
-  private mainWindow: BrowserWindow | null = null;
-  private onboardingWindow: BrowserWindow | null = null;
-  private isQuitting = false;
-  private startupFailed = false;
+    private mainWindow: BrowserWindow | null = null;
+    private onboardingWindow: BrowserWindow | null = null;
+    private isQuitting = false;
+    private startupFailed = false;
 
-  constructor() {
-    if (process.env.NODE_ENV === 'development') {
-      process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+    constructor() {
+        if (process.env.NODE_ENV === 'development') {
+            process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
+        }
+
+        errorHandler.initialize();
+        logger.info('ErrorHandler', 'Global error handler initialized');
+
+        if (!ApplicationManager.initialize()) {
+            throw new Error('Second instance detected - exiting');
+        }
+
+        this.setupEventHandlers();
     }
 
-    errorHandler.initialize();
-    logger.info('ErrorHandler', 'Global error handler initialized');
-
-    if (!ApplicationManager.initialize()) {
-      throw new Error('Second instance detected - exiting');
+    private setupEventHandlers(): void {
+        app.whenReady()
+            .then(() => this.onReady())
+            .catch((error) => this.handleStartupFailure(error));
+        app.on('window-all-closed', () => this.onWindowAllClosed());
+        app.on('before-quit', () => this.onBeforeQuit());
+        app.on('activate', () => this.onActivate());
     }
 
-    this.setupEventHandlers();
-  }
+    private async onReady(): Promise<void> {
+        try {
+            logger.info('Application', 'Application starting up');
 
-  private setupEventHandlers(): void {
-    app.whenReady().then(() => this.onReady()).catch((error) => this.handleStartupFailure(error));
-    app.on('window-all-closed', () => this.onWindowAllClosed());
-    app.on('before-quit', () => this.onBeforeQuit());
-    app.on('activate', () => this.onActivate());
-  }
+            DatabaseManager.initialize();
+            logger.info('Database', 'Database initialized');
 
-  private async onReady(): Promise<void> {
-    try {
-      logger.info('Application', 'Application starting up');
+            const schemaResult = await SchemaManager.initialize();
+            logger.info('Schema', 'Schema initialized', schemaResult);
 
-      DatabaseManager.initialize();
-      logger.info('Database', 'Database initialized');
+            await ConfigManager.initialize();
+            await ConfigManager.initializeDefaults();
+            logger.info('Config', 'Configuration initialized');
 
-      const schemaResult = await SchemaManager.initialize();
-      logger.info('Schema', 'Schema initialized', schemaResult);
+            await this.setupIPCHandlers();
+            logger.info('IPC', 'IPC handlers registered');
 
-      await ConfigManager.initialize();
-      await ConfigManager.initializeDefaults();
-      logger.info('Config', 'Configuration initialized');
+            if (!OnboardingManager.isComplete()) {
+                this.createOnboardingWindow();
+                logger.info('Window', 'Onboarding window created (first launch)');
+            } else {
+                this.createMainWindow();
+                logger.info('Window', 'Main window created (onboarding complete)');
+            }
 
-      await this.setupIPCHandlers();
-      logger.info('IPC', 'IPC handlers registered');
-
-      if (!OnboardingManager.isComplete()) {
-        this.createOnboardingWindow();
-        logger.info('Window', 'Onboarding window created (first launch)');
-      } else {
-        this.createMainWindow();
-        logger.info('Window', 'Main window created (onboarding complete)');
-      }
-
-      ApplicationManager.setReady();
-    } catch (error) {
-      logger.error('Application', 'Failed to initialize application', error);
-      throw error;
-    }
-  }
-
-  private createOnboardingWindow(): void {
-    this.onboardingWindow = createOnboardingWindow();
-
-    this.onboardingWindow.on('closed', () => {
-      this.onboardingWindow = null;
-
-      if (OnboardingManager.isComplete()) {
-        this.createMainWindow();
-      }
-      logger.info('Window', 'Onboarding window closed');
-    });
-  }
-
-  private createMainWindow(): void {
-    this.mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      minWidth: 800,
-      minHeight: 600,
-      webPreferences: {
-        nodeIntegration: false,
-        contextIsolation: true,
-        sandbox: true,
-        preload: path.join(__dirname, '../../electron/preload.js'),
-      },
-      show: false,
-    });
-
-    if (process.env.NODE_ENV === 'development') {
-      this.mainWindow.loadURL('http://localhost:3000');
-      this.mainWindow.webContents.openDevTools();
-    } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+            ApplicationManager.setReady();
+        } catch (error) {
+            logger.error('Application', 'Failed to initialize application', error);
+            throw error;
+        }
     }
 
-    this.mainWindow.once('ready-to-show', () => {
-      this.mainWindow?.show();
-      logger.info('Window', 'Main window shown');
-    });
+    private createOnboardingWindow(): void {
+        this.onboardingWindow = createOnboardingWindow();
 
-    SingleInstanceManager.setMainWindow(this.mainWindow);
-    errorHandler.setMainWindow(this.mainWindow);
+        this.onboardingWindow.on('closed', () => {
+            this.onboardingWindow = null;
 
-    this.mainWindow.on('closed', () => {
-      errorHandler.setMainWindow(null);
-      this.mainWindow = null;
-      logger.info('Window', 'Main window closed');
-    });
-
-    this.mainWindow.webContents.on('render-process-gone', (_event, details) => {
-      errorHandler.handleRendererProcessGone(details);
-    });
-  }
-
-  private async setupIPCHandlers(): Promise<void> {
-    await registerAppIpcHandlers();
-    logger.info('IPC', 'Active onboarding, runs, and settings handlers registered');
-  }
-
-  private onWindowAllClosed(): void {
-    if (process.platform !== 'darwin') {
-      app.quit();
-    }
-  }
-
-  private onBeforeQuit(): void {
-    this.isQuitting = true;
-    logger.info('Application', 'Application quitting');
-
-    DatabaseManager.close();
-    logger.info('Database', 'Database connection closed');
-  }
-
-  private onActivate(): void {
-    if (this.startupFailed) {
-      return;
+            if (OnboardingManager.isComplete()) {
+                this.createMainWindow();
+            }
+            logger.info('Window', 'Onboarding window closed');
+        });
     }
 
-    if (BrowserWindow.getAllWindows().length === 0) {
-      if (!OnboardingManager.isComplete()) {
-        this.createOnboardingWindow();
-      } else {
-        this.createMainWindow();
-      }
+    private createMainWindow(): void {
+        this.mainWindow = new BrowserWindow({
+            width: 1200,
+            height: 800,
+            minWidth: 800,
+            minHeight: 600,
+            webPreferences: {
+                nodeIntegration: false,
+                contextIsolation: true,
+                sandbox: true,
+                preload: path.join(__dirname, '../../electron/preload.js'),
+            },
+            show: false,
+        });
+
+        if (process.env.NODE_ENV === 'development') {
+            this.mainWindow.loadURL('http://localhost:3000');
+            this.mainWindow.webContents.openDevTools();
+        } else {
+            this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+        }
+
+        this.mainWindow.once('ready-to-show', () => {
+            this.mainWindow?.show();
+            logger.info('Window', 'Main window shown');
+        });
+
+        SingleInstanceManager.setMainWindow(this.mainWindow);
+        errorHandler.setMainWindow(this.mainWindow);
+
+        this.mainWindow.on('closed', () => {
+            errorHandler.setMainWindow(null);
+            this.mainWindow = null;
+            logger.info('Window', 'Main window closed');
+        });
+
+        this.mainWindow.webContents.on('render-process-gone', (_event, details) => {
+            errorHandler.handleRendererProcessGone(details);
+        });
     }
-  }
 
-  public isAppQuitting(): boolean {
-    return this.isQuitting;
-  }
+    private async setupIPCHandlers(): Promise<void> {
+        await registerAppIpcHandlers();
+        logger.info('IPC', 'Active onboarding, runs, and settings handlers registered');
+    }
 
-  private handleStartupFailure(error: unknown): void {
-    this.startupFailed = true;
-    this.isQuitting = true;
+    private onWindowAllClosed(): void {
+        if (process.platform !== 'darwin') {
+            app.quit();
+        }
+    }
 
-    logger.error('Application', 'Fatal startup failure', error);
-    DatabaseManager.close();
-    logger.info('Database', 'Database connection closed after startup failure');
+    private onBeforeQuit(): void {
+        this.isQuitting = true;
+        logger.info('Application', 'Application quitting');
 
-    errorHandler.showFatalStartupDialog(error);
-    SingleInstanceManager.releaseLock();
+        DatabaseManager.close();
+        logger.info('Database', 'Database connection closed');
+    }
 
-    app.exit(1);
-  }
+    private onActivate(): void {
+        if (this.startupFailed) {
+            return;
+        }
+
+        if (BrowserWindow.getAllWindows().length === 0) {
+            if (!OnboardingManager.isComplete()) {
+                this.createOnboardingWindow();
+            } else {
+                this.createMainWindow();
+            }
+        }
+    }
+
+    public isAppQuitting(): boolean {
+        return this.isQuitting;
+    }
+
+    private handleStartupFailure(error: unknown): void {
+        this.startupFailed = true;
+        this.isQuitting = true;
+
+        logger.error('Application', 'Fatal startup failure', error);
+        DatabaseManager.close();
+        logger.info('Database', 'Database connection closed after startup failure');
+
+        errorHandler.showFatalStartupDialog(error);
+        SingleInstanceManager.releaseLock();
+
+        app.exit(1);
+    }
 }
 
 new Application();

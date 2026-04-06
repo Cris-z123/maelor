@@ -5,7 +5,7 @@ import OnboardingApp from './app/OnboardingApp';
 import './styles/globals.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <OnboardingApp />
-  </React.StrictMode>
+    <React.StrictMode>
+        <OnboardingApp />
+    </React.StrictMode>,
 );

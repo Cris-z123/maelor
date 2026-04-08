@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.4](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v2.0.3...mailcopilot-v2.0.4) (2026-04-08)
+
+
+### Maintenance
+
+* update superpower and spec-kit ([53482f4](https://github.com/Cris-z123/mailCopilot/commit/53482f423da327e4001435db892ec00fbcccf170))
+* update superpower and spec-kit ([af755a8](https://github.com/Cris-z123/mailCopilot/commit/af755a8d6f8a51c75a3284dec9abc3a5c67da0ba))
+
 ## [2.0.3](https://github.com/Cris-z123/mailCopilot/compare/mailcopilot-v2.0.2...mailcopilot-v2.0.3) (2026-04-05)
 
 

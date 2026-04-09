@@ -180,7 +180,7 @@ export default function App() {
                 <aside className="border-r border-slate-200 bg-white px-5 py-6">
                     <div>
                         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                            mailCopilot
+                            Maelor
                         </p>
                         <h1 className="mt-3 text-2xl font-semibold">Outlook 审阅器</h1>
                         <p className="mt-2 text-sm leading-6 text-slate-600">

@@ -164,7 +164,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                 <div className="w-full rounded-3xl border border-slate-200 bg-white shadow-sm">
                     <div className="border-b border-slate-200 px-8 py-6">
                         <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">
-                            mailCopilot
+                            Maelor
                         </p>
                         <h1 className="mt-3 text-3xl font-semibold text-slate-900">
                             Outlook PST 直连初始化

@@ -13,7 +13,7 @@ class DatabaseManager {
         }
 
         const userDataPath = app.getPath('userData');
-        const dataDir = path.join(userDataPath, '.mailcopilot');
+        const dataDir = path.join(userDataPath, '.maelor');
 
         if (!fs.existsSync(dataDir)) {
             fs.mkdirSync(dataDir, { recursive: true });

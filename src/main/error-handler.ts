@@ -141,7 +141,7 @@ class GlobalErrorHandler {
         }
 
         const startupError = error instanceof Error ? error : new Error(String(error));
-        dialog.showErrorBox('mailCopilot 启动失败', this.buildStartupFailureMessage(startupError));
+        dialog.showErrorBox('Maelor 启动失败', this.buildStartupFailureMessage(startupError));
     }
 
     private showErrorDialog(errorInfo: ErrorInfo): void {
@@ -154,7 +154,7 @@ class GlobalErrorHandler {
         }
 
         const message = `${errorInfo.userMessage}\n\n如果问题持续存在，请重启应用后重试。`;
-        dialog.showErrorBox('mailCopilot 错误', message);
+        dialog.showErrorBox('Maelor 错误', message);
     }
 
     private buildStartupFailureMessage(error: Error): string {

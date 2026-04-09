@@ -1,7 +1,7 @@
 /**
  * electron-log v5 Configuration
  *
- * Structured logging for mailCopilot application
+ * Structured logging for Maelor application
  * Features:
  * - Structured JSON output (error type, module, message, timestamp, context)
  * - Log levels: DEBUG, INFO, WARN, ERROR
@@ -44,7 +44,7 @@ function initializeLogger(): void {
     }
 
     // Ensure logs directory exists
-    const logsDir = path.join(app.getPath('userData'), '.mailcopilot', 'logs');
+    const logsDir = path.join(app.getPath('userData'), '.maelor', 'logs');
 
     // Configure file transport
     const fileTransport = log.transports.file as LogTransport;

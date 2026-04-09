@@ -11,7 +11,7 @@ declare module 'electron' {
     interface SafeStorage {
         /**
          * Get password from keychain storage
-         * @param service - Service name (e.g., 'mailcopilot')
+         * @param service - Service name (e.g., 'maelor')
          * @param account - Account name (e.g., 'encryption_key')
          * @returns Password buffer or undefined if not found
          */
@@ -19,7 +19,7 @@ declare module 'electron' {
 
         /**
          * Set password in keychain storage
-         * @param service - Service name (e.g., 'mailcopilot')
+         * @param service - Service name (e.g., 'maelor')
          * @param account - Account name (e.g., 'encryption_key')
          * @param password - Password to store
          */

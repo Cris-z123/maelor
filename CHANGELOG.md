@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.0.1](https://github.com/Cris-z123/maelor/compare/maelor-v3.0.0...maelor-v3.0.1) (2026-04-10)
+
+
+### Bug Fixes
+
+* **release:** restore multi-size windows icon ([5f51da4](https://github.com/Cris-z123/maelor/commit/5f51da4ac4110d0be34f44fe15cefc22fe0160db))
+* **release:** restore multi-size windows icon ([4dc31d7](https://github.com/Cris-z123/maelor/commit/4dc31d78c51397094b4527b46355b06b218dafe3))
+
 ## [3.0.0](https://github.com/Cris-z123/maelor/compare/maelor-v2.0.3...maelor-v3.0.0) (2026-04-10)
 
 

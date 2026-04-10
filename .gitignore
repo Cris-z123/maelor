@@ -9,6 +9,8 @@ build/
 !build/
 build/*
 !build/installer.nsh
+!build/icon.ico
+!build/icon.png
 release/
 out/
 *.tsbuildinfo

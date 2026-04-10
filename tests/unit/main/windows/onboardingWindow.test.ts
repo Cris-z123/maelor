@@ -60,6 +60,7 @@ describe('createOnboardingWindow', () => {
                 resizable: false,
                 alwaysOnTop: true,
                 autoHideMenuBar: true,
+                icon: expect.stringContaining('build\\icon.ico'),
             }),
         );
         expect(windowMock.loadURL).toHaveBeenCalledWith('http://localhost:3000/onboarding.html');
@@ -81,6 +82,11 @@ describe('createOnboardingWindow', () => {
 
         createOnboardingWindow();
 
+        expect(browserWindowConstructor).toHaveBeenCalledWith(
+            expect.objectContaining({
+                icon: expect.stringContaining('build\\icon.ico'),
+            }),
+        );
         expect(windowMock.loadFile).toHaveBeenCalledWith(
             expect.stringContaining('renderer\\onboarding.html'),
         );

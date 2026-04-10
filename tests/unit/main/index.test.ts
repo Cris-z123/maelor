@@ -209,6 +209,11 @@ describe('main index entrypoint', () => {
 
         onboardingWindowHandlers.get('closed')?.();
         expect(BrowserWindow).toHaveBeenCalledOnce();
+        expect(BrowserWindow).toHaveBeenCalledWith(
+            expect.objectContaining({
+                icon: expect.stringContaining('build\\icon.ico'),
+            }),
+        );
         expect(mainWindow.loadFile).toHaveBeenCalledWith(
             expect.stringContaining('renderer\\index.html'),
         );

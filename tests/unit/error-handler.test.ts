@@ -14,9 +14,18 @@
  * @test: unit/error-handler
  */
 
+import type { BrowserWindow } from 'electron';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { errorHandler, ErrorSeverity, ErrorCategory } from '../../src/main/error-handler';
 import { logger } from '../../src/main/config/logger';
+
+type ErrorHandlerTestState = {
+    errorCount: number;
+    errorTimestamps: number[];
+    mainWindow: BrowserWindow | null;
+};
+
+const errorHandlerState = errorHandler as unknown as ErrorHandlerTestState;
 
 // Mock logger
 vi.mock('../../src/main/config/logger', () => ({
@@ -45,9 +54,9 @@ describe('GlobalErrorHandler', () => {
         vi.clearAllMocks();
 
         // Reset error handler state
-        (errorHandler as any).errorCount = 0;
-        (errorHandler as any).errorTimestamps = [];
-        (errorHandler as any).mainWindow = null;
+        errorHandlerState.errorCount = 0;
+        errorHandlerState.errorTimestamps = [];
+        errorHandlerState.mainWindow = null;
     });
 
     describe('initialize', () => {
@@ -77,17 +86,17 @@ describe('GlobalErrorHandler', () => {
         it('should set main window reference', () => {
             const mockWindow = {
                 isDestroyed: () => false,
-            } as any;
+            } as unknown as BrowserWindow;
 
             errorHandler.setMainWindow(mockWindow);
 
-            expect((errorHandler as any).mainWindow).toBe(mockWindow);
+            expect(errorHandlerState.mainWindow).toBe(mockWindow);
         });
 
         it('should accept null for window reference', () => {
             errorHandler.setMainWindow(null);
 
-            expect((errorHandler as any).mainWindow).toBeNull();
+            expect(errorHandlerState.mainWindow).toBeNull();
         });
     });
 
@@ -117,8 +126,8 @@ describe('GlobalErrorHandler', () => {
 
             errorHandler.reportError(error, ErrorCategory.UNKNOWN, 'TestModule');
 
-            expect((errorHandler as any).errorCount).toBe(1);
-            expect((errorHandler as any).errorTimestamps).toHaveLength(1);
+            expect(errorHandlerState.errorCount).toBe(1);
+            expect(errorHandlerState.errorTimestamps).toHaveLength(1);
         });
 
         it('should determine severity based on category', () => {
@@ -179,7 +188,7 @@ describe('GlobalErrorHandler', () => {
 
             errorHandler.handleRendererProcessGone(details);
 
-            expect((errorHandler as any).errorCount).toBe(1);
+            expect(errorHandlerState.errorCount).toBe(1);
         });
     });
 
@@ -202,12 +211,12 @@ describe('GlobalErrorHandler', () => {
             const error = new Error('Test error');
 
             errorHandler.reportError(error, ErrorCategory.UNKNOWN, 'TestModule');
-            expect((errorHandler as any).errorCount).toBe(1);
+            expect(errorHandlerState.errorCount).toBe(1);
 
             errorHandler.resetErrorTracking();
 
-            expect((errorHandler as any).errorCount).toBe(0);
-            expect((errorHandler as any).errorTimestamps).toHaveLength(0);
+            expect(errorHandlerState.errorCount).toBe(0);
+            expect(errorHandlerState.errorTimestamps).toHaveLength(0);
         });
 
         it('should log reset', () => {
@@ -298,7 +307,7 @@ describe('GlobalErrorHandler', () => {
             // Simulate errors with old timestamps
             const oldTimestamp = Date.now() - 120000; // 2 minutes ago
             for (let i = 0; i < 3; i++) {
-                (errorHandler as any).errorTimestamps.push(oldTimestamp);
+                errorHandlerState.errorTimestamps.push(oldTimestamp);
             }
 
             // Add recent error

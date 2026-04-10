@@ -6,7 +6,7 @@
 
 ## Overview
 
-The LLM Adapter API provides a unified interface for integrating both remote (OpenAI-compatible) and local (Ollama) LLM services for email action item extraction. The architecture enforces type safety, schema validation, and graceful degradation per the mailCopilot constitution.
+The LLM Adapter API provides a unified interface for integrating both remote (OpenAI-compatible) and local (Ollama) LLM services for email action item extraction. The architecture enforces type safety, schema validation, and graceful degradation per the Maelor constitution.
 
 **Key Features**:
 - Unified `LLMAdapter` interface for all LLM providers
@@ -632,4 +632,4 @@ if (!config.apiKey) {
 
 **API Version**: 1.0.0
 **Last Updated**: 2026-02-08
-**Maintainer**: mailCopilot Development Team
+**Maintainer**: Maelor Development Team

@@ -1,18 +1,45 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { FileSearch, History, Settings } from 'lucide-react';
 
 import type { RunDetail, RunSummary, SettingsView } from '@shared/types/app';
 
+import logoUrl from '@renderer/assets/logo.svg';
+import { useTheme } from '@renderer/hooks/useTheme';
 import LatestRunReview from '@renderer/components/runs/LatestRunReview';
 import OnboardingFlow from './OnboardingFlow';
 import { appApi } from './appApi';
 
 type TabKey = 'latest' | 'history' | 'settings';
 
-const tabs: Array<{ key: TabKey; label: string }> = [
-    { key: 'latest', label: '最新结果' },
-    { key: 'history', label: '历史运行' },
-    { key: 'settings', label: '设置' },
+const navItems: Array<{
+    key: Exclude<TabKey, 'settings'>;
+    label: string;
+    icon: typeof FileSearch;
+}> = [
+    { key: 'latest', label: '审阅', icon: FileSearch },
+    { key: 'history', label: '历史', icon: History },
 ];
+
+const tabTitles: Record<TabKey, { title: string; description: string }> = {
+    latest: {
+        title: '审阅',
+        description: '手动触发扫描，审阅本次提取结果与来源证据。',
+    },
+    history: {
+        title: '历史',
+        description: '查看最近 20 次运行记录并切回任一历史结果。',
+    },
+    settings: {
+        title: '设置',
+        description: '管理 Outlook、AI 连接、主题和本地数据维护。',
+    },
+};
+
+const themeOptions = [
+    { value: 'system', label: '系统' },
+    { value: 'light', label: '浅色' },
+    { value: 'dark', label: '深色' },
+] as const;
 
 const emptySettings: SettingsView = {
     outlookDirectory: '',
@@ -38,6 +65,7 @@ export default function App() {
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [settings, setSettings] = useState<SettingsView>(emptySettings);
     const [settingsApiKey, setSettingsApiKey] = useState('');
+    const { theme, setTheme } = useTheme();
 
     useEffect(() => {
         void refreshAppState();
@@ -162,7 +190,7 @@ export default function App() {
 
     if (configured === null) {
         return (
-            <div className="flex min-h-screen items-center justify-center text-sm text-slate-500">
+            <div className="flex min-h-screen items-center justify-center bg-background text-sm text-muted-foreground">
                 正在加载...
             </div>
         );
@@ -173,55 +201,71 @@ export default function App() {
     }
 
     const run = selectedRun ?? latestRun;
+    const currentTab = tabTitles[activeTab];
 
     return (
-        <div className="min-h-screen bg-slate-100 text-slate-900">
-            <div className="grid min-h-screen grid-cols-[220px_minmax(0,1fr)]">
-                <aside className="border-r border-slate-200 bg-white px-5 py-6">
-                    <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-                            mailCopilot
-                        </p>
-                        <h1 className="mt-3 text-2xl font-semibold">Outlook 审阅器</h1>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">
-                            Windows 经典 Outlook · PST 数据目录
-                        </p>
+        <div className="min-h-screen bg-background text-foreground">
+            <div className="grid min-h-screen grid-cols-[240px_minmax(0,1fr)]">
+                <aside className="flex flex-col border-r border-border bg-card/95 px-5 py-6 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <img alt="Maelor" className="h-10 w-10 rounded-2xl" src={logoUrl} />
+                        <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                                Maelor
+                            </p>
+                            <h1 className="text-lg font-semibold text-foreground">Outlook 审阅器</h1>
+                        </div>
                     </div>
 
+                    <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                        Windows 经典 Outlook · PST 数据目录
+                    </p>
+
                     <nav className="mt-10 space-y-2">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.key}
-                                className={`flex w-full items-center rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
-                                    activeTab === tab.key
-                                        ? 'bg-slate-900 text-white'
-                                        : 'text-slate-700 hover:bg-slate-100'
-                                }`}
-                                onClick={() => setActiveTab(tab.key)}
-                                type="button"
-                            >
-                                {tab.label}
-                            </button>
-                        ))}
+                        {navItems.map((item) => {
+                            const Icon = item.icon;
+                            const selected = activeTab === item.key;
+
+                            return (
+                                <button
+                                    key={item.key}
+                                    className={`flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium transition ${
+                                        selected
+                                            ? 'bg-primary text-primary-foreground shadow-sm'
+                                            : 'text-foreground hover:bg-muted'
+                                    }`}
+                                    onClick={() => setActiveTab(item.key)}
+                                    type="button"
+                                >
+                                    <Icon className="h-4 w-4" />
+                                    <span>{item.label}</span>
+                                </button>
+                            );
+                        })}
                     </nav>
+
+                    <div className="mt-auto pt-6">
+                        <button
+                            className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm font-medium transition ${
+                                activeTab === 'settings'
+                                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                                    : 'border-border bg-background text-foreground hover:bg-muted'
+                            }`}
+                            onClick={() => setActiveTab('settings')}
+                            type="button"
+                        >
+                            <Settings className="h-4 w-4" />
+                            <span>设置</span>
+                        </button>
+                    </div>
                 </aside>
 
                 <main className="flex min-h-screen flex-col">
-                    <header className="flex items-center justify-between border-b border-slate-200 bg-white px-8 py-5">
+                    <header className="flex items-center justify-between border-b border-border bg-background/80 px-8 py-5 backdrop-blur">
                         <div>
-                            <h2 className="text-xl font-semibold">
-                                {activeTab === 'latest'
-                                    ? '最新结果'
-                                    : activeTab === 'history'
-                                      ? '历史运行'
-                                      : '设置'}
-                            </h2>
-                            <p className="mt-1 text-sm text-slate-500">
-                                {activeTab === 'latest'
-                                    ? '手动触发扫描，审阅本次提取结果与来源证据。'
-                                    : activeTab === 'history'
-                                      ? '查看最近 20 次运行记录。'
-                                      : '只保留 Outlook、AI 配置和数据管理。'}
+                            <h2 className="text-xl font-semibold text-foreground">{currentTab.title}</h2>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                {currentTab.description}
                             </p>
                         </div>
 
@@ -229,7 +273,7 @@ export default function App() {
                             {activeTab === 'latest' && (
                                 <>
                                     <button
-                                        className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                        className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
                                         disabled={loading}
                                         onClick={() => void refreshAppState()}
                                         type="button"
@@ -237,7 +281,7 @@ export default function App() {
                                         刷新
                                     </button>
                                     <button
-                                        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                        className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                                         disabled={loading}
                                         onClick={() => {
                                             void handleStartRun();
@@ -253,7 +297,7 @@ export default function App() {
 
                     <div className="flex-1 px-8 py-6">
                         {statusMessage && (
-                            <div className="mb-6 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 shadow-sm">
+                            <div className="mb-6 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-foreground shadow-sm">
                                 {statusMessage}
                             </div>
                         )}
@@ -273,9 +317,9 @@ export default function App() {
                         )}
 
                         {activeTab === 'history' && (
-                            <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                                <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                    <thead className="bg-slate-50 text-left text-slate-500">
+                            <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+                                <table className="min-w-full divide-y divide-border text-sm">
+                                    <thead className="bg-muted/60 text-left text-muted-foreground">
                                         <tr>
                                             <th className="px-5 py-4 font-medium">时间</th>
                                             <th className="px-5 py-4 font-medium">PST 数</th>
@@ -285,11 +329,11 @@ export default function App() {
                                             <th className="px-5 py-4 font-medium">操作</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-200 bg-white">
+                                    <tbody className="divide-y divide-border bg-card">
                                         {recentRuns.length === 0 && (
                                             <tr>
                                                 <td
-                                                    className="px-5 py-8 text-center text-sm text-slate-500"
+                                                    className="px-5 py-8 text-center text-sm text-muted-foreground"
                                                     colSpan={6}
                                                 >
                                                     还没有历史运行记录。
@@ -298,24 +342,24 @@ export default function App() {
                                         )}
                                         {recentRuns.map((runSummary) => (
                                             <tr key={runSummary.runId}>
-                                                <td className="px-5 py-4 text-slate-700">
+                                                <td className="px-5 py-4 text-foreground">
                                                     {formatDate(runSummary.startedAt)}
                                                 </td>
-                                                <td className="px-5 py-4 text-slate-700">
+                                                <td className="px-5 py-4 text-foreground">
                                                     {runSummary.pstCount}
                                                 </td>
-                                                <td className="px-5 py-4 text-slate-700">
+                                                <td className="px-5 py-4 text-foreground">
                                                     {runSummary.processedEmailCount}
                                                 </td>
-                                                <td className="px-5 py-4 text-slate-700">
+                                                <td className="px-5 py-4 text-foreground">
                                                     {runSummary.itemCount}
                                                 </td>
-                                                <td className="px-5 py-4 text-slate-700">
+                                                <td className="px-5 py-4 text-foreground">
                                                     {runSummary.status}
                                                 </td>
                                                 <td className="px-5 py-4">
                                                     <button
-                                                        className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                                                        className="rounded-xl border border-border px-3 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted"
                                                         onClick={() => {
                                                             void handleOpenRun(runSummary.runId);
                                                         }}
@@ -333,14 +377,14 @@ export default function App() {
 
                         {activeTab === 'settings' && (
                             <div className="grid gap-6 xl:grid-cols-2">
-                                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                                    <h3 className="text-lg font-semibold text-slate-900">
+                                <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-foreground">
                                         Outlook 目录
                                     </h3>
-                                    <label className="mt-4 block text-sm text-slate-700">
+                                    <label className="mt-4 block text-sm text-foreground">
                                         <span className="mb-2 block font-medium">数据目录</span>
                                         <input
-                                            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-600"
+                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition focus:border-primary"
                                             onChange={(event) =>
                                                 setSettings((current) => ({
                                                     ...current,
@@ -352,17 +396,17 @@ export default function App() {
                                     </label>
                                 </section>
 
-                                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                                    <h3 className="text-lg font-semibold text-slate-900">
+                                <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-foreground">
                                         AI 配置
                                     </h3>
                                     <div className="mt-4 space-y-4">
-                                        <label className="block text-sm text-slate-700">
+                                        <label className="block text-sm text-foreground">
                                             <span className="mb-2 block font-medium">
                                                 API Base URL
                                             </span>
                                             <input
-                                                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-600"
+                                                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition focus:border-primary"
                                                 onChange={(event) =>
                                                     setSettings((current) => ({
                                                         ...current,
@@ -372,10 +416,10 @@ export default function App() {
                                                 value={settings.aiBaseUrl}
                                             />
                                         </label>
-                                        <label className="block text-sm text-slate-700">
+                                        <label className="block text-sm text-foreground">
                                             <span className="mb-2 block font-medium">Model</span>
                                             <input
-                                                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-600"
+                                                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition focus:border-primary"
                                                 onChange={(event) =>
                                                     setSettings((current) => ({
                                                         ...current,
@@ -385,12 +429,12 @@ export default function App() {
                                                 value={settings.aiModel}
                                             />
                                         </label>
-                                        <label className="block text-sm text-slate-700">
+                                        <label className="block text-sm text-foreground">
                                             <span className="mb-2 block font-medium">
                                                 新的 API Key
                                             </span>
                                             <input
-                                                className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-600"
+                                                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition focus:border-primary"
                                                 onChange={(event) =>
                                                     setSettingsApiKey(event.target.value)
                                                 }
@@ -402,13 +446,36 @@ export default function App() {
                                     </div>
                                 </section>
 
-                                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                                    <h3 className="text-lg font-semibold text-slate-900">
+                                <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-foreground">外观</h3>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        选择应用显示主题。系统模式会跟随当前操作系统设置。
+                                    </p>
+                                    <div className="mt-4 flex gap-3">
+                                        {themeOptions.map((option) => (
+                                            <button
+                                                key={option.value}
+                                                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
+                                                    theme === option.value
+                                                        ? 'bg-primary text-primary-foreground'
+                                                        : 'border border-border bg-background text-foreground hover:bg-muted'
+                                                }`}
+                                                onClick={() => setTheme(option.value)}
+                                                type="button"
+                                            >
+                                                {option.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-foreground">
                                         数据管理
                                     </h3>
-                                    <dl className="mt-4 space-y-3 text-sm text-slate-600">
+                                    <dl className="mt-4 space-y-3 text-sm text-muted-foreground">
                                         <div>
-                                            <dt className="font-medium text-slate-800">
+                                            <dt className="font-medium text-foreground">
                                                 数据库位置
                                             </dt>
                                             <dd className="mt-1 break-all font-mono text-xs">
@@ -416,7 +483,7 @@ export default function App() {
                                             </dd>
                                         </div>
                                         <div>
-                                            <dt className="font-medium text-slate-800">
+                                            <dt className="font-medium text-foreground">
                                                 数据库大小
                                             </dt>
                                             <dd className="mt-1">
@@ -430,7 +497,7 @@ export default function App() {
                                     </dl>
                                     <div className="mt-5 flex flex-wrap gap-3">
                                         <button
-                                            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                                            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
                                             onClick={() => {
                                                 void handleRebuildIndex();
                                             }}
@@ -439,7 +506,7 @@ export default function App() {
                                             重建索引
                                         </button>
                                         <button
-                                            className="rounded-xl border border-rose-300 px-4 py-2 text-sm font-medium text-rose-700 transition hover:bg-rose-50"
+                                            className="rounded-xl border border-destructive/50 px-4 py-2 text-sm font-medium text-destructive transition hover:bg-destructive/10"
                                             onClick={() => {
                                                 void handleClearRuns();
                                             }}
@@ -450,16 +517,16 @@ export default function App() {
                                     </div>
                                 </section>
 
-                                <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-                                    <h3 className="text-lg font-semibold text-slate-900">
+                                <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-foreground">
                                         保存更改
                                     </h3>
-                                    <p className="mt-3 text-sm leading-6 text-slate-600">
-                                        当前产品只保留 Outlook 目录、AI
-                                        连接参数和基础数据管理，不再暴露通知、模式切换和实验开关。
+                                    <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                                        当前产品只保留 Outlook 目录、AI 连接参数和基础数据管理，不再暴露通知、
+                                        模式切换和实验开关。
                                     </p>
                                     <button
-                                        className="mt-5 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+                                        className="mt-5 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
                                         onClick={() => {
                                             void handleSaveSettings();
                                         }}

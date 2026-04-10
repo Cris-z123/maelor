@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import type { ConnectionResult, ValidationResult } from '@shared/types/app';
 
@@ -13,8 +13,8 @@ const stepLabels = ['Outlook 目录', 'PST 验证', 'AI 配置'] as const;
 
 function getStepClass(active: boolean): string {
     return active
-        ? 'border-blue-600 bg-blue-600 text-white'
-        : 'border-slate-200 bg-white text-slate-500';
+        ? 'border-primary bg-primary text-primary-foreground'
+        : 'border-border bg-card text-muted-foreground';
 }
 
 export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlowProps) {
@@ -153,7 +153,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
         Boolean(connection?.success);
 
     return (
-        <div className={embedded ? 'h-full' : 'min-h-screen bg-slate-50'}>
+        <div className={embedded ? 'h-full' : 'min-h-screen bg-background'}>
             <div
                 className={
                     embedded
@@ -161,15 +161,15 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                         : 'mx-auto flex min-h-screen max-w-5xl items-center px-8 py-12'
                 }
             >
-                <div className="w-full rounded-3xl border border-slate-200 bg-white shadow-sm">
-                    <div className="border-b border-slate-200 px-8 py-6">
-                        <p className="text-sm font-medium uppercase tracking-[0.2em] text-slate-500">
-                            mailCopilot
+                <div className="w-full rounded-3xl border border-border bg-card shadow-sm">
+                    <div className="border-b border-border px-8 py-6">
+                        <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">
+                            Maelor
                         </p>
-                        <h1 className="mt-3 text-3xl font-semibold text-slate-900">
+                        <h1 className="mt-3 text-3xl font-semibold text-foreground">
                             Outlook PST 直连初始化
                         </h1>
-                        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+                        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
                             仅支持 Windows 经典 Outlook 的 PST 数据目录。流程固定为目录配置、PST
                             验证、AI 连接验证。
                         </p>
@@ -196,18 +196,18 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                         </div>
 
                         <div className="space-y-6">
-                            <section className="rounded-2xl border border-slate-200 p-5">
+                            <section className="rounded-2xl border border-border bg-card p-5">
                                 <div className="flex items-center justify-between gap-4">
                                     <div>
-                                        <h2 className="text-lg font-semibold text-slate-900">
+                                        <h2 className="text-lg font-semibold text-foreground">
                                             1. Outlook 目录
                                         </h2>
-                                        <p className="mt-1 text-sm text-slate-600">
+                                        <p className="mt-1 text-sm text-muted-foreground">
                                             配置经典 Outlook 本地数据目录，扫描范围只接受 `.pst`。
                                         </p>
                                     </div>
                                     <button
-                                        className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
+                                        className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
                                         disabled={loading}
                                         onClick={() => {
                                             void handleAutoDetect();
@@ -220,20 +220,20 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
 
                                 <div className="mt-4 space-y-3">
                                     <label
-                                        className="block text-sm font-medium text-slate-700"
+                                        className="block text-sm font-medium text-foreground"
                                         htmlFor="outlook-directory"
                                     >
                                         Outlook 数据目录
                                     </label>
                                     <input
                                         id="outlook-directory"
-                                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-600"
+                                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                         onChange={(event) => setDirectoryPath(event.target.value)}
                                         placeholder="例如：C:\\Users\\<user>\\Documents\\Outlook Files"
                                         value={directoryPath}
                                     />
                                     <button
-                                        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                        className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                                         disabled={loading || !directoryPath.trim()}
                                         onClick={() => {
                                             void handleValidate();
@@ -245,83 +245,71 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                                 </div>
                             </section>
 
-                            <section className="rounded-2xl border border-slate-200 p-5">
-                                <h2 className="text-lg font-semibold text-slate-900">
-                                    2. PST 验证
-                                </h2>
-                                <p className="mt-1 text-sm text-slate-600">
+                            <section className="rounded-2xl border border-border bg-card p-5">
+                                <h2 className="text-lg font-semibold text-foreground">2. PST 验证</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     至少需要一个可读 PST 才能完成初始化。
                                 </p>
 
                                 {!validation ? (
-                                    <div className="mt-4 rounded-2xl border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500">
+                                    <div className="mt-4 rounded-2xl border border-dashed border-border px-4 py-6 text-sm text-muted-foreground">
                                         目录验证完成后，这里会列出发现的 PST 文件。
                                     </div>
                                 ) : (
                                     <div className="mt-4 space-y-3">
                                         <div className="grid gap-3 sm:grid-cols-3">
-                                            <div className="rounded-2xl bg-slate-50 p-4">
-                                                <div className="text-xs uppercase tracking-wide text-slate-500">
+                                            <div className="rounded-2xl bg-muted p-4">
+                                                <div className="text-xs uppercase tracking-wide text-muted-foreground">
                                                     可读 PST
                                                 </div>
-                                                <div className="mt-2 text-2xl font-semibold text-slate-900">
+                                                <div className="mt-2 text-2xl font-semibold text-foreground">
                                                     {validation.readablePstCount}
                                                 </div>
                                             </div>
-                                            <div className="rounded-2xl bg-slate-50 p-4">
-                                                <div className="text-xs uppercase tracking-wide text-slate-500">
+                                            <div className="rounded-2xl bg-muted p-4">
+                                                <div className="text-xs uppercase tracking-wide text-muted-foreground">
                                                     不可读 PST
                                                 </div>
-                                                <div className="mt-2 text-2xl font-semibold text-slate-900">
+                                                <div className="mt-2 text-2xl font-semibold text-foreground">
                                                     {validation.unreadablePstCount}
                                                 </div>
                                             </div>
-                                            <div className="rounded-2xl bg-slate-50 p-4">
-                                                <div className="text-xs uppercase tracking-wide text-slate-500">
+                                            <div className="rounded-2xl bg-muted p-4">
+                                                <div className="text-xs uppercase tracking-wide text-muted-foreground">
                                                     验证状态
                                                 </div>
-                                                <div className="mt-2 text-sm font-medium text-slate-900">
+                                                <div className="mt-2 text-sm font-medium text-foreground">
                                                     {validation.valid ? '通过' : '未通过'}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="overflow-hidden rounded-2xl border border-slate-200">
-                                            <table className="min-w-full divide-y divide-slate-200 text-sm">
-                                                <thead className="bg-slate-50 text-left text-slate-500">
+                                        <div className="overflow-hidden rounded-2xl border border-border">
+                                            <table className="min-w-full divide-y divide-border text-sm">
+                                                <thead className="bg-muted text-left text-muted-foreground">
                                                     <tr>
-                                                        <th className="px-4 py-3 font-medium">
-                                                            文件
-                                                        </th>
-                                                        <th className="px-4 py-3 font-medium">
-                                                            大小
-                                                        </th>
-                                                        <th className="px-4 py-3 font-medium">
-                                                            状态
-                                                        </th>
-                                                        <th className="px-4 py-3 font-medium">
-                                                            说明
-                                                        </th>
+                                                        <th className="px-4 py-3 font-medium">文件</th>
+                                                        <th className="px-4 py-3 font-medium">大小</th>
+                                                        <th className="px-4 py-3 font-medium">状态</th>
+                                                        <th className="px-4 py-3 font-medium">说明</th>
                                                     </tr>
                                                 </thead>
-                                                <tbody className="divide-y divide-slate-200 bg-white">
+                                                <tbody className="divide-y divide-border bg-card">
                                                     {validation.files.map((file) => (
                                                         <tr key={file.path}>
-                                                            <td className="px-4 py-3 text-slate-700">
-                                                                <div className="font-medium text-slate-900">
+                                                            <td className="px-4 py-3 text-foreground">
+                                                                <div className="font-medium text-foreground">
                                                                     {file.fileName}
                                                                 </div>
-                                                                <div className="mt-1 text-xs text-slate-500">
+                                                                <div className="mt-1 text-xs text-muted-foreground">
                                                                     {file.path}
                                                                 </div>
                                                             </td>
-                                                            <td className="px-4 py-3 text-slate-600">
+                                                            <td className="px-4 py-3 text-muted-foreground">
                                                                 {Math.max(
                                                                     1,
                                                                     Math.round(
-                                                                        file.sizeBytes /
-                                                                            1024 /
-                                                                            1024,
+                                                                        file.sizeBytes / 1024 / 1024,
                                                                     ),
                                                                 )}{' '}
                                                                 MB
@@ -331,8 +319,8 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                                                                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${
                                                                         file.readability ===
                                                                         'readable'
-                                                                            ? 'bg-emerald-50 text-emerald-700'
-                                                                            : 'bg-amber-50 text-amber-700'
+                                                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
+                                                                            : 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
                                                                     }`}
                                                                 >
                                                                     {file.readability === 'readable'
@@ -340,7 +328,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                                                                         : '不可读'}
                                                                 </span>
                                                             </td>
-                                                            <td className="px-4 py-3 text-slate-600">
+                                                            <td className="px-4 py-3 text-muted-foreground">
                                                                 {file.reason ?? '-'}
                                                             </td>
                                                         </tr>
@@ -352,37 +340,37 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                                 )}
                             </section>
 
-                            <section className="rounded-2xl border border-slate-200 p-5">
-                                <h2 className="text-lg font-semibold text-slate-900">3. AI 配置</h2>
-                                <p className="mt-1 text-sm text-slate-600">
+                            <section className="rounded-2xl border border-border bg-card p-5">
+                                <h2 className="text-lg font-semibold text-foreground">3. AI 配置</h2>
+                                <p className="mt-1 text-sm text-muted-foreground">
                                     当前版本只支持一个远程 OpenAI-compatible provider。
                                 </p>
 
                                 <div className="mt-4 grid gap-4 md:grid-cols-2">
-                                    <label className="block text-sm text-slate-700">
+                                    <label className="block text-sm text-foreground">
                                         <span className="mb-2 block font-medium">API Base URL</span>
                                         <input
-                                            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-600"
+                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                             onChange={(event) => setBaseUrl(event.target.value)}
                                             placeholder="https://api.openai.com/v1"
                                             value={baseUrl}
                                         />
                                     </label>
 
-                                    <label className="block text-sm text-slate-700">
+                                    <label className="block text-sm text-foreground">
                                         <span className="mb-2 block font-medium">Model</span>
                                         <input
-                                            className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-600"
+                                            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                             onChange={(event) => setModel(event.target.value)}
                                             value={model}
                                         />
                                     </label>
                                 </div>
 
-                                <label className="mt-4 block text-sm text-slate-700">
+                                <label className="mt-4 block text-sm text-foreground">
                                     <span className="mb-2 block font-medium">API Key</span>
                                     <input
-                                        className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-blue-600"
+                                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
                                         onChange={(event) => setApiKey(event.target.value)}
                                         placeholder="sk-..."
                                         type="password"
@@ -392,7 +380,7 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
 
                                 <div className="mt-4 flex flex-wrap items-center gap-3">
                                     <button
-                                        className="rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                        className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                                         disabled={loading || !baseUrl.trim() || !apiKey.trim()}
                                         onClick={() => {
                                             void handleConnectionTest();
@@ -405,8 +393,8 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                                         <span
                                             className={`rounded-full px-3 py-1 text-xs font-medium ${
                                                 connection.success
-                                                    ? 'bg-emerald-50 text-emerald-700'
-                                                    : 'bg-rose-50 text-rose-700'
+                                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
+                                                    : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400'
                                             }`}
                                         >
                                             {connection.success
@@ -418,19 +406,19 @@ export function OnboardingFlow({ embedded = false, onCompleted }: OnboardingFlow
                             </section>
 
                             {message && (
-                                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                                <div className="rounded-2xl border border-border bg-muted px-4 py-3 text-sm text-foreground">
                                     {message}
                                 </div>
                             )}
 
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-6">
-                                <div className="text-sm text-slate-500">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-6">
+                                <div className="text-sm text-muted-foreground">
                                     {completed
                                         ? '初始化已完成。'
                                         : '完成条件：至少一个可读 PST，并通过 AI 连接测试。'}
                                 </div>
                                 <button
-                                    className="rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+                                    className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                                     disabled={loading || completed || !canFinish}
                                     onClick={() => {
                                         void handleComplete();

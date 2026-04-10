@@ -51,22 +51,22 @@ describe('DatabaseManager', () => {
         const db = DatabaseManager.initialize();
 
         expect(db).toBe(fakeDb);
-        expect(fs.mkdirSync).toHaveBeenCalledWith('D:\\userData\\.mailcopilot', {
+        expect(fs.mkdirSync).toHaveBeenCalledWith('D:\\userData\\.maelor', {
             recursive: true,
         });
-        expect(databaseCtor).toHaveBeenCalledWith('D:\\userData\\.mailcopilot\\app.db', {
+        expect(databaseCtor).toHaveBeenCalledWith('D:\\userData\\.maelor\\app.db', {
             verbose: console.log,
         });
         expect(fakeDb.pragma).toHaveBeenCalledWith('journal_mode = WAL');
         expect(fakeDb.pragma).toHaveBeenCalledWith('cache_size = -64000');
-        expect(DatabaseManager.getPath()).toBe('D:\\userData\\.mailcopilot\\app.db');
+        expect(DatabaseManager.getPath()).toBe('D:\\userData\\.maelor\\app.db');
     });
 
     it('reuses the existing instance and exposes helper methods', () => {
         const fakeDb = createFakeDb();
         DatabaseManager.setInstanceForTesting(fakeDb as never);
         (DatabaseManager as unknown as { dbPath: string }).dbPath =
-            'D:\\userData\\.mailcopilot\\app.db';
+            'D:\\userData\\.maelor\\app.db';
         vi.spyOn(fs, 'existsSync').mockReturnValue(true);
         vi.spyOn(fs, 'statSync').mockReturnValue({ size: 512 } as fs.Stats);
 

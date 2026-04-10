@@ -69,9 +69,13 @@ export default {
                     DEFAULT: 'hsl(var(--card))',
                     foreground: 'hsl(var(--card-foreground))',
                 },
-                brand: {
-                    blue: '#4F46E5', // 智捷蓝
-                    cyan: '#06B6D4', // 灵动青
+                warning: {
+                    DEFAULT: 'hsl(var(--warning))',
+                    foreground: 'hsl(var(--warning-foreground))',
+                },
+                success: {
+                    DEFAULT: 'hsl(var(--success))',
+                    foreground: 'hsl(var(--success-foreground))',
                 },
                 'low-confidence': '#FFFBE6',
             },

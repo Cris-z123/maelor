@@ -197,7 +197,7 @@ vi.mock('electron', () => ({
     app: {
         getPath: (name: string) => {
             if (name === 'userData') {
-                return '/tmp/test-mailcopilot';
+                return '/tmp/test-maelor';
             }
             if (name === 'documents') {
                 return '/tmp/test-documents';

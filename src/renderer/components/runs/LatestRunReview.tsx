@@ -24,13 +24,14 @@ export function LatestRunReview({
 
     if (!run) {
         return (
-            <div className="rounded-3xl border border-dashed border-slate-300 bg-white px-8 py-14 text-center shadow-sm">
-                <h3 className="text-xl font-semibold text-slate-900">还没有运行结果</h3>
-                <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                    当前配置已完成，但还没有扫描结果。执行一次“立即扫描”后，最新结果页会展示运行摘要、事项列表和来源证据。
+            <div className="rounded-3xl border border-dashed border-border bg-card px-8 py-14 text-center shadow-sm">
+                <h3 className="text-xl font-semibold text-foreground">还没有运行结果</h3>
+                <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+                    当前配置已完成，但还没有扫描结果。执行一次“立即扫描”后，最新结果页会展示运行摘要、
+                    事项列表和来源证据。
                 </p>
                 <button
-                    className="mt-6 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700"
+                    className="mt-6 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
                     onClick={onStartRun}
                     type="button"
                 >

@@ -74,7 +74,7 @@ describe('Phase 4 IPC contracts', () => {
             outlookDirectory: 'C:\\Users\\User\\Documents\\Outlook Files',
             aiBaseUrl: 'https://api.openai.com/v1',
             aiModel: 'gpt-4.1-mini',
-            databasePath: 'D:\\mailCopilot\\mailcopilot.db',
+            databasePath: 'D:\\Maelor\\maelor.db',
             databaseSizeBytes: 4096,
         });
         deps.clearRuns.mockResolvedValue({ success: true, deletedRunCount: 5 });
@@ -139,7 +139,7 @@ describe('Phase 4 IPC contracts', () => {
             outlookDirectory: 'C:\\Users\\User\\Documents\\Outlook Files',
             aiBaseUrl: 'https://api.openai.com/v1',
             aiModel: 'gpt-4.1-mini',
-            databasePath: 'D:\\mailCopilot\\mailcopilot.db',
+            databasePath: 'D:\\Maelor\\maelor.db',
             databaseSizeBytes: 4096,
         });
     });

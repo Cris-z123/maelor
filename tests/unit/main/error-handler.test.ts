@@ -55,7 +55,7 @@ describe('error handler user-facing dialogs', () => {
             ),
         );
 
-        expect(showErrorBox).toHaveBeenCalledWith('mailCopilot 启动失败', expect.any(String));
+        expect(showErrorBox).toHaveBeenCalledWith('Maelor 启动失败', expect.any(String));
         const message = showErrorBox.mock.calls[0][1] as string;
         expect(message).toContain('应用无法完成本地数据库升级，已停止启动以保护现有数据。');
         expect(message).toContain('先不要手动删除数据库文件');
@@ -91,7 +91,7 @@ describe('error handler user-facing dialogs', () => {
             'MainProcess',
         );
 
-        expect(showErrorBox).toHaveBeenCalledWith('mailCopilot 错误', expect.any(String));
+        expect(showErrorBox).toHaveBeenCalledWith('Maelor 错误', expect.any(String));
         const message = showErrorBox.mock.calls[0][1] as string;
         expect(message).toContain('数据库出现错误，部分功能暂时不可用。');
         expect(message).toContain('如果问题持续存在，请重启应用后重试。');

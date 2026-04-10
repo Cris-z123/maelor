@@ -2,7 +2,7 @@
 
 ## Release Flow
 
-mailCopilot uses a `release-please` driven release flow:
+Maelor uses a `release-please` driven release flow:
 
 1. Push Conventional Commit changes to `main`.
 2. `release-please` opens or updates a Release PR that bumps `package.json` and `CHANGELOG.md`.
@@ -46,9 +46,9 @@ Behavior:
 
 Expected output names:
 
-- `mailCopilot-<version>-windows-x64.exe`
-- `mailCopilot-<version>-macos-<arch>.dmg`
-- `mailCopilot-<version>-macos-<arch>.zip`
+- `Maelor-<version>-windows-x64.exe`
+- `Maelor-<version>-macos-<arch>.dmg`
+- `Maelor-<version>-macos-<arch>.zip`
 
 Metadata files such as `.yml` and `.blockmap` are uploaded alongside the installers and archives.
 

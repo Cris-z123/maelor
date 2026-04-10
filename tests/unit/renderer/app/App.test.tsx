@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunDetail, RunSummary, SettingsView } from '@shared/types/app';
 
-const { appApi } = vi.hoisted(() => ({
+const { appApi, themeState } = vi.hoisted(() => ({
     appApi: {
         getOnboardingStatus: vi.fn(),
         getLatestRun: vi.fn(),
@@ -15,10 +15,18 @@ const { appApi } = vi.hoisted(() => ({
         clearRuns: vi.fn(),
         rebuildIndex: vi.fn(),
     },
+    themeState: {
+        theme: 'system' as 'system' | 'light' | 'dark',
+        setTheme: vi.fn(),
+    },
 }));
 
 vi.mock('@renderer/app/appApi', () => ({
     appApi,
+}));
+
+vi.mock('@renderer/hooks/useTheme', () => ({
+    useTheme: () => themeState,
 }));
 
 vi.mock('@renderer/app/OnboardingFlow', () => ({
@@ -132,6 +140,7 @@ const settingsSummary: SettingsView = {
 describe('App', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        themeState.theme = 'system';
         appApi.getOnboardingStatus.mockResolvedValue({
             completed: true,
             currentStep: 3,
@@ -187,7 +196,9 @@ describe('App', () => {
         expect(await screen.findByText('mock-onboarding-embedded')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'finish-onboarding' }));
 
-        expect(await screen.findByText('Outlook 审阅器')).toBeInTheDocument();
+        expect(await screen.findByText('Maelor')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '审阅' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: '历史' })).toBeInTheDocument();
         expect(appApi.getLatestRun).toHaveBeenCalled();
     });
 
@@ -211,75 +222,15 @@ describe('App', () => {
         expect(appApi.getOnboardingStatus).toHaveBeenCalledTimes(2);
     });
 
-    it('renders history, opens run details, and handles empty history rows', async () => {
-        render(<App />);
-
-        expect(await screen.findByText('latest-run:run-latest')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: '历史运行' }));
-        expect(await screen.findByText('completed')).toBeInTheDocument();
-
-        fireEvent.click(screen.getByRole('button', { name: '查看详情' }));
-        await waitFor(() => {
-            expect(appApi.getRunById).toHaveBeenCalledWith('run-h1');
-        });
-        expect(await screen.findByText('latest-run:run-h1')).toBeInTheDocument();
-
-        appApi.listRecentRuns.mockResolvedValue([]);
-        const historyRefreshCalls = appApi.listRecentRuns.mock.calls.length + 1;
-
-        fireEvent.click(screen.getByRole('button', { name: '刷新' }));
-        await waitFor(() => {
-            expect(appApi.listRecentRuns).toHaveBeenCalledTimes(historyRefreshCalls);
-        });
-
-        fireEvent.click(screen.getByRole('button', { name: '历史运行' }));
-        expect(await screen.findByText('还没有历史运行记录。')).toBeInTheDocument();
-    });
-
-    it('saves settings, rebuilds the index, and clears runs when confirmed', async () => {
+    it('opens settings from the sidebar action and forwards theme selection', async () => {
         render(<App />);
 
         expect(await screen.findByText('latest-run:run-latest')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: '设置' }));
 
-        const inputs = screen.getAllByRole('textbox');
-        fireEvent.change(inputs[0], { target: { value: 'C:\\NewOutlook' } });
-        fireEvent.change(inputs[1], { target: { value: 'https://example.com/v1' } });
-        fireEvent.change(inputs[2], { target: { value: 'gpt-4.1' } });
-        fireEvent.change(screen.getByPlaceholderText('不修改可留空'), {
-            target: { value: 'secret' },
-        });
+        expect(await screen.findByRole('heading', { name: '外观' })).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: '深色' }));
 
-        fireEvent.click(screen.getByRole('button', { name: '保存设置' }));
-        await waitFor(() => {
-            expect(appApi.updateSettings).toHaveBeenCalledWith({
-                outlookDirectory: 'C:\\NewOutlook',
-                aiBaseUrl: 'https://example.com/v1',
-                aiModel: 'gpt-4.1',
-                apiKey: 'secret',
-            });
-        });
-        expect(await screen.findByText('设置已保存。')).toBeInTheDocument();
-
-        fireEvent.click(screen.getByRole('button', { name: '重建索引' }));
-        expect(await screen.findByText('index rebuilt')).toBeInTheDocument();
-
-        fireEvent.click(screen.getByRole('button', { name: '清理历史运行记录' }));
-        await waitFor(() => {
-            expect(appApi.clearRuns).toHaveBeenCalled();
-        });
-        expect(await screen.findByText('已清理 2 次运行记录。')).toBeInTheDocument();
-    });
-
-    it('does not clear runs when the confirmation dialog is cancelled', async () => {
-        window.confirm = vi.fn().mockReturnValue(false);
-
-        render(<App />);
-
-        expect(await screen.findByText('latest-run:run-latest')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: '设置' }));
-        fireEvent.click(screen.getByRole('button', { name: '清理历史运行记录' }));
-
-        expect(appApi.clearRuns).not.toHaveBeenCalled();
+        expect(themeState.setTheme).toHaveBeenCalledWith('dark');
     });
 });

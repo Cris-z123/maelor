@@ -10,6 +10,7 @@
 import { BrowserWindow } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getAppIconPath } from '../windowIcon.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -33,6 +34,7 @@ export function createOnboardingWindow(): BrowserWindow {
         resizable: false,
         alwaysOnTop: true,
         autoHideMenuBar: true,
+        icon: getAppIconPath(),
         show: false,
         webPreferences: {
             contextIsolation: true,

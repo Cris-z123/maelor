@@ -6,26 +6,56 @@
 
 @layer base {
     :root {
-        --background: 210 20% 98%;
-        --foreground: 222 26% 14%;
+        --background: 210 40% 98%;
+        --foreground: 222 47% 11%;
         --card: 0 0% 100%;
-        --card-foreground: 222 26% 14%;
+        --card-foreground: 222 47% 11%;
         --popover: 0 0% 100%;
-        --popover-foreground: 222 26% 14%;
-        --primary: 217 91% 60%;
+        --popover-foreground: 222 47% 11%;
+        --primary: 170 83% 31%;
         --primary-foreground: 0 0% 100%;
-        --secondary: 210 18% 96%;
-        --secondary-foreground: 222 26% 14%;
-        --muted: 210 16% 95%;
-        --muted-foreground: 215 16% 46%;
-        --accent: 210 18% 96%;
-        --accent-foreground: 222 26% 14%;
-        --destructive: 0 72% 51%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 38 92% 50%;
+        --accent-foreground: 222 47% 11%;
+        --destructive: 0 84% 60%;
         --destructive-foreground: 0 0% 100%;
-        --border: 214 20% 88%;
-        --input: 214 20% 88%;
-        --ring: 217 91% 60%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 170 83% 31%;
         --radius: 1rem;
+        --warning: 25 95% 53%;
+        --warning-foreground: 0 0% 100%;
+        --success: 160 84% 39%;
+        --success-foreground: 0 0% 100%;
+    }
+
+    .dark {
+        --background: 222 47% 11%;
+        --foreground: 210 40% 98%;
+        --card: 217 33% 17%;
+        --card-foreground: 210 40% 98%;
+        --popover: 217 33% 17%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 171 77% 64%;
+        --primary-foreground: 222 47% 11%;
+        --secondary: 217 19% 27%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217 19% 27%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 43 96% 56%;
+        --accent-foreground: 222 47% 11%;
+        --destructive: 0 91% 71%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 217 19% 27%;
+        --input: 217 19% 27%;
+        --ring: 171 77% 64%;
+        --warning: 27 96% 61%;
+        --warning-foreground: 222 47% 11%;
+        --success: 160 84% 45%;
+        --success-foreground: 222 47% 11%;
     }
 
     * {
@@ -34,11 +64,11 @@
     }
 
     html {
-        @apply bg-slate-100;
+        @apply bg-background;
     }
 
     body {
-        @apply m-0 bg-slate-100 text-slate-900;
+        @apply m-0 bg-background text-foreground;
         font-family:
             'Inter',
             -apple-system,

@@ -12,6 +12,7 @@ import { SchemaManager } from './database/schema.js';
 import { errorHandler } from './error-handler.js';
 import { registerAppIpcHandlers } from './ipc/registerAppHandlers.js';
 import OnboardingManager from './onboarding/OnboardingManager.js';
+import { getAppIconPath } from './windowIcon.js';
 import { createOnboardingWindow } from './windows/onboardingWindow.js';
 
 /**
@@ -105,6 +106,7 @@ class Application {
             height: 800,
             minWidth: 800,
             minHeight: 600,
+            icon: getAppIconPath(),
             webPreferences: {
                 nodeIntegration: false,
                 contextIsolation: true,

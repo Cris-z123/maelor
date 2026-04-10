@@ -1,8 +1,8 @@
-﻿# Deployment Guide: mailCopilot
+# Deployment Guide: Maelor
 
 ## 1. Lifecycle Policy
 
-mailCopilot 当前采用以下发布与使用策略：
+Maelor 当前采用以下发布与使用策略：
 - Windows：唯一受支持的内测分发平台，自签名证书签名
 - macOS：实验性构建，仅用于开发验证，未签名、未公证
 - 自动更新：当前未实现受支持的自动更新链路
@@ -11,12 +11,12 @@ mailCopilot 当前采用以下发布与使用策略：
 ## 2. Release Artifacts
 
 Windows 内测产物：
-- `mailCopilot-<version>-windows-x64.exe`
+- `Maelor-<version>-windows-x64.exe`
 - 必须完成 Windows 代码签名后才允许上传到 GitHub Release
 - 当前阶段允许使用自签测试证书，但仅用于受控内测，不代表正式受信任发布
 
 macOS 实验性产物：
-- `mailCopilot-<version>-macos-arm64.dmg` 或 `zip`
+- `Maelor-<version>-macos-arm64.dmg` 或 `zip`
 - 可能被 Gatekeeper 阻止，不作为正式支持分发
 
 ## 3. Windows Build Requirements
@@ -59,7 +59,7 @@ pnpm run dist:win
 - 如果迁移失败、缺少迁移路径、或数据库版本高于当前应用支持范围，应用会阻止启动并展示恢复指引
 
 卸载：
-- 卸载器会先结束运行中的 `mailCopilot.exe` 进程树
+- 卸载器会先结束运行中的 `Maelor.exe` 进程树
 - 真正卸载时会删除应用文件和用户数据目录
 - 升级过程中的卸载阶段不会删除用户数据
 

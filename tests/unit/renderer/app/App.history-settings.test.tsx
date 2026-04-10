@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { RunDetail, RunSummary, SettingsView } from '@shared/types/app';
 
-const { appApi } = vi.hoisted(() => ({
+const { appApi, themeState } = vi.hoisted(() => ({
     appApi: {
         getOnboardingStatus: vi.fn(),
         getLatestRun: vi.fn(),
@@ -15,10 +15,18 @@ const { appApi } = vi.hoisted(() => ({
         clearRuns: vi.fn(),
         rebuildIndex: vi.fn(),
     },
+    themeState: {
+        theme: 'system' as 'system' | 'light' | 'dark',
+        setTheme: vi.fn(),
+    },
 }));
 
 vi.mock('@renderer/app/appApi', () => ({
     appApi,
+}));
+
+vi.mock('@renderer/hooks/useTheme', () => ({
+    useTheme: () => themeState,
 }));
 
 vi.mock('@renderer/app/OnboardingFlow', () => ({
@@ -95,6 +103,7 @@ const settingsSummary: SettingsView = {
 describe('App Phase 4 surfaces', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        themeState.theme = 'system';
         appApi.getOnboardingStatus.mockResolvedValue({
             completed: true,
             currentStep: 3,
@@ -124,11 +133,11 @@ describe('App Phase 4 surfaces', () => {
         });
     });
 
-    it('renders the recent-runs history table and navigates back to the selected historical run', async () => {
+    it('renders the recent-runs history table and opens a historical run', async () => {
         render(<App />);
 
         expect(await screen.findByText('latest-run:run-latest')).toBeInTheDocument();
-        fireEvent.click(screen.getByRole('button', { name: '历史运行' }));
+        fireEvent.click(screen.getByRole('button', { name: '历史' }));
 
         expect(await screen.findByText('时间')).toBeInTheDocument();
         expect(screen.getByText('PST 数')).toBeInTheDocument();
@@ -142,16 +151,17 @@ describe('App Phase 4 surfaces', () => {
         expect(await screen.findByText('latest-run:run-h1')).toBeInTheDocument();
     });
 
-    it('renders settings sections with summaries and forwards settings maintenance actions', async () => {
+    it('renders settings sections and forwards maintenance actions', async () => {
         render(<App />);
 
         expect(await screen.findByText('latest-run:run-latest')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: '设置' }));
 
-        expect(await screen.findByText('Outlook 目录')).toBeInTheDocument();
-        expect(screen.getByText('AI 配置')).toBeInTheDocument();
-        expect(screen.getByText('数据管理')).toBeInTheDocument();
-        expect(screen.getByText('保存更改')).toBeInTheDocument();
+        expect(await screen.findByRole('heading', { name: 'Outlook 目录' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: 'AI 配置' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: '外观' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: '数据管理' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { name: '保存更改' })).toBeInTheDocument();
         expect(screen.getByDisplayValue('C:\\Outlook')).toBeInTheDocument();
         expect(screen.getByDisplayValue('https://api.openai.com/v1')).toBeInTheDocument();
         expect(screen.getByDisplayValue('gpt-4.1-mini')).toBeInTheDocument();

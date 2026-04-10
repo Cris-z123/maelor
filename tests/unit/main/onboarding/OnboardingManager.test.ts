@@ -24,7 +24,7 @@ describe('OnboardingManager.detectOutlookDirectory', () => {
     beforeEach(() => {
         vi.clearAllMocks();
 
-        tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'mailcopilot-onboarding-'));
+        tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'maelor-onboarding-'));
         documentsPath = path.join(tempRoot, 'Documents');
         appDataPath = path.join(tempRoot, 'AppData', 'Roaming');
         homePath = path.join(tempRoot, 'Home');

@@ -18,7 +18,7 @@ const REQUIRED_TABLES = [
 
 const INITIAL_SQL = '-- initial schema';
 const UPGRADE_SQL = '-- migrate 3.0 to 4.0';
-const DB_PATH = 'C:\\Users\\tester\\AppData\\Roaming\\mailCopilot\\app.db';
+const DB_PATH = 'C:\\Users\\tester\\AppData\\Roaming\\Maelor\\app.db';
 
 class FakeSchemaDatabase {
     tables = new Set<string>();

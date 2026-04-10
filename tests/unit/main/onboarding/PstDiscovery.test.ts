@@ -18,7 +18,7 @@ describe('PstDiscovery.validateDirectory', () => {
     });
 
     function createTempDir(): string {
-        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'mailcopilot-pst-'));
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'maelor-pst-'));
         tempRoots.push(root);
         return root;
     }

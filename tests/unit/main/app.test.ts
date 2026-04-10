@@ -65,7 +65,7 @@ describe('app lifecycle managers', () => {
             | ((event: Electron.Event, commandLine: string[], workingDirectory: string) => void)
             | undefined;
 
-        secondInstanceHandler?.({} as Electron.Event, ['mailCopilot.exe'], 'D:\\work');
+        secondInstanceHandler?.({} as Electron.Event, ['Maelor.exe'], 'D:\\work');
 
         expect(windowMock.restore).toHaveBeenCalledOnce();
         expect(windowMock.focus).toHaveBeenCalledTimes(1);

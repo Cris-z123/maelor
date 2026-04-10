@@ -6,6 +6,22 @@ function readWorkspaceFile(...segments: string[]): string {
     return readFileSync(path.resolve(process.cwd(), ...segments), 'utf8');
 }
 
+function readWorkspaceBinary(...segments: string[]): Buffer {
+    return readFileSync(path.resolve(process.cwd(), ...segments));
+}
+
+function readIcoSizes(buffer: Buffer): Array<{ width: number; height: number }> {
+    const imageCount = buffer.readUInt16LE(4);
+
+    return Array.from({ length: imageCount }, (_, index) => {
+        const entryOffset = 6 + index * 16;
+        const width = buffer.readUInt8(entryOffset) || 256;
+        const height = buffer.readUInt8(entryOffset + 1) || 256;
+
+        return { width, height };
+    });
+}
+
 describe('windows installer configuration', () => {
     it('includes the custom NSIS script for uninstall cleanup', () => {
         const builderConfig = readWorkspaceFile('electron-builder.yml');
@@ -25,5 +41,16 @@ describe('windows installer configuration', () => {
         expect(installerScript).toContain('Skipping user data removal during application update.');
         expect(installerScript).toContain('RMDir /r "$APPDATA\\${APP_FILENAME}"');
         expect(installerScript).toContain('RMDir /r "$LOCALAPPDATA\\${APP_FILENAME}"');
+    });
+
+    it('ships a windows icon that includes a 256x256 layer for nsis packaging', () => {
+        const builderConfig = readWorkspaceFile('electron-builder.yml');
+        const iconPath = path.resolve(process.cwd(), 'build', 'icon.ico');
+        const iconBuffer = readWorkspaceBinary('build', 'icon.ico');
+        const iconSizes = readIcoSizes(iconBuffer);
+
+        expect(builderConfig).toContain('icon: build/icon.ico');
+        expect(existsSync(iconPath)).toBe(true);
+        expect(iconSizes).toContainEqual({ width: 256, height: 256 });
     });
 });

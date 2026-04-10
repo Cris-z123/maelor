@@ -1,8 +1,12 @@
-# mailCopilot
+<p align="center">
+  <img src="build/icon.png" alt="Maelor" width="128" />
+</p>
 
-> 智能邮件处理助手 - Email Item Traceability & Verification System
+# Maelor
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/your-org/mailcopilot)
+> A secure and reliable email copilot
+
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/Cris-z123/Maelor)
 [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Cris-z123/11757b000330f5d8d4e482164f08052d/raw/mailcopilot-coverage.json)](https://gist.github.com/Cris-z123/11757b000330f5d8d4e482164f08052d)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Electron](https://img.shields.io/badge/Electron-29.4.6-9FEAF5?logo=electron)](https://electronjs.org/)
@@ -10,7 +14,7 @@
 
 ## 📖 项目简介
 
-mailCopilot 是一款面向隐私敏感场景的**本地邮件智能处理客户端**，通过规则引擎与本地/远程 LLM 协同，在**用户可控环境**下实现邮件内容结构化、事项提取、**100% 可溯源验证**。
+Maelor 是一款面向隐私敏感场景的**本地邮件智能处理客户端**，通过规则引擎与本地/远程 LLM 协同，在**用户可控环境**下实现邮件内容结构化、事项提取、**100% 可溯源验证**。
 
 ### 核心特性
 
@@ -172,4 +176,4 @@ chore: update dependencies
 
 ## 📮 联系方式
 
-- 问题反馈: [GitHub Issues](https://github.com/your-org/mailcopilot/issues)
+- 问题反馈: [GitHub Issues](https://github.com/Cris-z123/Maelor/issues)
